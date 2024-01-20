@@ -10,6 +10,21 @@ from scipy.ndimage.morphology import binary_dilation
 from utils import constants
 
 
+def get_snr_tail(
+    area: np.ndarray, ydata: np.ndarray, fitdata: np.ndarray
+) -> np.ndarray:
+    """Calculate the historical `tail of fit residuals` SNR.
+
+    Args:
+        area (np.ndarray): area of the fit peaks.
+        ydata (np.ndarray): time-domain data.
+        fitdata (np.ndarray): time-domain fit.
+    """
+    residual = fitdata - ydata
+    std = np.std(residual[-np.round(len(residual) / 4).astype(int) : -1])
+    return area / std
+
+
 def _get_dilation_kernel(x: int) -> int:
     """Get dilation kernel for binary dilation in 1-dimension."""
     return int((math.ceil(x * 0.025) * 2 + 1))

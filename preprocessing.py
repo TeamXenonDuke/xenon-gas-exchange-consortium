@@ -7,23 +7,38 @@ from typing import Any, Dict, Tuple
 
 import numpy as np
 
+from spect import nmr_timefit
 from utils import constants, recon_utils, signal_utils, spect_utils, traj_utils
 
 
-def remove_contamination(dict_dyn: Dict[str, Any], dict_dis: Dict[str, Any]) -> Dict:
+def remove_contamination(
+    dict_dis: Dict[str, Any],
+    dict_bonus: Dict[str, Any],
+) -> Dict:
     """Remove gas contamination from data."""
-    _, fit_obj = spect_utils.calculate_static_spectroscopy(
-        fid=dict_dyn[constants.IOFields.FIDS_DIS],
-        sample_time=dict_dyn[constants.IOFields.SAMPLE_TIME],
-        tr=dict_dyn[constants.IOFields.TR],
-        center_freq=dict_dyn[constants.IOFields.XE_CENTER_FREQUENCY],
-        rf_excitation=dict_dyn[constants.IOFields.XE_DISSOLVED_OFFSET_FREQUENCY],
+    _, fit_dict = spect_utils.fit_static_spectroscopy(
+        fids=np.transpose(dict_bonus[constants.IOFields.FIDS_BONUS_DIS]),
+        sample_time=dict_dis[constants.IOFields.SAMPLE_TIME],
+        tr=dict_dis[constants.IOFields.TR] / 2,
+        center_freq=dict_dis[constants.IOFields.XE_CENTER_FREQUENCY],
+        rf_excitation=dict_dis[constants.IOFields.XE_DISSOLVED_OFFSET_FREQUENCY],
     )
-
+    fit_obj = nmr_timefit.NMR_TimeFit(
+        ydata=fit_dict[constants.SpectIOFields.DATA_DIS_AVG],
+        tdata=fit_dict[constants.SpectIOFields.T_SPECTRA],
+        area=fit_dict[constants.SpectIOFields.FIT_PARAMS][0:3],
+        freq=fit_dict[constants.SpectIOFields.FIT_PARAMS][3:6],
+        fwhmL=fit_dict[constants.SpectIOFields.FIT_PARAMS][6:9],
+        fwhmG=fit_dict[constants.SpectIOFields.FIT_PARAMS][9:12],
+        phase=fit_dict[constants.SpectIOFields.FIT_PARAMS][12:15],
+        line_broadening=0,
+        zeropad_size=np.size(fit_dict[constants.SpectIOFields.T_SPECTRA]),
+        method="voigt",
+    )
     dict_dis[constants.IOFields.FIDS_DIS] = signal_utils.remove_gasphase_contamination(
         data_dissolved=dict_dis[constants.IOFields.FIDS_DIS],
         data_gas=dict_dis[constants.IOFields.FIDS_DIS],
-        sample_time=dict_dyn[constants.IOFields.SAMPLE_TIME],
+        sample_time=dict_dis[constants.IOFields.SAMPLE_TIME],
         freq_gas_acq_diss=fit_obj.freq[2],
         phase_gas_acq_diss=fit_obj.phase[2],
         area_gas_acq_diss=fit_obj.area[2],
