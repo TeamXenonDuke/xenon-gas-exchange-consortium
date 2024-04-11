@@ -1,7 +1,7 @@
 cff-version: 1.2.0
 message: "If you use this software, please cite it as below."
 authors:
-- family-names: “Team Xenon at Duke University”
+- family-names: “Team Xenon Duke”
   
 title: “Xenon Gas Exchange Imaging Pipeline”  
 version: 4.0
