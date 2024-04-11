@@ -308,7 +308,7 @@ Please contact David Mummy (david.mummy@duke.edu) for any correspondence.
 We appreciate being cited! Please click the "Cite This Repository" button under "About" on the repository landing page to get APA and BibTex citations. You can also just copy the following BibTex code into a plain text file and load it into your favorite citation manager: 
 
 @software{Lu_Duke_University_Xenon_2024,
-author = {Lu, Junlan and Leewiwatwong, Suphachart and Kabir, Sakib and Wang, Ziyi},
+author = {Lu, Junlan and Leewiwatwong, Suphachart and Bechtel, Ari and Kabir, Sakib and Wang, Ziyi},
 month = jan,
 title = {{“Duke University Xenon Gas Exchange Imaging Pipeline”}},
 url = {https://github.com/TeamXenonDuke/xenon-gas-exchange-consortium},
