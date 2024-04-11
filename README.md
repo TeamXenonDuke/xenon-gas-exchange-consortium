@@ -12,6 +12,8 @@ The xenon gas exchange pipeline, developed at the [Driehuys Lab](https://sites.d
 
 4. [Acknowledgments](#acknowledgements)
 
+5. [How to Cite](#howtocite)
+
 ## Setup
 
 The xenon gas exchange pipeline is a cross system_vendor program that works on Windows, Mac and Linux system. At least 8GB of RAM is required to run this pipeline. Windows users can install Windows Subsystem for Linux (WSL) or install Ubuntu as dual boot/in the virtual box. The details of WSL installation can be seen in Section 1.1. Warning: run time in WSL can be slower compare to Linux or Mac system.
@@ -299,4 +301,18 @@ Code inspired by: Ziyi Wang
 
 Additional help: Isabelle Dummer, Joanna Nowakowska, Shuo Zhang
 
-Correspondence: David Mummy: david.mummy@duke.edu
+Please contact David Mummy (david.mummy@duke.edu) for any correspondence.
+
+## How to Cite: 
+
+We appreciate being cited! Please click the "Cite This Repository" button under "About" on the repository landing page to get APA and BibTex citations. You can also just copy the following BibTex code into a plain text file and load it into your favorite citation manager: 
+
+@software{Lu_Duke_University_Xenon_2024,
+author = {Lu, Junlan and Leewiwatwong, Suphachart and Kabir, Sakib and Wang, Ziyi},
+month = jan,
+title = {{“Duke University Xenon Gas Exchange Imaging Pipeline”}},
+url = {https://github.com/TeamXenonDuke/xenon-gas-exchange-consortium},
+version = {4.0},
+year = {2024}
+}
+
