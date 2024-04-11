@@ -1,10 +1,16 @@
 cff-version: 1.2.0
 message: "If you use this software, please cite it as below."
 authors:
-- family-names: Team Xenon
-  given-names: DukeU
+- family-names: Lu
+  given-names: Junlan
+- family-names: Leewiwatwong
+  given-names: Suphachart
+- family-names: Kabir
+  given-names: Sakib
+- family-names: Wang
+  given-names: Ziyi 
   
-title: “Xenon Gas Exchange Imaging Pipeline”  
+title: “Duke University Xenon Gas Exchange Imaging Pipeline”  
 version: 4.0
 date-released: 2024-01-29
 url: "https://github.com/TeamXenonDuke/xenon-gas-exchange-consortium"
