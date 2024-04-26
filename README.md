@@ -228,7 +228,7 @@ Note: If necesary, the details of ANTs Compilation can be seen [here](https://gi
 
 #### 3.1.1 Accepted file inputs
 
-The pipeline accepts Siemens twix (.dat) or ISMRMRD (.h5) files for standard proton UTE, 1-point Dixon, and (optionally) calibration scans. Alternatively, if a subject scan has already been processed through the pipeline and you wish to reprocess the previously constructed images, you can run the pipeline on the subject's .mat file. ISMRMRD files must be named and formatted according to the <sup>129</sup>Xe MRI clinical trials consortium specifications: [https://github.com/Xe-MRI-CTC/xemrd-specification] (https://github.com/Xe-MRI-CTC/xemrd-specification)
+The pipeline accepts Siemens twix (.dat) or ISMRMRD (.h5) files for standard proton UTE, 1-point Dixon, and (optionally) calibration scans. Alternatively, if a subject scan has already been processed through the pipeline and you wish to reprocess the previously constructed images, you can run the pipeline on the subject's .mat file. ISMRMRD files must be named and formatted according to the <sup>129</sup>Xe MRI clinical trials consortium specifications: [https://github.com/Xe-MRI-CTC/xemrd-specification](https://github.com/Xe-MRI-CTC/xemrd-specification)
 
 More information on consortium protocol for the proton UTE, 1-point Dixon, and calibration scans can be found in the following reference:
 >Niedbalski, PJ, Hall, CS, Castro, M, et al. Protocols for multi-site trials using hyperpolarized 129Xe MRI for imaging of ventilation, alveolar-airspace size, and gas exchange: A position paper from the 129Xe MRI clinical trials consortium. Magn Reson Med. 2021; 86: 2966–2986. https://doi.org/10.1002/mrm.28985
