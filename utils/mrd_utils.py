@@ -346,6 +346,15 @@ def get_gx_data(dataset: ismrmrd.hdf5.Dataset) -> Dict[str, Any]:
     for i in range(0, raw_fids_truncated.shape[0]):
         raw_traj[i, :, :] = dataset.read_acquisition(i).traj
 
+    gas_traj = raw_traj[
+            contrast_labels_truncated == constants.ContrastLabels.GAS, :, :
+        ];
+
+    dis_traj = raw_traj[
+            contrast_labels_truncated == constants.ContrastLabels.DISSOLVED, :, :
+        ];
+    
+    all_traj = [gas_traj , dis_traj];
     return {
         constants.IOFields.FIDS: raw_fids_truncated,
         constants.IOFields.FIDS_GAS: raw_fids_truncated[
@@ -354,9 +363,7 @@ def get_gx_data(dataset: ismrmrd.hdf5.Dataset) -> Dict[str, Any]:
         constants.IOFields.FIDS_DIS: raw_fids_truncated[
             contrast_labels_truncated == constants.ContrastLabels.DISSOLVED, :
         ],
-        constants.IOFields.TRAJ: raw_traj[
-            contrast_labels_truncated == constants.ContrastLabels.GAS, :, :
-        ],
+        constants.IOFields.TRAJ: all_traj,
     }
 
 
