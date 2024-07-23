@@ -224,7 +224,9 @@ class Subject(object):
                 n_points=self.data_gas.shape[1],
             )
         else:
-            self.traj_dissolved = self.dict_dis[constants.IOFields.TRAJ]
+            self.traj_gas = self.dict_dis[constants.IOFields.TRAJ][0]
+            self.traj_dissolved = self.dict_dis[constants.IOFields.TRAJ][1]
+
             if (
                 self.dict_dis[constants.IOFields.INSTITUTION]
                 == constants.Institution.CCHMC.value
@@ -232,7 +234,7 @@ class Subject(object):
                 self.traj_scaling_factor = (
                     0.903  # cincinnati requires a unique scaling factor
                 )
-        self.traj_gas = self.traj_dissolved
+        
 
         # truncate gas and dissolved data and trajectories
         self.data_dissolved, self.traj_dissolved = pp.truncate_data_and_traj(
