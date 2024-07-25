@@ -223,6 +223,7 @@ class Subject(object):
                 recon_size=int(self.config.recon.recon_size),
                 n_points=self.data_gas.shape[1],
             )
+            self.traj_gas = self.traj_dissolved
         else:
             self.traj_gas = self.dict_dis[constants.IOFields.TRAJ][0]
             self.traj_dissolved = self.dict_dis[constants.IOFields.TRAJ][1]
