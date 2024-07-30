@@ -216,6 +216,13 @@ class Subject(object):
         self.data_dissolved = self.dict_dis[constants.IOFields.FIDS_DIS]
         self.data_gas = self.dict_dis[constants.IOFields.FIDS_GAS]
 
+        if (
+            self.dict_dis[constants.IOFields.INSTITUTION]
+            == constants.Institution.IOWA.value
+            ):
+                self.data_dissolved =  np.conjugate(self.data_dissolved);
+                self.data_gas = np.conjugate(self.data_gas);
+
         # get or generate trajectories and trajectory scaling factors
         if constants.IOFields.TRAJ not in self.dict_dis.keys():
             self.traj_dissolved = pp.prepare_traj(self.dict_dis, config=self.config)
