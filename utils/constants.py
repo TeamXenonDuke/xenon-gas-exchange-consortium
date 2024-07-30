@@ -183,6 +183,7 @@ class Institution(enum.Enum):
     DUKE = "duke"
     UVA = "uva"
     CCHMC = "cchmc"
+    IOWA = "university of iowa"
 
 
 class SystemVendor(enum.Enum):
@@ -209,6 +210,7 @@ class Orientation(object):
     AXIAL = "axial"
     TRANSVERSE = "transverse"
     CORONAL_CCHMC = "coronal_cchmc"
+    CORONAL_IOWA = "coronal_iowa"
     NONE = "none"
 
 
