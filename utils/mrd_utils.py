@@ -235,6 +235,8 @@ def get_orientation(header: ismrmrd.xsd.ismrmrdschema.ismrmrd.ismrmrdHeader) -> 
         orientation.lower() == constants.Orientation.CORONAL or not orientation
     ):
         return constants.Orientation.CORONAL_CCHMC
+    elif institution == constants.Institution.IOWA.value:
+        return constants.Orientation.CORONAL_IOWA
     else:
         return orientation.lower() if orientation else constants.Orientation.CORONAL
 
