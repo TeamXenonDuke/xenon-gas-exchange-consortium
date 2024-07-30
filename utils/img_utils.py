@@ -81,6 +81,20 @@ def flip_and_rotate_image(
         image = np.rot90(np.rot90(image, 3, axes=(1, 2)), 1, axes=(0, 2))
         image = np.flip(image, axis=2)
         return image
+    elif orientation == constants.Orientation.CORONAL_IOWA:
+
+        def complex_rot_axial_iowa(x):
+            from scipy.ndimage import rotate
+
+            real = rotate(np.real(x), 180, (1, 2))
+            imag = rotate(np.imag(x), 180, (1, 2))
+            return real + 1j * imag
+        def complex_align(x):
+            return np.flip(np.flip(np.flip(np.transpose(x, (2, 1, 0)), 0), 1), 2)
+
+        image = complex_rot_axial_iowa(complex_align(image))
+        image= np.flip(image , axis=0)
+        return image
     elif orientation == constants.Orientation.TRANSVERSE:
         return rotate_axial_to_coronal(flip_image_complex(image))
     elif orientation == constants.Orientation.AXIAL:
