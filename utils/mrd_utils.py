@@ -219,6 +219,7 @@ def get_orientation(header: ismrmrd.xsd.ismrmrdschema.ismrmrd.ismrmrdHeader) -> 
     """
     orientation = ""
     institution = get_institution_name(header)
+    system_vendor = get_system_vendor(header)
 
     try:
         var_names = [
@@ -226,16 +227,25 @@ def get_orientation(header: ismrmrd.xsd.ismrmrdschema.ismrmrd.ismrmrdHeader) -> 
             for i in range(len(header.userParameters.userParameterString))
         ]
         orientation = header.userParameters.userParameterString[
-            var_names.index(constants.IOFields.ORIENTATION)
+            var_names.index(constants.IOFields.SYSTEM_VENDOR)
         ].value
     except:
         logging.info("Unable to find orientation from twix object, returning coronal.")
 
-    if institution == constants.Institution.CCHMC.value and (
+    # if institution == constants.Institution.CCHMC.value and (
+    #     orientation.lower() == constants.Orientation.CORONAL or not orientation
+    # ):
+    #     return constants.Orientation.CORONAL_CCHMC
+    # elif institution == constants.Institution.IOWA.value:
+    #     return constants.Orientation.CORONAL_IOWA
+    # else:
+    #     return orientation.lower() if orientation else constants.Orientation.CORONAL
+
+    if system_vendor == constants.SystemVendor.PHILIPS.value and (
         orientation.lower() == constants.Orientation.CORONAL or not orientation
     ):
         return constants.Orientation.CORONAL_CCHMC
-    elif institution == constants.Institution.IOWA.value:
+    elif system_vendor == constants.SystemVendor.GE.value:
         return constants.Orientation.CORONAL_IOWA
     else:
         return orientation.lower() if orientation else constants.Orientation.CORONAL
