@@ -190,6 +190,8 @@ class SystemVendor(enum.Enum):
     """Scanner system_vendor."""
 
     SIEMENS = "siemens"
+    GE = "GE"
+    PHILIPS = "Philips"
 
 
 class TrajType(object):
