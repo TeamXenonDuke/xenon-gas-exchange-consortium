@@ -438,6 +438,7 @@ def read_dis_mrd(path: str) -> Dict[str, Any]:
         constants.IOFields.RAMP_TIME: mrd_utils.get_ramp_time(header),
         constants.IOFields.REMOVEOS: False,
         constants.IOFields.SCAN_DATE: mrd_utils.get_scan_date(header),
+        constants.IOFields.SYSTEM_VENDOR: mrd_utils.get_system_vendor(header),
         constants.IOFields.SOFTWARE_VERSION: "NA",
         constants.IOFields.TE90: mrd_utils.get_TE90(header),
         constants.IOFields.TR: mrd_utils.get_TR_dissolved(header),
