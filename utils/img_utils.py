@@ -77,11 +77,11 @@ def flip_and_rotate_image(
         image = np.rot90(image, 1, axes=(0, 1))
         image = np.flip(np.flip(image, axis=1), axis=2)
         return image
-    elif orientation == constants.Orientation.CORONAL_CCHMC:
+    elif orientation == constants.Orientation.CORONAL_PHILIPS:
         image = np.rot90(np.rot90(image, 3, axes=(1, 2)), 1, axes=(0, 2))
         image = np.flip(image, axis=2)
         return image
-    elif orientation == constants.Orientation.CORONAL_IOWA:
+    elif orientation == constants.Orientation.CORONAL_GE:
 
         def complex_rot_axial_iowa(x):
             from scipy.ndimage import rotate
