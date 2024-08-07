@@ -302,6 +302,7 @@ class Subject(object):
                 image_size=int(self.config.recon.recon_size),
             )
             orientation = self.dict_ute[constants.IOFields.ORIENTATION]
+            system_vendor = self.dict_ute[constants.IOFields.SYSTEM_VENDOR]
         elif self.config.recon.recon_key == constants.ReconKey.PLUMMER.value:
             raise NotImplementedError("Plummer CS reconstruction not implemented.")
         else:
@@ -313,6 +314,7 @@ class Subject(object):
         self.image_proton = img_utils.flip_and_rotate_image(
             self.image_proton,
             orientation=orientation,
+            system_vendor=system_vendor,
         )
         io_utils.export_nii(np.abs(self.image_proton), "tmp/image_proton.nii")
 
@@ -334,6 +336,7 @@ class Subject(object):
                 image_size=int(self.config.recon.recon_size),
             )
             orientation = self.dict_dis[constants.IOFields.ORIENTATION]
+            system_vendor = self.dict_ute[constants.IOFields.SYSTEM_VENDOR]
         elif self.config.recon.recon_key == constants.ReconKey.PLUMMER.value:
             raise NotImplementedError("Plummer CS reconstruction not implemented.")
         else:
@@ -352,10 +355,12 @@ class Subject(object):
         self.image_gas_highsnr = img_utils.flip_and_rotate_image(
             self.image_gas_highsnr,
             orientation=orientation,
+            system_vendor=system_vendor,
         )
         self.image_gas_highreso = img_utils.flip_and_rotate_image(
             self.image_gas_highreso,
             orientation=orientation,
+            system_vendor=system_vendor,
         )
         io_utils.export_nii(np.abs(self.image_gas_highsnr), "tmp/image_gas_highsnr.nii")
         io_utils.export_nii(
@@ -373,6 +378,7 @@ class Subject(object):
                 image_size=int(self.config.recon.recon_size),
             )
             orientation = self.dict_dis[constants.IOFields.ORIENTATION]
+            system_vendor = self.dict_ute[constants.IOFields.SYSTEM_VENDOR]
         elif self.config.recon.recon_key == constants.ReconKey.PLUMMER.value:
             raise NotImplementedError("Plummer CS reconstruction not implemented.")
         else:
@@ -384,6 +390,7 @@ class Subject(object):
         self.image_dissolved = img_utils.flip_and_rotate_image(
             self.image_dissolved,
             orientation=orientation,
+            system_vendor=system_vendor,
         )
 
     def segmentation(self):

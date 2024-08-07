@@ -211,8 +211,6 @@ class Orientation(object):
     CORONAL = "coronal"
     AXIAL = "axial"
     TRANSVERSE = "transverse"
-    CORONAL_PHILIPS = "coronal_philips"
-    CORONAL_GE = "coronal_ge"
     NONE = "none"
 
 

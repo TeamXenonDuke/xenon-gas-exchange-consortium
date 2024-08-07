@@ -62,7 +62,8 @@ def rotate_axial_to_coronal(image: np.ndarray) -> np.ndarray:
 
 
 def flip_and_rotate_image(
-    image: np.ndarray, orientation: str = constants.Orientation.CORONAL
+    image: np.ndarray, orientation: str = constants.Orientation.CORONAL,
+    system_vendor: str = constants.SystemVendor.SIEMENS
 ) -> np.ndarray:
     """Flip and rotate image based on orientation.
 
@@ -72,40 +73,46 @@ def flip_and_rotate_image(
     Returns:
         Flipped and rotated image.
     """
-    if orientation == constants.Orientation.CORONAL:
-        image = np.rot90(np.rot90(image, 3, axes=(1, 2)), 1, axes=(0, 2))
-        image = np.rot90(image, 1, axes=(0, 1))
-        image = np.flip(np.flip(image, axis=1), axis=2)
-        return image
-    elif orientation == constants.Orientation.CORONAL_PHILIPS:
-        image = np.rot90(np.rot90(image, 3, axes=(1, 2)), 1, axes=(0, 2))
-        image = np.flip(image, axis=2)
-        return image
-    elif orientation == constants.Orientation.CORONAL_GE:
+    if system_vendor == constants.SystemVendor.SIEMENS.value:
+        if orientation == constants.Orientation.CORONAL:
+            image = np.rot90(np.rot90(image, 3, axes=(1, 2)), 1, axes=(0, 2))
+            image = np.rot90(image, 1, axes=(0, 1))
+            image = np.flip(np.flip(image, axis=1), axis=2)
+            return image
+        elif orientation == constants.Orientation.TRANSVERSE:
+            return rotate_axial_to_coronal(flip_image_complex(image))
+        elif orientation == constants.Orientation.AXIAL:
+            image = np.rot90(np.rot90(image, 1, axes=(1, 2)), 3, axes=(0, 2))
+            image = np.rot90(image, 1, axes=(0, 1))
+            image = np.flip(image, axis=2)
+            return image
+        elif orientation == constants.Orientation.NONE:
+            return image
+    elif system_vendor == constants.SystemVendor.PHILIPS.value:
+        if orientation == constants.Orientation.CORONAL:
+            image = np.rot90(np.rot90(image, 3, axes=(1, 2)), 1, axes=(0, 2))
+            image = np.flip(image, axis=2)
+            return image
+        else:
+            raise ValueError("Invalid orientation: {}.".format(orientation))
+    elif system_vendor == constants.SystemVendor.GE.value:
+        if orientation == constants.Orientation.CORONAL:
+            def complex_rot_axial_iowa(x):
+                from scipy.ndimage import rotate
 
-        def complex_rot_axial_iowa(x):
-            from scipy.ndimage import rotate
+                real = rotate(np.real(x), 180, (1, 2))
+                imag = rotate(np.imag(x), 180, (1, 2))
+                return real + 1j * imag
+            def complex_align(x):
+                return np.flip(np.flip(np.flip(np.transpose(x, (2, 1, 0)), 0), 1), 2)
 
-            real = rotate(np.real(x), 180, (1, 2))
-            imag = rotate(np.imag(x), 180, (1, 2))
-            return real + 1j * imag
-        def complex_align(x):
-            return np.flip(np.flip(np.flip(np.transpose(x, (2, 1, 0)), 0), 1), 2)
-
-        image = complex_rot_axial_iowa(complex_align(image))
-        image= np.flip(image , axis=0)
-        return image
-    elif orientation == constants.Orientation.TRANSVERSE:
-        return rotate_axial_to_coronal(flip_image_complex(image))
-    elif orientation == constants.Orientation.AXIAL:
-        image = np.rot90(np.rot90(image, 1, axes=(1, 2)), 3, axes=(0, 2))
-        image = np.rot90(image, 1, axes=(0, 1))
-        image = np.flip(image, axis=2)
-        return image
-    elif orientation == constants.Orientation.NONE:
-        return image
+            image = complex_rot_axial_iowa(complex_align(image))
+            image= np.flip(image, axis=0)
+            return image
+        else:
+            raise ValueError("Invalid orientation: {}.".format(orientation))
     else:
-        raise ValueError("Invalid orientation: {}.".format(orientation))
+        raise ValueError("Invalid system_vendor: {}.".format(system_vendor))
 
 
 def standardize_image(image: np.ndarray) -> np.ndarray:
