@@ -183,12 +183,15 @@ class Institution(enum.Enum):
     DUKE = "duke"
     UVA = "uva"
     CCHMC = "cchmc"
+    IOWA = "university of iowa"
 
 
 class SystemVendor(enum.Enum):
     """Scanner system_vendor."""
 
     SIEMENS = "siemens"
+    GE = "GE"
+    PHILIPS = "Philips"
 
 
 class TrajType(object):
@@ -208,7 +211,6 @@ class Orientation(object):
     CORONAL = "coronal"
     AXIAL = "axial"
     TRANSVERSE = "transverse"
-    CORONAL_CCHMC = "coronal_cchmc"
     NONE = "none"
 
 

@@ -218,7 +218,7 @@ def get_orientation(header: ismrmrd.xsd.ismrmrdschema.ismrmrd.ismrmrdHeader) -> 
             Returns coronal if not found.
     """
     orientation = ""
-    institution = get_institution_name(header)
+    system_vendor = get_system_vendor(header)
 
     try:
         var_names = [
@@ -231,12 +231,15 @@ def get_orientation(header: ismrmrd.xsd.ismrmrdschema.ismrmrd.ismrmrdHeader) -> 
     except:
         logging.info("Unable to find orientation from twix object, returning coronal.")
 
-    if institution == constants.Institution.CCHMC.value and (
-        orientation.lower() == constants.Orientation.CORONAL or not orientation
-    ):
-        return constants.Orientation.CORONAL_CCHMC
+    if system_vendor == constants.SystemVendor.PHILIPS.value:
+        if orientation.lower() == constants.Orientation.CORONAL or not orientation:
+            return constants.Orientation.CORONAL
+    elif system_vendor == constants.SystemVendor.GE.value:
+        if orientation.lower() == constants.Orientation.CORONAL or not orientation:
+            return constants.Orientation.CORONAL
     else:
-        return orientation.lower() if orientation else constants.Orientation.CORONAL
+        if orientation.lower() == constants.Orientation.CORONAL or not orientation:
+            return constants.Orientation.CORONAL
 
 
 def get_protocol_name(header: ismrmrd.xsd.ismrmrdschema.ismrmrd.ismrmrdHeader) -> str:
