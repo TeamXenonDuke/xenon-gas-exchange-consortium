@@ -336,7 +336,7 @@ class Subject(object):
                 image_size=int(self.config.recon.recon_size),
             )
             orientation = self.dict_dis[constants.IOFields.ORIENTATION]
-            system_vendor = self.dict_ute[constants.IOFields.SYSTEM_VENDOR]
+            system_vendor = self.dict_dis[constants.IOFields.SYSTEM_VENDOR]
         elif self.config.recon.recon_key == constants.ReconKey.PLUMMER.value:
             raise NotImplementedError("Plummer CS reconstruction not implemented.")
         else:
@@ -378,7 +378,7 @@ class Subject(object):
                 image_size=int(self.config.recon.recon_size),
             )
             orientation = self.dict_dis[constants.IOFields.ORIENTATION]
-            system_vendor = self.dict_ute[constants.IOFields.SYSTEM_VENDOR]
+            system_vendor = self.dict_dis[constants.IOFields.SYSTEM_VENDOR]
         elif self.config.recon.recon_key == constants.ReconKey.PLUMMER.value:
             raise NotImplementedError("Plummer CS reconstruction not implemented.")
         else:
