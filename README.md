@@ -307,7 +307,7 @@ Note: The following steps are for correcting auto-generated gas image masks.
 
 5. Correct the mask with the Paintbrush and save as `mask_reg_corrected.nii` when complete.
 
-6. In your config file, set `segmenation_key` to MANUAL_VENT and `manual_seg_filepath` to the corrected mask filepath.
+6. In your config file, set `segmentation_key` to MANUAL_VENT and `manual_seg_filepath` to the corrected mask filepath.
 
 7. Reprocess subject as specified in 3.1.3.
 
