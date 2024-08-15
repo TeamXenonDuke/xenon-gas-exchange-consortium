@@ -75,6 +75,7 @@ class IOFields(object):
     TR = "tr"
     TR_DIS = "tr_dis"
     TRAJ = "traj"
+    SYSTEM_VENDOR = "system_vendor"
 
 
 class CNNPaths(object):
@@ -189,7 +190,7 @@ class Institution(enum.Enum):
 class SystemVendor(enum.Enum):
     """Scanner system_vendor."""
 
-    SIEMENS = "siemens"
+    SIEMENS = "Siemens"
     GE = "GE"
     PHILIPS = "Philips"
 
