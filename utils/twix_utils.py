@@ -362,6 +362,22 @@ def get_institution_name(twix_obj: mapvbvd._attrdict.AttrDict) -> str:
         return "unknown"
 
 
+def get_system_vendor(
+    twix_obj: mapvbvd._attrdict.AttrDict
+) -> str:
+    """Get system vendor from the Twix header.
+
+    Args
+        header (ismrmrd.xsd.ismrmrdschema.ismrmrd.ismrmrdHeader): MRD header
+    Returns:
+        system vendor (str)
+    """
+    try :
+        return str(twix_obj.hdr.Dicom.Manufacturer)
+    except:
+        return "Siemens"
+
+
 def get_dyn_fids(
     twix_obj: mapvbvd._attrdict.AttrDict, n_skip_end: int = 20
 ) -> np.ndarray:
