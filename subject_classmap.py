@@ -112,7 +112,8 @@ class Subject(object):
         """
 
         self.dict_dis = io_utils.read_dis_twix(
-            io_utils.get_dis_twix_files(str(self.config.data_dir))
+            io_utils.get_dis_twix_files(str(self.config.data_dir)),
+            config = self.config
         )
         try:
             self.dict_dyn = io_utils.read_dyn_twix(
