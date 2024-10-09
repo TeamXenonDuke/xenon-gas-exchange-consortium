@@ -16,6 +16,8 @@ import numpy as np
 import pandas as pd
 import pydicom
 import scipy.io as sio
+import logging
+import ml_collections
 from ml_collections import config_dict
 
 from utils import constants, img_utils, mrd_utils, twix_utils
@@ -232,7 +234,7 @@ def read_dyn_twix(path: str) -> Dict[str, Any]:
     }
 
 
-def read_dis_twix(path: str) -> Dict[str, Any]:
+def read_dis_twix(path: str, config: Optional[ml_collections.ConfigDict] = None) -> Dict[str, Any]:
     """Read 1-point dixon disssolved phase imaging twix file.
 
     Args:
@@ -270,6 +272,9 @@ def read_dis_twix(path: str) -> Dict[str, Any]:
     data_dict = twix_utils.get_gx_data(twix_obj=twix_obj)
     filename = os.path.basename(path)
 
+    if config or config.recon.del_x is constants.NONE:  # type: ignore
+        logging.error("Gradient delay is not properly set in the config file")
+
     return {
         constants.IOFields.SAMPLE_TIME: twix_utils.get_sample_time(twix_obj),
         constants.IOFields.FA_DIS: twix_utils.get_flipangle_dissolved(twix_obj),
@@ -283,9 +288,9 @@ def read_dis_twix(path: str) -> Dict[str, Any]:
         constants.IOFields.XE_DISSOLVED_OFFSET_FREQUENCY: twix_utils.get_excitation_freq(
             twix_obj
         ),
-        constants.IOFields.GRAD_DELAY_X: data_dict[constants.IOFields.GRAD_DELAY_X],
-        constants.IOFields.GRAD_DELAY_Y: data_dict[constants.IOFields.GRAD_DELAY_Y],
-        constants.IOFields.GRAD_DELAY_Z: data_dict[constants.IOFields.GRAD_DELAY_Z],
+        constants.IOFields.GRAD_DELAY_X: config.recon.del_x,
+        constants.IOFields.GRAD_DELAY_Y: config.recon.del_y,
+        constants.IOFields.GRAD_DELAY_Z: config.recon.del_z,
         constants.IOFields.INSTITUTION: twix_utils.get_institution_name(twix_obj),
         constants.IOFields.SYSTEM_VENDOR: twix_utils.get_system_vendor(twix_obj),
         constants.IOFields.N_FRAMES: data_dict[constants.IOFields.N_FRAMES],
