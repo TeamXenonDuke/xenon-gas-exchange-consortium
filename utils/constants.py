@@ -451,7 +451,7 @@ class ReferenceDistribution(object):
     REFERENCE_208_PPM = {
         "title": "REFERENCE_208_PPM",
         "threshold_vent": [0.3908, 0.5741, 0.7180, 0.8413, 0.9511],
-        "threshold_rbc": [0.001007, 0.002723, 0.00512, 0.00814, 0.011743],
+        "threshold_rbc": [0.0977, 0.2641, 0.4967, 0.7896, 1.1391],
         "threshold_membrane": [0.004170, 0.006461, 0.009249, 0.012532, 0.016309, 0.020580, 0.025344],
         "reference_fit_vent": (0.04074, 0.707, 0.140),
         "reference_fit_rbc": (0.06106, 0.00527, 0.00268),
