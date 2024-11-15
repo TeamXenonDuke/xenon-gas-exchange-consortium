@@ -7,6 +7,7 @@ from typing import Any, Dict, Optional, Tuple
 
 import ml_collections
 import numpy as np
+import logging
 
 from utils import constants, recon_utils, signal_utils, spect_utils, traj_utils
 
@@ -49,6 +50,8 @@ def prepare_traj(
         data_dict[constants.IOFields.GRAD_DELAY_X] = config.recon.del_x  # type: ignore
         data_dict[constants.IOFields.GRAD_DELAY_Y] = config.recon.del_y  # type: ignore
         data_dict[constants.IOFields.GRAD_DELAY_Z] = config.recon.del_z  # type: ignore
+    else:
+        logging.error("Gradient delay is not properly set in the config file")
 
     traj_x, traj_y, traj_z = traj_utils.generate_trajectory(
         sample_time=1e6 * data_dict[constants.IOFields.SAMPLE_TIME],
