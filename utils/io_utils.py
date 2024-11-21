@@ -144,7 +144,9 @@ def get_dyn_mrd_files(path: str) -> str:
     try:
         return (
             glob.glob(os.path.join(path, "**Calibration***.h5"))
-            + glob.glob(os.path.join(path, "**calibration***.h5"))
+            + glob.glob(os.path.join(path, "**calibration***.h5")) 
+            + glob.glob(os.path.join(path, "**Calibration***.mrd"))
+            + glob.glob(os.path.join(path, "**calibration***.mrd"))
         )[0]
     except:
         raise ValueError("Can't find MRD file in path.")
@@ -176,7 +178,10 @@ def get_ute_mrd_files(path: str) -> str:
         str file path of MRD file
     """
     try:
-        return (glob.glob(os.path.join(path, "**proton***.h5")))[0]
+        return (
+            glob.glob(os.path.join(path, "**proton***.h5"))
+            + glob.glob(os.path.join(path, "**proton***.mrd"))
+        )[0]
     except:
         raise ValueError("Can't find MRD file in path.")
 
