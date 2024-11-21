@@ -456,7 +456,6 @@ def get_gx_data(twix_obj: mapvbvd._attrdict.AttrDict) -> Dict[str, Any]:
             n_frames = data_dis.shape[0]
             n_skip_start = 0
             n_skip_end = 0
-            grad_delay_x, grad_delay_y, grad_delay_z = -5, -5, -5
         elif raw_fids.shape[0] == 4230:
             logging.info("Reading in fast dixon data on Siemens Prisma.")
             data_gas = raw_fids[:-30][0::2, :]
@@ -464,7 +463,6 @@ def get_gx_data(twix_obj: mapvbvd._attrdict.AttrDict) -> Dict[str, Any]:
             n_frames = data_dis.shape[0]
             n_skip_start = 0
             n_skip_end = 0
-            grad_delay_x, grad_delay_y, grad_delay_z = -5, -5, -5
         elif raw_fids.shape[0] // 100 == 42:
             logging.info("Reading in fast dixon data on Siemens Prisma.")
             num_spectra = raw_fids.shape[0] % 100
@@ -473,7 +471,6 @@ def get_gx_data(twix_obj: mapvbvd._attrdict.AttrDict) -> Dict[str, Any]:
             n_frames = data_dis.shape[0]
             n_skip_start = 0
             n_skip_end = 0
-            grad_delay_x, grad_delay_y, grad_delay_z = -5, -5, -5
         else:
             raise ValueError("Cannot get data from 'fast' dixon twix object.")
     elif flip_angle_dissolved == 15:
@@ -484,7 +481,6 @@ def get_gx_data(twix_obj: mapvbvd._attrdict.AttrDict) -> Dict[str, Any]:
             n_frames = data_dis.shape[0]
             n_skip_start = 0
             n_skip_end = 0
-            grad_delay_x, grad_delay_y, grad_delay_z = -5, -5, -5
         elif raw_fids.shape[0] // 100 == 24:
             logging.info("Reading in medium dixon data on Siemens Prisma.")
             num_spectra = raw_fids.shape[0] % 100
@@ -493,7 +489,6 @@ def get_gx_data(twix_obj: mapvbvd._attrdict.AttrDict) -> Dict[str, Any]:
             n_frames = data_dis.shape[0]
             n_skip_start = 0
             n_skip_end = 0
-            grad_delay_x, grad_delay_y, grad_delay_z = -5, -5, -5
         else:
             raise ValueError("Cannot get data from 'medium' dixon twix object.")
     elif flip_angle_dissolved == 20:
@@ -504,7 +499,6 @@ def get_gx_data(twix_obj: mapvbvd._attrdict.AttrDict) -> Dict[str, Any]:
             n_frames = data_dis.shape[0]
             n_skip_start = 0
             n_skip_end = 0
-            grad_delay_x, grad_delay_y, grad_delay_z = -5, -5, -5
         elif raw_fids.shape[0] == 2002:
             if scan_datetime > datetime.datetime(2017, 12, 31):
                 logging.info("Reading in 'normal' dixon data on Siemens Trio.")
@@ -513,7 +507,6 @@ def get_gx_data(twix_obj: mapvbvd._attrdict.AttrDict) -> Dict[str, Any]:
                 n_frames = 1001
                 n_skip_start = 1
                 n_skip_end = 1
-                grad_delay_x, grad_delay_y, grad_delay_z = 0, -4, -3
             else:
                 logging.info("Reading in 'normal' dixon data on Siemens Trio.")
                 data_gas = raw_fids[:-2][2::2, :]
@@ -521,7 +514,6 @@ def get_gx_data(twix_obj: mapvbvd._attrdict.AttrDict) -> Dict[str, Any]:
                 n_frames = 1001
                 n_skip_start = 1
                 n_skip_end = 1
-                grad_delay_x, grad_delay_y, grad_delay_z = 24, 22, 22
         elif raw_fids.shape[0] == 2032:
             logging.info("Reading in normal dixon on Siemens Trio w/ bonus spectra.")
             data_gas = raw_fids[:-32][2::2, :]
@@ -529,7 +521,6 @@ def get_gx_data(twix_obj: mapvbvd._attrdict.AttrDict) -> Dict[str, Any]:
             n_frames = 1016
             n_skip_start = 1
             n_skip_end = 16
-            grad_delay_x, grad_delay_y, grad_delay_z = 0, -4, -3
         elif raw_fids.shape[0] == 2000:
             logging.info("Reading in normal dixon on Siemens Trio 2007 or 2008.")
             data_gas = raw_fids[0::2, :] * np.exp(1j * np.pi / 2)
@@ -537,7 +528,6 @@ def get_gx_data(twix_obj: mapvbvd._attrdict.AttrDict) -> Dict[str, Any]:
             n_frames = 1000
             n_skip_start = 0
             n_skip_end = 0
-            grad_delay_x, grad_delay_y, grad_delay_z = 0, -4, -3
         elif raw_fids.shape[0] // 100 == 20:
             logging.info("Reading in normal dixon on Siemens Trio w/ bonus spectra.")
             num_spectra = raw_fids.shape[0] % 100
@@ -546,7 +536,6 @@ def get_gx_data(twix_obj: mapvbvd._attrdict.AttrDict) -> Dict[str, Any]:
             n_frames = data_dis.shape[0]
             n_skip_start = 0
             n_skip_end = 0
-            grad_delay_x, grad_delay_y, grad_delay_z = -5, -5, -5
         else:
             raise ValueError("Cannot get data from normal dixon twix object.")
     else:
@@ -558,9 +547,6 @@ def get_gx_data(twix_obj: mapvbvd._attrdict.AttrDict) -> Dict[str, Any]:
         constants.IOFields.N_FRAMES: n_frames,
         constants.IOFields.N_SKIP_START: n_skip_start,
         constants.IOFields.N_SKIP_END: n_skip_end,
-        constants.IOFields.GRAD_DELAY_X: grad_delay_x,
-        constants.IOFields.GRAD_DELAY_Y: grad_delay_y,
-        constants.IOFields.GRAD_DELAY_Z: grad_delay_z,
         constants.IOFields.FIDS: raw_fids,
     }
 
