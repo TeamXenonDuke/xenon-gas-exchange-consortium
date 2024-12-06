@@ -451,14 +451,14 @@ class Subject(object):
             logging.info("Run registration algorithm, vent is fixed, mask is moving")
             self.mask, self.image_proton_reg = np.abs(
                 registration.register_ants(
-                    abs(self.image_gas_highreso), self.mask, self.image_proton
+                    abs(self.image_gas_highreso), self.mask.astype(np.int8), self.image_proton
                 )
             )
         elif self.config.registration_key == constants.RegistrationKey.PROTON2GAS.value:
             logging.info("Run registration algorithm, vent is fixed, proton is moving")
             self.image_proton_reg, mask = np.abs(
                 registration.register_ants(
-                    abs(self.image_gas_highreso), self.image_proton, self.mask
+                    abs(self.image_gas_highreso), self.image_proton, self.mask.astype(np.int8)
                 )
             )
             if (
