@@ -221,7 +221,7 @@ class Subject(object):
         self.data_gas = self.dict_dis[constants.IOFields.FIDS_GAS]
 
         if (
-            self.dict_ute[constants.IOFields.SYSTEM_VENDOR]
+            self.dict_dis[constants.IOFields.SYSTEM_VENDOR]
             == constants.SystemVendor.GE.value
             ):
                 self.data_dissolved =  np.conjugate(self.data_dissolved);
