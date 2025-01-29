@@ -1054,9 +1054,10 @@ class Subject(object):
             "tmp/proton_reg.nii",
             "tmp/rbc2gas_rgb.nii",
         )
-
         # move files
-        io_utils.move_files(output_files, self.config.data_dir)
+        subfolder = os.path.join(self.config.data_dir, "gx")
+        os.makedirs(subfolder, exist_ok=True)
+        io_utils.move_files(output_files, subfolder)
 
 
 
