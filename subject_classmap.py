@@ -286,14 +286,18 @@ class Subject(object):
             # get proton data
             self.data_ute = self.dict_ute[constants.IOFields.FIDS]
 
-            # remove noisy FIDs
-            if self.config.recon.remove_noisy_projections:
-                self.data_ute, self.traj_ute = pp.remove_noisy_projections(
-                    self.data_ute, self.traj_ute
-                )
+            # # remove noisy FIDs
+            # if self.config.recon.remove_noisy_projections:
+            #     self.data_ute, self.traj_ute = pp.remove_noisy_projections(
+            #         self.data_ute, self.traj_ute
+            #     )
 
             # rescale trajectories
-            self.traj_ute *= self.traj_scaling_factor
+            # self.traj_ute *= self.traj_scaling_factor
+            self.traj_ute = self.traj_ute/0.5*(np.max(self.traj_ute))
+            # cut the proton/traj to 128 instead of 512
+            self.data_ute = self.data_ute[:,:128]
+            self.traj_ute = self.traj_ute[:,:128,:]
 
         
         # Choose appropriate reference distribution
@@ -1054,6 +1058,7 @@ class Subject(object):
             "tmp/proton_reg.nii",
             "tmp/rbc2gas_rgb.nii",
         )
+
         # move files
         subfolder = os.path.join(self.config.data_dir, "gx")
         os.makedirs(subfolder, exist_ok=True)
