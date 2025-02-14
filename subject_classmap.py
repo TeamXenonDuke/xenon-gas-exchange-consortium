@@ -294,7 +294,7 @@ class Subject(object):
 
             # rescale trajectories
             # self.traj_ute *= self.traj_scaling_factor
-            self.traj_ute = self.traj_ute/0.5*(np.max(self.traj_ute))
+            self.traj_ute = self.traj_ute/np.max(self.traj_ute)
             # cut the proton/traj to 128 instead of 512
             self.data_ute = self.data_ute[:,:128]
             self.traj_ute = self.traj_ute[:,:128,:]
