@@ -542,7 +542,14 @@ def export_nii(image: np.ndarray, path: str, fov: Optional[float] = None):
             fov / np.shape(image)[0] / 10,
         ]
     nib.save(nii_imge, path)
+import matplotlib.pyplot as plt
 
+def save_debug_image(image, filename, cmap="gray"):
+    """Save a 2D slice of a 3D or 4D image for debugging."""
+    plt.imshow(image, cmap=cmap)
+    plt.axis("off")
+    plt.savefig(filename, bbox_inches="tight", pad_inches=0)
+    plt.close()
 
 def export_nii_4d(image, path, fov=None):
     """Export 4d image image as nifti file.
@@ -552,12 +559,24 @@ def export_nii_4d(image, path, fov=None):
         path: str file path of nifti file
         fov: float field of view in cm
     """
-    color = (np.copy(image) * 255).astype("uint8")  # need uint8 to save to RGB
+    # color = (np.copy(image) * 255).astype("uint8")  # need uint8 to save to RGB
+    color = np.copy(image)
+
+    # Normalize only if image is not in the expected range
+    if color.max() > 1:
+        color = (color / color.max()) * 255  # Normalize to [0, 255] only if needed
+
+    color = color.astype("uint8")
+
+    save_debug_image(color[:, :, color.shape[2] // 2, 0], "/Users/hong/Pipeline/patients/009-037/noair/debug_color_mid_slice.png")
+
     # some fancy and tricky re-arrange
     color = np.transpose(color, [2, 3, 0, 1])
     cline = np.reshape(color, (1, np.size(color)))
     color = np.reshape(cline, np.shape(image), order="A")
     color = np.transpose(color, [2, 1, 0, 3])
+    save_debug_image(color[:, :, color.shape[2] // 2, 0], "/Users/hong/Pipeline/patients/009-037/noair/debug_color_mid_slice_after_transpose.png")
+
     # stake the RGB channels
     shape_3d = image.shape[0:3]
     rgb_dtype = np.dtype([("R", "u1"), ("G", "u1"), ("B", "u1")])
