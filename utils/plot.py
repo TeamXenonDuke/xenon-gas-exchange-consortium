@@ -96,11 +96,6 @@ def get_biggest_island_indices(arr: np.ndarray) -> Tuple[int, int]:
 
     return index_start, index_end
 
-def save_debug_image(image, filename, cmap="gray"):
-    plt.imshow(image, cmap=cmap)
-    plt.axis("off")
-    plt.savefig(filename, bbox_inches="tight", pad_inches=0)
-    plt.close()
 
 def map_and_overlay_to_rgb(
     image: np.ndarray, image_background: np.ndarray, cmap: Dict[int, np.ndarray]
@@ -120,7 +115,6 @@ def map_and_overlay_to_rgb(
         image_out[:, :, i, :] = _merge_rgb_and_gray(
             image_background[:, :, i], image_rgb[:, :, i, :]
         )
-
     return image_out
 
 
