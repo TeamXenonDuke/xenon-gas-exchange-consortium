@@ -114,16 +114,12 @@ def map_and_overlay_to_rgb(
     Returns:
         RGB image of shape (x, y, z, 3)
     """
-    # save_debug_image(image[:,:,65], "/Users/hong/Pipeline/patients/009-037/noair/input_image_slice65.png")
-    # save_debug_image(image_background[:,:,65], "/Users/hong/Pipeline/patients/009-037/noair/background_slice65.png")
     image_rgb = map_grey_to_rgb(image, cmap)
     image_out = np.zeros((image.shape[0], image.shape[1], image.shape[2], 3))
     for i in range(0, image.shape[2]):
         image_out[:, :, i, :] = _merge_rgb_and_gray(
             image_background[:, :, i], image_rgb[:, :, i, :]
         )
-    # save_debug_image(image_rgb[:,:,65], "/Users/hong/Pipeline/patients/009-037/noair/rgb_slice65.png")
-    # save_debug_image(image_out[:,:,65,:], "/Users/hong/Pipeline/patients/009-037/noair/output_slice65.png")
 
     return image_out
 
