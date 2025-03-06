@@ -552,7 +552,12 @@ def export_nii_4d(image, path, fov=None):
         path: str file path of nifti file
         fov: float field of view in cm
     """
-    color = (np.copy(image) * 255).astype("uint8")  # need uint8 to save to RGB
+    color = np.copy(image)
+    # Normalize only if image is not in the expected range
+    if color.max() > 1:
+        color = (color / color.max()) * 255  # Normalize to [0, 255] only if needed
+    color = color.astype("uint8")
+
     # some fancy and tricky re-arrange
     color = np.transpose(color, [2, 3, 0, 1])
     cline = np.reshape(color, (1, np.size(color)))
