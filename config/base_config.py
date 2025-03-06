@@ -86,6 +86,9 @@ class Recon(object):
         self.del_y = "None"
         self.del_z = "None"
 
+        # Scan type
+        self.scan_type = constants.ScanType.NORMALDIXON.value
+
         # Reconstruction and matrix sizes
         self.recon_size = 64
         self.matrix_size = 128
@@ -93,7 +96,6 @@ class Recon(object):
         # Additional options
         self.recon_proton = True
         self.recon_key = constants.ReconKey.ROBERTSON.value
-        self.scan_type = constants.ScanType.NORMALDIXON.value
         self.kernel_sharpness_lr = 0.14
         self.kernel_sharpness_hr = 0.32
         self.n_skip_start = config_utils.get_n_skip_start(self.scan_type)

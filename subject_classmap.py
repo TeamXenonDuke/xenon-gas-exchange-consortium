@@ -112,8 +112,7 @@ class Subject(object):
         """
 
         self.dict_dis = io_utils.read_dis_twix(
-            io_utils.get_dis_twix_files(str(self.config.data_dir)),
-            config = self.config
+            io_utils.get_dis_twix_files(str(self.config.data_dir)), config=self.config
         )
         try:
             self.dict_dyn = io_utils.read_dyn_twix(
@@ -133,8 +132,8 @@ class Subject(object):
         data.
         """
         self.dict_dis = io_utils.read_dis_mrd(
-            io_utils.get_dis_mrd_files(str(self.config.data_dir)), 
-            self.config.multi_echo
+            io_utils.get_dis_mrd_files(str(self.config.data_dir)),
+            self.config.multi_echo,
         )
         try:
             self.dict_dyn = io_utils.read_dyn_mrd(
@@ -223,9 +222,9 @@ class Subject(object):
         if (
             self.dict_dis[constants.IOFields.INSTITUTION]
             == constants.Institution.IOWA.value
-            ):
-                self.data_dissolved =  np.conjugate(self.data_dissolved);
-                self.data_gas = np.conjugate(self.data_gas);
+        ):
+            self.data_dissolved = np.conjugate(self.data_dissolved)
+            self.data_gas = np.conjugate(self.data_gas)
 
         # get or generate trajectories and trajectory scaling factors
         if constants.IOFields.TRAJ not in self.dict_dis.keys():
@@ -246,7 +245,6 @@ class Subject(object):
                 self.traj_scaling_factor = (
                     0.903  # cincinnati requires a unique scaling factor
                 )
-        
 
         # truncate gas and dissolved data and trajectories
         self.data_dissolved, self.traj_dissolved = pp.truncate_data_and_traj(
@@ -295,30 +293,34 @@ class Subject(object):
             # rescale trajectories
             self.traj_ute *= self.traj_scaling_factor
 
-        
         # Choose appropriate reference distribution
         self.reference_data_key = self.config.reference_data_key
 
         if self.reference_data_key == constants.ReferenceDataKey.DUKE_REFERENCE.value:
-            # Choose between 208 ppmm and 218 ppm. 
-            # Default to 218 if other or no value for excitation found. 
-            if 216 <= self.dict_dis[
-                    constants.IOFields.XE_DISSOLVED_OFFSET_FREQUENCY
-                ] <= 220:
+            # Choose between 208 ppmm and 218 ppm.
+            # Default to 218 if other or no value for excitation found.
+            if (
+                216
+                <= self.dict_dis[constants.IOFields.XE_DISSOLVED_OFFSET_FREQUENCY]
+                <= 220
+            ):
                 self.reference_data = constants.ReferenceDistribution.REFERENCE_218_PPM
 
-            elif 206 <= self.dict_dis[
-                    constants.IOFields.XE_DISSOLVED_OFFSET_FREQUENCY
-                ] <= 210:    
+            elif (
+                206
+                <= self.dict_dis[constants.IOFields.XE_DISSOLVED_OFFSET_FREQUENCY]
+                <= 210
+            ):
                 self.reference_data = constants.ReferenceDistribution.REFERENCE_208_PPM
 
-            else: 
+            else:
                 self.reference_data = constants.ReferenceDistribution.REFERENCE_218_PPM
                 logging.info("Warning: Unrecognized excitation frequency")
 
-        elif self.reference_data_key == constants.ReferenceDataKey.MANUAL_REFERENCE.value:
+        elif (
+            self.reference_data_key == constants.ReferenceDataKey.MANUAL_REFERENCE.value
+        ):
             self.reference_data = constants.ReferenceDistribution.REFERENCE_MANUAL
-            
 
     def reconstruction_ute(self):
         """Reconstruct the UTE image."""
@@ -506,7 +508,7 @@ class Subject(object):
         self.image_gas_binned = binning.linear_bin(
             image=img_utils.normalize(self.image_gas_cor, self.mask),
             mask=self.mask,
-            thresholds=self.reference_data['threshold_vent'],
+            thresholds=self.reference_data["threshold_vent"],
         )
         self.mask_vent = np.logical_and(self.image_gas_binned > 1, self.mask)
 
@@ -683,8 +685,8 @@ class Subject(object):
                 self.image_membrane2gas,
                 self.image_rbc2gas,
                 self.mask_vent,
-                self.reference_data['reference_fit_membrane'][1],
-                self.reference_data['reference_fit_rbc'][1],
+                self.reference_data["reference_fit_membrane"][1],
+                self.reference_data["reference_fit_rbc"][1],
             ),
             constants.StatsIOFields.DLCO_EST: metrics.dlco(
                 self.image_gas_binned,
@@ -693,8 +695,8 @@ class Subject(object):
                 self.mask,
                 self.mask_vent,
                 self.dict_dis[constants.IOFields.FOV],
-                self.reference_data['reference_fit_membrane'][1],
-                self.reference_data['reference_fit_rbc'][1],
+                self.reference_data["reference_fit_membrane"][1],
+                self.reference_data["reference_fit_rbc"][1],
             ),
         }
         return self.dict_stats
@@ -715,7 +717,7 @@ class Subject(object):
                 constants.IOFields.SOFTWARE_VERSION
             ],
             constants.IOFields.GIT_BRANCH: report.get_git_branch(),
-            constants.IOFields.REFERENCE_DATA_KEY: self.reference_data['title'],
+            constants.IOFields.REFERENCE_DATA_KEY: self.reference_data["title"],
             constants.IOFields.BANDWIDTH: self.dict_dis[constants.IOFields.BANDWIDTH],
             constants.IOFields.SAMPLE_TIME: (
                 1e6 * self.dict_dis[constants.IOFields.SAMPLE_TIME]
@@ -784,8 +786,8 @@ class Subject(object):
 
     def generate_figures(self):
         """Export image figures."""
-        #Issues with index_start, index_skip, index_end; all equal 0
-        #everything fine up to this point as far as I can tell
+        # Issues with index_start, index_skip, index_end; all equal 0
+        # everything fine up to this point as far as I can tell
         index_start, index_skip = plot.get_plot_indices(self.mask)
         proton_reg = img_utils.normalize(
             np.abs(self.image_proton),
@@ -867,7 +869,7 @@ class Subject(object):
             xlim=constants.VENTHISTOGRAMFields.XLIM,
             ylim=constants.VENTHISTOGRAMFields.YLIM,
             num_bins=constants.VENTHISTOGRAMFields.NUMBINS,
-            refer_fit=self.reference_data['reference_fit_vent'],
+            refer_fit=self.reference_data["reference_fit_vent"],
             xticks=constants.VENTHISTOGRAMFields.XTICKS,
             yticks=constants.VENTHISTOGRAMFields.YTICKS,
             xticklabels=constants.VENTHISTOGRAMFields.XTICKLABELS,
@@ -883,7 +885,7 @@ class Subject(object):
             xlim=constants.RBCHISTOGRAMFields.XLIM,
             ylim=constants.RBCHISTOGRAMFields.YLIM,
             num_bins=constants.RBCHISTOGRAMFields.NUMBINS,
-            refer_fit=self.reference_data['reference_fit_rbc'],
+            refer_fit=self.reference_data["reference_fit_rbc"],
             xticks=constants.RBCHISTOGRAMFields.XTICKS,
             yticks=constants.RBCHISTOGRAMFields.YTICKS,
             xticklabels=constants.RBCHISTOGRAMFields.XTICKLABELS,
@@ -899,7 +901,7 @@ class Subject(object):
             xlim=constants.MEMBRANEHISTOGRAMFields.XLIM,
             ylim=constants.MEMBRANEHISTOGRAMFields.YLIM,
             num_bins=constants.MEMBRANEHISTOGRAMFields.NUMBINS,
-            refer_fit=self.reference_data['reference_fit_membrane'],
+            refer_fit=self.reference_data["reference_fit_membrane"],
             xticks=constants.MEMBRANEHISTOGRAMFields.XTICKS,
             yticks=constants.MEMBRANEHISTOGRAMFields.YTICKS,
             xticklabels=constants.MEMBRANEHISTOGRAMFields.XTICKLABELS,
@@ -916,15 +918,15 @@ class Subject(object):
         ]
         report.intro(self.dict_info, path=pdf_list[0])
         report.clinical(
-            {**self.dict_stats, **self.reference_data['reference_stats']},
+            {**self.dict_stats, **self.reference_data["reference_stats"]},
             path=pdf_list[1],
         )
         report.grayscale(
-            {**self.dict_stats, **self.reference_data['reference_stats']},
+            {**self.dict_stats, **self.reference_data["reference_stats"]},
             path=pdf_list[2],
         )
         report.qa(
-            {**self.dict_stats, **self.reference_data['reference_stats']},
+            {**self.dict_stats, **self.reference_data["reference_stats"]},
             path=pdf_list[3],
         )
 
@@ -1057,6 +1059,3 @@ class Subject(object):
 
         # move files
         io_utils.move_files(output_files, self.config.data_dir)
-
-
-
