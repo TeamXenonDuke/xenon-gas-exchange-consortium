@@ -483,6 +483,25 @@ class Subject(object):
         else:
             raise ValueError("Invalid registration key.")
 
+        def convert_and_threshold_mask(mask):
+            """
+            Check if the mask is not boolean, then apply a threshold and convert to boolean.
+
+            Parameters:
+                mask (numpy.ndarray): Input mask array.
+
+            Returns:
+                numpy.ndarray: Mask array thresholded and converted to boolean if not already boolean.
+            """
+            if mask.dtype != bool:
+                mask = np.where(mask > 0.5, 1, 0)  # Apply threshold: >0.5 becomes 1, otherwise 0
+                mask = mask.astype(bool)          # Convert to boolean
+            return mask
+
+
+        self.mask = convert_and_threshold_mask(self.mask);
+
+
     def biasfield_correction(self):
         """Correct ventilation image for bias field."""
         if self.config.bias_key == constants.BiasfieldKey.SKIP.value:
