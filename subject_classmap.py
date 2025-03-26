@@ -221,8 +221,8 @@ class Subject(object):
         self.data_gas = self.dict_dis[constants.IOFields.FIDS_GAS]
 
         if (
-            self.dict_dis[constants.IOFields.INSTITUTION]
-            == constants.Institution.IOWA.value
+            self.dict_dis[constants.IOFields.SYSTEM_VENDOR]
+            == constants.SystemVendor.GE.value
             ):
                 self.data_dissolved =  np.conjugate(self.data_dissolved);
                 self.data_gas = np.conjugate(self.data_gas);
