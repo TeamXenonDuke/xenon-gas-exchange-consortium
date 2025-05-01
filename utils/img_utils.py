@@ -15,6 +15,8 @@ import numpy as np
 import skimage
 from scipy import ndimage
 
+import pdb
+
 from utils import constants, io_utils
 
 
@@ -75,6 +77,7 @@ def flip_and_rotate_image(
     """
     
     # Siemens vendor code block
+    pdb.set_trace()
     if system_vendor == constants.SystemVendor.SIEMENS.value:
         if orientation == constants.Orientation.CORONAL:
             image = np.rot90(np.rot90(image, 3, axes=(1, 2)), 1, axes=(0, 2))
