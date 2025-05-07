@@ -48,6 +48,8 @@ class Config(config_dict.ConfigDict):
         self.bias_key = constants.BiasfieldKey.N4ITK.value
         self.hb_correction_key = constants.HbCorrectionKey.NONE.value
         self.hb = 0.0
+        self.patient_frc = "None"
+        self.bag_volume = "None"
         self.dicom_proton_dir = ""
         self.multi_echo = False
         self.registration_key = constants.RegistrationKey.SKIP.value
