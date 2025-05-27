@@ -28,7 +28,7 @@ def get_patient_age(twix_obj: mapvbvd._attrdict.AttrDict) -> float:
     try:
         return twix_obj.hdr.Meas.flPatientAge
     except:
-        pass
+        return np.nan
 
     raise ValueError("Could not find age from twix object")
 
@@ -49,7 +49,7 @@ def get_patient_sex(twix_obj: mapvbvd._attrdict.AttrDict) -> str:
     try:
         return "M" if twix_obj.hdr.Meas.lPatientSex == 1 else "F"
     except:
-        pass
+        return np.nan
 
     raise ValueError("Could not find sex from twix object")
 
@@ -70,7 +70,7 @@ def get_patient_height(twix_obj: mapvbvd._attrdict.AttrDict) -> float:
     try:
         return twix_obj.hdr.Meas.flPatientHeight / 10.0
     except:
-        pass
+        return np.nan
 
     raise ValueError("Could not find height from twix object")
 
