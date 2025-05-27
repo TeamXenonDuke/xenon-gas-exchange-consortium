@@ -11,7 +11,7 @@ from utils import constants
 
 import pandas as pd
 import logging
-
+import numpy as np
 
 def _get_dilation_kernel(x: int) -> int:
     """Get dilation kernel for binary dilation in 1-dimension."""
@@ -86,13 +86,22 @@ def inflation_volume(mask: np.ndarray, fov: float) -> float:
         np.sum(mask) * fov**3 / np.shape(mask)[0] ** 3
     ) / constants.FOVINFLATIONSCALE3D
 
-import pandas as pd
-import numpy as np
-
-import pandas as pd
-import numpy as np
 
 def GLI_volume(age: float, sex: str, height: float, volume_type: str = "frc") -> float:
+    """
+    Calculate the GLI-predicted lung volume for a given age, sex, and height.
+
+    Args:
+        age: float, subject age in years.
+        sex: str, subject sex ("M" or "F").
+        height: float, subject height in cm.
+        volume_type: str, either "frc" (functional residual capacity) or "fvc" (forced vital capacity).
+
+    Returns:
+        Predicted lung volume (float) based on GLI lookup table. Returns np.nan if input is missing or match not found.
+    """
+    if pd.isna(age) or pd.isna(sex) or pd.isna(height):
+        return np.nan
     lookup_df = pd.read_pickle('./assets/lut/GLI.pkl')
 
     # Ensure sex is upper case, and volume_type is lower case
