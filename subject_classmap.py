@@ -7,6 +7,7 @@ from typing import Any, Dict
 
 import nibabel as nib
 import numpy as np
+import pandas as pd
 
 import biasfield
 import preprocessing as pp
@@ -725,12 +726,20 @@ class Subject(object):
             Bag_Volume = float(self.config.bag_volume);
         else:
             FVC_Volume = metrics.GLI_volume(self.dict_dis[constants.IOFields.AGE],self.dict_dis[constants.IOFields.SEX],self.dict_dis[constants.IOFields.HEIGHT],volume_type="fvc");
-            Bag_Volume = metrics.get_bag_volume(FVC_Volume);
-
-        predicted_volume = FRC_Volume + Bag_Volume;
-        self.reference_data['reference_stats']['inflation_percentage'] = int(round(self.dict_stats[constants.StatsIOFields.INFLATION] / predicted_volume * 100, 0))
-        self.reference_data['reference_stats']['inflation_avg'] =round(predicted_volume,1);
-        self.dict_stats[constants.StatsIOFields.INFLATION] = round(self.dict_stats[constants.StatsIOFields.INFLATION],1);
+            if isinstance(FVC_Volume, (int, float)) and not pd.isna(FVC_Volume):
+                Bag_Volume = metrics.get_bag_volume(FVC_Volume);
+        
+        if pd.isna(FRC_Volume) or pd.isna(Bag_Volume):
+            self.reference_data['reference_stats']['inflation_percentage'] = "NA";
+            self.reference_data['reference_stats']['inflation_avg'] ="NA";
+            self.reference_data['reference_stats']['inflation_display'] ="NA";
+            self.dict_stats[constants.StatsIOFields.INFLATION] = round(self.dict_stats[constants.StatsIOFields.INFLATION],1);
+        else:
+            predicted_volume = FRC_Volume + Bag_Volume
+            self.reference_data['reference_stats']['inflation_percentage'] = int(round(self.dict_stats[constants.StatsIOFields.INFLATION] / predicted_volume * 100, 0));
+            self.reference_data['reference_stats']['inflation_avg'] =round(predicted_volume,1);
+            self.reference_data['reference_stats']['inflation_display'] = f"{self.reference_data['reference_stats']['inflation_avg'] }L ({self.reference_data['reference_stats']['inflation_percentage']}%)";
+            self.dict_stats[constants.StatsIOFields.INFLATION] = round(self.dict_stats[constants.StatsIOFields.INFLATION],1);
 
         return self.dict_stats
 
