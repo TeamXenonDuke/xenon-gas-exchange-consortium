@@ -442,9 +442,9 @@ def read_dis_mrd(path: str, multi_echo: bool) -> Dict[str, Any]:
 
     data_dict = mrd_utils.get_gx_data(dataset, multi_echo)
     return {
-        constants.IOFields.AGE: 30.0,
-        constants.IOFields.SEX: "M",
-        constants.IOFields.HEIGHT: 171.0,
+        constants.IOFields.AGE: np.nan,
+        constants.IOFields.SEX: np.nan,
+        constants.IOFields.HEIGHT: np.nan,
         constants.IOFields.BANDWIDTH: np.nan,
         constants.IOFields.SAMPLE_TIME: mrd_utils.get_sample_time(dataset),
         constants.IOFields.FA_DIS: mrd_utils.get_flipangle_dissolved(header),
