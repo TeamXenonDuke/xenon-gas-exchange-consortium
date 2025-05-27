@@ -449,6 +449,7 @@ class ReferenceDistribution(object):
         "inflation_avg": "3.4",
         "inflation_std": "0.33",
         "inflation_percentage":"0.0",
+        "inflation_display":"0.0",
         }
     }
 
@@ -484,6 +485,7 @@ class ReferenceDistribution(object):
             "inflation_avg": "3.4",
             "inflation_std": "0.33",
             "inflation_percentage":"0.0",
+            "inflation_display":"0.0",
             }
         }
     
@@ -519,6 +521,7 @@ class ReferenceDistribution(object):
             "inflation_avg": "3.4",
             "inflation_std": "0.33",
             "inflation_percentage":"0.0",
+            "inflation_display":"0.0",
             }
         }
 
