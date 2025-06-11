@@ -830,7 +830,7 @@ class Subject(object):
             ),
             constants.IOFields.TE90: 1e6 * self.dict_dis[constants.IOFields.TE90],
             constants.IOFields.TR_DIS: 1e3 * self.dict_dis[constants.IOFields.TR],
-            "user_lung_volume_value":self.user_lung_volume_value,
+            constants.IOFields.USER_LUNG_VOLUME_VALUE:self.user_lung_volume_value,
         }
         return self.dict_info
 
