@@ -25,6 +25,7 @@ class IOFields(object):
     SEX = "sex"
     HEIGHT = "height"
     BANDWIDTH = "bandwidth"
+    USER_LUNG_VOLUME_VALUE ="user_lung_volume_value"
     BIASFIELD_KEY = "biasfield_key"
     BONUS_SPECTRA_LABELS = "bonus_spectra_labels"
     CONTRAST_LABELS = "contrast_labels"
