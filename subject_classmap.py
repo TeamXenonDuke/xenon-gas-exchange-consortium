@@ -104,6 +104,7 @@ class Subject(object):
         self.traj_ute = np.array([])
         self.reference_data_key = str()
         self.reference_data = {}
+        self.user_lung_volume_value = ""
 
     def read_twix_files(self):
         """Read in twix files to dictionary.
@@ -719,26 +720,32 @@ class Subject(object):
         }
         if isinstance(self.config.patient_frc, (int, float)):
             FRC_Volume = float(self.config.patient_frc);
+            User_Volume_FRC = str(self.config.patient_frc);
         else:
             FRC_Volume= metrics.GLI_volume(self.dict_dis[constants.IOFields.AGE],self.dict_dis[constants.IOFields.SEX],self.dict_dis[constants.IOFields.HEIGHT],volume_type="frc");
+            User_Volume_FRC = "Predicted";
 
         if isinstance(self.config.bag_volume, (int, float)):
             Bag_Volume = float(self.config.bag_volume);
+            User_Volume_Bag = str(self.config.bag_volume);
         else:
+            User_Volume_Bag= "Predicted";
             FVC_Volume = metrics.GLI_volume(self.dict_dis[constants.IOFields.AGE],self.dict_dis[constants.IOFields.SEX],self.dict_dis[constants.IOFields.HEIGHT],volume_type="fvc");
             if isinstance(FVC_Volume, (int, float)) and not pd.isna(FVC_Volume):
                 Bag_Volume = metrics.get_bag_volume(FVC_Volume);
-        
+
+        self.user_lung_volume_value =  User_Volume_FRC+"L/ "+User_Volume_Bag+"L";
+
         if pd.isna(FRC_Volume) or pd.isna(Bag_Volume):
-            self.reference_data['reference_stats']['inflation_percentage'] = "NA";
-            self.reference_data['reference_stats']['inflation_avg'] ="NA";
-            self.reference_data['reference_stats']['inflation_display'] ="NA";
+            self.reference_data['reference_stats'][constants.StatsIOFields.INFLATION_PCT] = "NA";
+            self.reference_data['reference_stats'][constants.StatsIOFields.INFLATION_AVG] ="NA";
+            self.reference_data['reference_stats'][constants.StatsIOFields.INFLATION_DISPLAY] ="NA";
             self.dict_stats[constants.StatsIOFields.INFLATION] = round(self.dict_stats[constants.StatsIOFields.INFLATION],1);
         else:
             predicted_volume = FRC_Volume + Bag_Volume
-            self.reference_data['reference_stats']['inflation_percentage'] = int(round(self.dict_stats[constants.StatsIOFields.INFLATION] / predicted_volume * 100, 0));
-            self.reference_data['reference_stats']['inflation_avg'] =round(predicted_volume,1);
-            self.reference_data['reference_stats']['inflation_display'] = f"{self.reference_data['reference_stats']['inflation_avg'] }L ({self.reference_data['reference_stats']['inflation_percentage']}%)";
+            self.reference_data['reference_stats'][constants.StatsIOFields.INFLATION_PCT] = int(round(self.dict_stats[constants.StatsIOFields.INFLATION] / predicted_volume * 100, 0));
+            self.reference_data['reference_stats'][constants.StatsIOFields.INFLATION_AVG] =round(predicted_volume,1);
+            self.reference_data['reference_stats'][constants.StatsIOFields.INFLATION_DISPLAY] = f"{self.reference_data['reference_stats'][constants.StatsIOFields.INFLATION_AVG] }L ({self.reference_data['reference_stats'][constants.StatsIOFields.INFLATION_PCT]}%)";
             self.dict_stats[constants.StatsIOFields.INFLATION] = round(self.dict_stats[constants.StatsIOFields.INFLATION],1);
 
         return self.dict_stats
@@ -823,6 +830,7 @@ class Subject(object):
             ),
             constants.IOFields.TE90: 1e6 * self.dict_dis[constants.IOFields.TE90],
             constants.IOFields.TR_DIS: 1e3 * self.dict_dis[constants.IOFields.TR],
+            "user_lung_volume_value":self.user_lung_volume_value,
         }
         return self.dict_info
 
