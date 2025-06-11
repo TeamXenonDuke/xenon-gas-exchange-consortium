@@ -249,6 +249,9 @@ class StatsIOFields(object):
     """Statistic IO Fields."""
 
     INFLATION = "inflation"
+    INFLATION_PCT='inflation_percentage'
+    INFLATION_AVG='inflation_avg'
+    INFLATION_DISPLAY='inflation_display'
     RBC_M_RATIO = "rbc_m_ratio"
     RBC_SNR = "rbc_snr"
     MEMBRANE_SNR = "membrane_snr"
