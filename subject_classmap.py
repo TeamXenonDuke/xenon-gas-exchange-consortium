@@ -718,24 +718,44 @@ class Subject(object):
                 self.reference_data['reference_fit_rbc'][1],
             ),
         }
+        
         if isinstance(self.config.patient_frc, (int, float)):
-            FRC_Volume = float(self.config.patient_frc);
-            User_Volume_FRC = str(self.config.patient_frc);
+            FRC_Volume = float(self.config.patient_frc)
+            User_Volume_FRC = f"{FRC_Volume}L"
         else:
-            FRC_Volume= metrics.GLI_volume(self.dict_dis[constants.IOFields.AGE],self.dict_dis[constants.IOFields.SEX],self.dict_dis[constants.IOFields.HEIGHT],volume_type="frc");
-            User_Volume_FRC = "Predicted";
+            FRC_Volume = metrics.GLI_volume(
+                self.dict_dis[constants.IOFields.AGE],
+                self.dict_dis[constants.IOFields.SEX],
+                self.dict_dis[constants.IOFields.HEIGHT],
+                volume_type="frc"
+            )
+            User_Volume_FRC = "Predicted"
 
         if isinstance(self.config.bag_volume, (int, float)):
-            Bag_Volume = float(self.config.bag_volume);
-            User_Volume_Bag = str(self.config.bag_volume);
+            Bag_Volume = float(self.config.bag_volume)
+            User_Volume_Bag = f"{Bag_Volume}L"
         else:
-            User_Volume_Bag= "Predicted";
-            FVC_Volume = metrics.GLI_volume(self.dict_dis[constants.IOFields.AGE],self.dict_dis[constants.IOFields.SEX],self.dict_dis[constants.IOFields.HEIGHT],volume_type="fvc");
+            User_Volume_Bag = "Predicted"
+            FVC_Volume = metrics.GLI_volume(
+                self.dict_dis[constants.IOFields.AGE],
+                self.dict_dis[constants.IOFields.SEX],
+                self.dict_dis[constants.IOFields.HEIGHT],
+                volume_type="fvc"
+            )
             if isinstance(FVC_Volume, (int, float)) and not pd.isna(FVC_Volume):
-                Bag_Volume = metrics.get_bag_volume(FVC_Volume);
+                Bag_Volume = metrics.get_bag_volume(FVC_Volume)
 
-        self.user_lung_volume_value =  User_Volume_FRC+"L/ "+User_Volume_Bag+"L";
+        if User_Volume_FRC == "Predicted":
+            display_frc = "Predicted"
+        else:
+            display_frc = User_Volume_FRC
 
+        if User_Volume_Bag == "Predicted":
+            display_bag = "Predicted"
+        else:
+            display_bag = User_Volume_Bag
+
+        self.user_lung_volume_value = f"{display_frc}/ {display_bag}"
         if pd.isna(FRC_Volume) or pd.isna(Bag_Volume):
             self.reference_data['reference_stats'][constants.StatsIOFields.INFLATION_PCT] = "NA";
             self.reference_data['reference_stats'][constants.StatsIOFields.INFLATION_AVG] ="NA";
