@@ -104,7 +104,7 @@ You can verify if you have conda by typing `which conda` in your terminal.
 
 ### Installation Using `setup.sh`
 
-Steps 2.2 and 2.3 of installation can be completed automatically using the bash script `setup.sh` in the pipeline folder. If you wish to complete the process manually, skip to [Step 2.2](#22-virtual-environment-creation-and-python-package-installation).
+Steps 2.2 and 2.3 of installation can be completed automatically using the bash script `setup.sh` in the pipeline folder. If you wish to complete the process manually, skip to [Step 2.2](#22-virtual-environment-creation-and-package-installation).
 
 `cd` to the main pipeline folder (`xenon-gas-exchange-consortium`) before running the next commands!
 
