@@ -744,18 +744,25 @@ class Subject(object):
             )
             if isinstance(FVC_Volume, (int, float)) and not pd.isna(FVC_Volume):
                 Bag_Volume = metrics.get_bag_volume(FVC_Volume)
+            else:
+                Bag_Volume = np.nan
 
-        if User_Volume_FRC == "Predicted":
+        if pd.isna(FRC_Volume):
+            display_frc = "NA"
+        elif User_Volume_FRC == "Predicted":
             display_frc = "Predicted"
         else:
             display_frc = User_Volume_FRC
 
-        if User_Volume_Bag == "Predicted":
+        if pd.isna(Bag_Volume):
+            display_bag = "NA"
+        elif User_Volume_Bag == "Predicted":
             display_bag = "Predicted"
         else:
             display_bag = User_Volume_Bag
 
         self.user_lung_volume_value = f"{display_frc}/ {display_bag}"
+
         if pd.isna(FRC_Volume) or pd.isna(Bag_Volume):
             self.reference_data['reference_stats'][constants.StatsIOFields.INFLATION_PCT] = "NA";
             self.reference_data['reference_stats'][constants.StatsIOFields.INFLATION_AVG] ="NA";
