@@ -1,5 +1,6 @@
 #!/bin/bash
 RED='\033[0;31m'
+YELLOW='\033[1;33m'
 NC='\033[0m'
 
 echo "It is recommended to run this script with the following command './setup.sh 2>&1 | tee setup.log' in order to log all standard output and error in case of failure."
@@ -117,7 +118,8 @@ if !([[ "$1" == "build-only" ]] || [[ "$1" == "install-only" ]]); then
     fi
 
     # Prompt for user: pause to move the .h5 files to the correct directory from the Google Drive and confirm.
-    read -r -n 1 -p "Please move the .h5 files to './models/weights'. Enter 'y' when complete. Enter 'n' if you want to exit setup. " reply
+    echo -e "${YELLOW}\e]8;;https://drive.google.com/drive/folders/1gcwT14_6Tl_2zkLZ_MHsm-pAYHXWtVOA?usp=sharing\ahttps://drive.google.com/drive/folders/1gcwT14_6Tl_2zkLZ_MHsm-pAYHXWtVOA?usp=sharing\e]8;;\a${NC}"
+    read -r -n 1 -p "Download 'model_ANATOMY_UTE.h5' and 'model_ANATOMY_VEN.h5' from the above link and place it in the './models/weights' folder in your main program directory. Enter 'y' when complete. Enter 'n' if you want to exit setup. " reply
     echo
     while true; do
         if [[ $reply =~ ^[Yy]$ ]]; then
@@ -212,7 +214,7 @@ fi
 if (( $# == 0 )) || [[ "$1" == "build-only" ]]; then
     # Warning and prompts to the user to make sure they understand that the SuperBuild and install step is about to begin.
     echo -e "${RED}Warning: The ANTs SuperBuild is about to start! ${NC}"
-    read -r -n 1 -p "It is recommended to run the superbuild in an independent terminal application rather than in a code editor (e.g. VSCode). Please do NOT start any new applications or processes! Make sure your laptop is plugged in. Enter 'y' when you are ready to start the SuperBuild. Enter 'n' if you want to exit setup. " reply
+    read -r -n 1 -p "It is recommended to run the SuperBuild in an independent terminal application rather than in a code editor (e.g. VSCode). Please do NOT start any new applications or processes! Make sure your laptop is plugged in. Enter 'y' when you are ready to start the SuperBuild. Enter 'n' if you want to exit setup. " reply
     echo
     while true; do
         if [[ $reply =~ ^[Yy]$ ]]; then
@@ -238,7 +240,7 @@ if (( $# == 0 )) || [[ "$1" == "build-only" ]]; then
     fi
 
     # Prompt for user: User selects the number of cores they wish to allocate for the build step (max: 3/4 of available cores). Recommended default is 4.
-    read -r -p "You have $available_cores cores available for threads. Please enter the number of cores you would like to use for the superbuild (max: $available_cores) or press enter for  the recommended default (4 cores). " reply
+    read -r -p "You have $available_cores cores available for threads. Please enter the number of threads you would like to use for the SuperBuild (max: $available_cores) or press enter for  the recommended default (4 threads). " reply
     while true; do
         if [[ "$reply" == "" ]]; then
             CORES=4
@@ -253,7 +255,7 @@ if (( $# == 0 )) || [[ "$1" == "build-only" ]]; then
     done
 
     # Build step
-    echo "$CORES cores allocated for threads."
+    echo "$CORES threads allocated."
     make -j $CORES 2>&1 | tee build.log
 fi
 
@@ -265,7 +267,7 @@ make install 2>&1 | tee install.log
 
 # Move antsApplyTransforms, antsRegistration, and N4BiasFieldCorrection to bin
 mv ./Examples/antsApplyTransforms ./Examples/antsRegistration ./Examples/N4BiasFieldCorrection ../../bin
-echo "Please check that 'antsApplyTransforms', 'antsRegistration', and 'N4BiasFieldCorrection' are located in the 'bin' directory."
+echo -e "${YELLOW}Please verify that 'antsApplyTransforms', 'antsRegistration', and 'N4BiasFieldCorrection' are located in the 'bin' directory.${NC}"
 
 # Exit.
 echo "Setup complete. Exiting..."

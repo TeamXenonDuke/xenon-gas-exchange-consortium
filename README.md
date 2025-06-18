@@ -1,6 +1,6 @@
 # <sup>129</sup>Xe gas exchange imaging pipeline
 
-The xenon gas exchange pipeline, developed at the [Driehuys Lab](https://sites.duke.edu/driehuyslab/), processes raw <sup>129</sup>Xe MRI data and produces a summary report to analyze the functionality of the human lung. This README presents the installation and basic usage the pipeline. Before moving to the installation process, download or clone this repository in your computer.
+The xenon gas exchange pipeline, developed at the [Driehuys Lab](https://sites.duke.edu/driehuyslab/), processes raw <sup>129</sup>Xe MRI data and produces a summary report to analyze the functionality of the human lung. This README presents the setup/installation process and basic usage of the pipeline. Before moving to the installation process, download or clone this repository to your computer.
 
 ## Table of contents:
 
@@ -16,43 +16,59 @@ The xenon gas exchange pipeline, developed at the [Driehuys Lab](https://sites.d
 
 ## Setup
 
-The xenon gas exchange pipeline is a cross system_vendor program that works on Windows, Mac and Linux system. At least 8GB of RAM is required to run this pipeline. Windows users can install Windows Subsystem for Linux (WSL) or install Ubuntu as dual boot/in the virtual box. The details of WSL installation can be seen in Section 1.1. Warning: run time in WSL can be slower compare to Linux or Mac system.
+The xenon gas exchange pipeline is a cross system-vendor program that works on Windows (WSL), Mac, and Linux system. At least 8GB of RAM is required to run this pipeline.
+
+Windows users must install Windows Subsystem for Linux (WSL) or install Ubuntu as dual boot/in the virtual box.
+
+Mac users must install Xcode Command Line Tools and Homebrew.
+
+WARNING: run time in WSL can be slower compared to Linux or Mac systems.
 
 ### 1.1. Windows Subsystem for Linux
 
-Windows Subsystem for Linux installation process can seem overwhelming, espcially following the procedure in the microsoft [documentation](https://docs.microsoft.com/en-us/windows/wsl/install-win10). However a short Youtube video can make the install process much easier. One good example YouTube instruction can be seen [here](https://www.youtube.com/watch?v=X-DHaQLrBi8&t=385s&ab_channel=ProgrammingKnowledge2ProgrammingKnowledge2). Note: If the YouTube link is broken, please search in YouTube.
+The install process for WSL using Ubuntu can be found [here](https://www.youtube.com/watch?v=X-DHaQLrBi8&t=385s&ab_channel=ProgrammingKnowledge2ProgrammingKnowledge2). Note: If the link is broken, please search "How to Install Ubuntu on Windows 10 (WSL)" on YouTube.
+
+Further information for the Windows Subsystem for Linux installation process can be found in the [Microsoft documentation](https://docs.microsoft.com/en-us/windows/wsl/install-win10).
 
 ### 1.2. Xcode and Homebrew for Mac
 
-First, open the terminal and install Xcode Command Line Tools using this command:
+Open the terminal and install Xcode Command Line Tools using the following command:
 
 ```bash
 xcode-select --install
 ```
 
-If homebrew is not already installed, it can be installed using this command:
+If Homebrew is not already installed, install it using the following command:
 
 ```bash
 /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
 ```
 
-Don't forget to add homebrew to your path. Check if homebrew installed correctly, writing `which brew`. The details of homebrew can be seen [here](https://brew.sh/).
+Check if Homebrew installed correctly to your PATH, with `which brew`. The details of Homebrew can be found [here](https://brew.sh/).
 
 ## Installation
 
-This program is written in Python. Some of the code is written in C language. We will begin with Python installation.
+### 2.1. Python and Conda Installation
 
-### 2.1. Python Installation
+The pipeline requires Python 3.8.8. We will setup and run the program using a dedicated virtual environment. To create a virtual environment, a `conda` distribution is required. You can install a conda distribution by downloading 'Anaconda' or 'Miniconda'. You can download 'Anaconda' from this [link](https://www.anaconda.com/products/individual), or 'Miniconda' from this [link](https://docs.conda.io/en/latest/miniconda.html). (Note: Windows users should download the Linux version since they will be using WSL)
 
-First step of the installation process is to install python. This gas exchange pipeline works with Python 3.8.8 in its current version. In order to install necessary Python Libraries, Python 3.8.8 version is required. To create a virtual environment, a 'conda' distribution is required. If you don't have conda distribution installed into your machine, you can install one downloading 'Anaconda' or 'Miniconda'. You can download the 'Anaconda Distribution' from this [link](https://www.anaconda.com/products/individual), or 'Miniconda' from this [link](https://docs.conda.io/en/latest/miniconda.html). Here, command line installation procedure has been presented. So, Mac user can download the Command Line Installer.
+Select Conda installation for:
 
-#### 2.1.1. Conda Installation on Intel Based Mac or Linux systems:
+[2.1.1. Linux or Intel Based Mac](#211-conda-installation-on-intel-based-mac-or-linux-systems)
 
-Now, open the terminal. You need to write a command to install Anaconda/Miniconda. Command to install the Anaconda or Miniconda is:
+[2.1.2. Apple Silicon Based Mac](#212-conda-installation-on-apple-silicon-based-mac-systems)
+
+[2.1.3. Windows Subsystem for Linux (WSL)](#213-conda-installation-on-windows-subsystem-for-linux-wsl)
+
+#### 2.1.1. Conda Installation on Linux or Intel Based Mac systems:
+
+Open the terminal. Input the following command to install the Anaconda or Miniconda distribution:
 
 ```bash
-bash ~/path/filename
+bash ~/<path>/<filename>
 ```
+
+`<path>` is the absolute path to where the Anaconda file is located. `<filename>` is the name of the installation file.
 
 Example: If your downloaded Anaconda file is in the "Downloads" folder and the file name is "Anaconda3-2020.11-Linux-x86_64.sh", write the following in the terminal:
 
@@ -60,15 +76,13 @@ Example: If your downloaded Anaconda file is in the "Downloads" folder and the f
 bash ~/Downloads/Anaconda3-2020.11-Linux-x86_64.sh
 ```
 
-Here, path = Downloads and filename = Anaconda3-2020.11-Linux-x86_64.sh
+Press "enter" and reply "yes" to agree to the license agreements. After completing the installation process, close and re-open the terminal. You can verify if conda was installed correctly with `which conda`.
 
-Press "enter" and reply "yes" to agree to the license agreements. After completing the installation process, close and reopen the terminal. You can verify if you have `conda` now by typing `which conda` in your terminal.
-
-If you don't see 'conda' directory after verifing, you can review the details of [Anconda](https://docs.anaconda.com/anaconda/install/linux/) or [Miniconda](https://docs.conda.io/projects/conda/en/latest/user-guide/install/linux.html) installation.
+If you do not see the 'conda' folder after installation, you can review the details of [Anaconda](https://docs.anaconda.com/anaconda/install/linux/) or [Miniconda](https://docs.conda.io/projects/conda/en/latest/user-guide/install/linux.html) installation.
 
 #### 2.1.2. Conda Installation on Apple Silicon Based Mac systems:
 
-For full use of this pipeline with Apple silicon based Mac systems, Conda should be installed with miniforge. Install miniforge using Homebrew using the following command:
+On Apple silicon based Mac systems, Conda must be installed with miniforge. Install miniforge using Homebrew with the following command:
 
 ```bash
 brew install miniforge
@@ -76,111 +90,179 @@ brew install miniforge
 
 More information on miniforge and alternative installation methods can be found at the [miniforge GitHub](https://github.com/conda-forge/miniforge).
 
-#### 2.1.3. Conda Installtion on Windows Subsystem for Linux(WSL):
+#### 2.1.3. Conda Installation on Windows Subsystem for Linux (WSL):
 
-WSL users need to install `Anaconda` or 'Miniconda' for Linux inside the WSL shell. Change your current directory to where you have downloaded your Anaconda or Miniconda installation file (.sh file). Then run the:
+WSL users must install 'Anaconda' or 'Miniconda' for Linux inside the WSL shell. `cd` to the folder where you have downloaded your Anaconda or Miniconda installation file (.sh file). Then run:
 
 ```bash
-bash filename
+bash <filename>
 ```
 
-You can verify if you have `conda` now by typing `which conda` in your terminal.
+`<filename>` is the specific name of the installation file (e.g. `bash Anaconda3-2024.10-1-Linux-x86_64`).
 
-### 2.2. Virtual Environment Creation and Python Package Installation
+You can verify if you have conda by typing `which conda` in your terminal.
+
+### Installation Using `setup.sh`
+
+Steps 2.2 and 2.3 of installation can be completed automatically using the bash script `setup.sh` in the pipeline folder. If you wish to complete the process manually, skip to [Step 2.2](#22-virtual-environment-creation-and-python-package-installation).
+
+`cd` to the main pipeline folder (`xenon-gas-exchange-consortium`) before running the next commands!
+
+Run the following commands to automate steps 2.2 and 2.3. The first command will allow you to run `setup.sh` on your terminal.
+
+```bash
+chmod u+x ./setup.sh
+```
+
+The second command will run the script and record all output and errors to `setup.log`:
+
+```bash
+./setup.sh 2>&1 | tee setup.log
+```
+
+The terminal will prompt you to complete steps that require some user input.
+
+1. The terminal will ask you to enter a name for the conda virtual environment. `XeGas` is the recommended default.
+
+   a. If you have previously created an environment and want to use it for setup/installation, enter the name for it. The terminal will ask if you would like to create a new one with the same name or use the existing environment for setup.
+
+2. You will be asked to check the list of packages installed by `setup.sh` to make sure they are all there. Check over the list (shown by `pip list`) to verify if they include all packages in `setup/requirements.txt`.
+
+3. You will need to download the files `model_ANATOMY_UTE.h5` and `model_ANATOMY_VEN.h5` from this [link](https://drive.google.com/drive/folders/1gcwT14_6Tl_2zkLZ_MHsm-pAYHXWtVOA?usp=sharing) and place them in `models/weights`.
+
+4. You will be prompted to enter the number of threads you wish to use during the SuperBuild step. 4 is recommended. Using more can cause your OS to force cancel during build/installation. More threads will make the process faster. If you keep getting failures, switch to 1 thread.
+
+If you are having issues with the SuperBuild failing (build and install step), please see [Resolving Issues with `setup.sh` SuperBuild](#resolving-issues-with-setupsh-superbuild).
+
+Setup and installation will be complete and the pipeline will be ready to use once `setup.sh` is ran successfully.
+
+Remember to use the following command before using the pipeline:
+
+```bash
+conda activate <name_of_conda_environment>
+```
+
+The next steps will be for manual installation. Skip to [Usage](#usage) if you are finished with setup and installation.
+
+#### Resolving Issues with `setup.sh` SuperBuild
+
+You can rerun `setup.sh` to skip to the build and install step if there is a failure during the SuperBuild. You should have all required packages installed to your conda environment and native computer by the time the SuperBuild starts, so you can skip over that part of `setup.sh` and go straight to the build or install steps.
+
+If there was a failure during the build step, enter the following command to skip to the build step (Note: Repeated failures may mean you are using too many CPU cores. You may need to run the build step with only 1 thread!):
+
+```bash
+./setup.sh build-only 2>&1 | tee setup.log
+```
+
+If you made it passed the build step successfully but had a failure during the install step, enter the following command to skip to the install step:
+
+```bash
+./setup.sh install-only 2>&1 | tee setup.log
+```
+
+Setup and installation will be complete and the pipeline will be ready to use once `setup.sh` is ran successfully.
+
+Remember to use the following command before using the pipeline:
+
+```bash
+conda activate <name_of_conda_environment>
+```
+
+The next steps will be for manual installation. Skip to [Usage](#usage) if you are finished with setup and installation.
+
+### 2.2. Virtual Environment Creation and Package Installation
 
 #### 2.2.1. Create Virtual Environment
 
-To create a virtual environment using `conda` execute the command in the terminal:
+To create a virtual environment using `conda` execute the following command in the terminal. "XeGas" is the recommended name, but you may use a different name:
 
 ```bash
 conda create --name XeGas python=3.8.8
 ```
 
-Here, XeGas is the the given name, but any name can be given.
-
-To activate the environment, execute the command
+To activate the environment, execute the following commands. Replace "XeGas" with the name you previously chose if needed:
 
 ```bash
+conda init
 conda activate XeGas
 ```
 
 #### 2.2.2. Install Required Packages
 
-We will be using pip to install the required packages. First update the pip using:
+##### Install/Update pip
+
+We will be using pip to install the required packages. Update pip using:
 
 ```bash
 pip install --upgrade pip
 ```
 
-Now install a c compiler. Here we will install gcc compiler.
+##### Install C Compiler
 
-##### Linux and WSL users:
+Next we will install gcc compiler to compile C code using sudo (Linux/WSL) or brew (Mac).
 
-Get updates:
+Linux and WSL users:
 
 ```bash
 sudo apt-get update
-```
-
-Install gcc executing this command:
-
-```bash
 sudo apt install gcc
 ```
 
-##### Mac Users:
-
-Install gcc:
+Mac Users:
 
 ```bash
 brew install gcc
 ```
 
-##### Installing Packages in the Virtual Environment:
+##### Install Packages in your Virtual Environment
 
-Now we are ready to install necessary packages. Packages must be installed inside the virtual conda environment. The list of packages are in the `setup/requirements.txt` file. In the terminal, if you are not in the main program directory, change the directory using the `cd` command. To install the required packages, execute the command:
+Packages must be installed inside the virtual conda environment. Make sure your VE is activated using `conda activate XeGas`.
+
+`cd` to the main pipeline folder (`xenon-gas-exchange-consortium`) before running the next command!
+
+The list of packages are in `setup/requirements.txt`. To install the required packages, run the following command:
 
 ```bash
 pip install -r setup/requirements.txt
 ```
 
-To confirm that correct packages are installed, execute the command
+To confirm that the correct packages are installed, execute the following command:
 
-```
+```bash
 pip list
 ```
 
-and verify that the packages in the virtual environment agree with that in the `requirements.txt` file.
+Verify that the packages in the virtual environment include the packages in the `requirements.txt` file.
 
-##### Install Packages in your Native Computer:
+##### Install Packages in your Native Computer
 
-For Linux and WSL:
+Lastly, install the following packages directly to your computer using sudo or brew.
 
-```
+Linux and WSL Users:
+
+```bash
 sudo apt install wkhtmltopdf
 sudo apt install poppler-utils
 ```
 
-For Mac:
+Mac Users:
 
-```
+```bash
 brew install wkhtmltopdf
 brew install poppler
 ```
 
-### 2.3. Compilation and Download Necessary tools
+### 2.3. Download Necessary Tools and Compile ANTs
 
-#### 2.3.1. For Segmentation: Downloading the h5 models for machine learning
+#### 2.3.1. Segmentation: Downloading the .h5 models for machine learning
 
-Check the `models/weights` folder if two `.h5` files are not available there, download `model_ANATOMY_UTE.h5` and `model_ANATOMY_VEN.h5` from this [link](https://drive.google.com/drive/folders/1gcwT14_6Tl_2zkLZ_MHsm-pAYHXWtVOA?usp=sharing) and place it in the `models/weights` folder in your main program directory.
+Download `model_ANATOMY_UTE.h5` and `model_ANATOMY_VEN.h5` from this [link](https://drive.google.com/drive/folders/1gcwT14_6Tl_2zkLZ_MHsm-pAYHXWtVOA?usp=sharing) and place it in the `models/weights` folder in your main pipeline folder (`xenon-gas-exchange-consortium`).
 
-#### 2.3.2. For Registration: Compiling ANTs
+#### 2.3.2. Registration: Compiling ANTs
 
-Compiling ANTs require to install git, cmake, g++, zlib. Following commands will install these packages.
+Compiling ANTs requires `git`, `cmake`, `g++`, and `zlib`. The following commands will install these packages.
 
-#### Linux and Windows Subsystem For Linux(WSL) Users
-
-Execute following commands on your terminal:
+Linux and WSL Users:
 
 ```bash
 sudo apt-get -y install git
@@ -189,11 +271,11 @@ sudo apt install g++
 sudo apt-get -y install zlib1g-dev
 ```
 
-#### Mac Users:
+Mac Users:
 
 Check if you have git, cmake, g++ using `which git`, `which cmake`, `which g++`
 
-If you don't have any of these, execute the following commands:
+If you do not have any of these, execute the following commands:
 
 ```bash
 brew install git
@@ -201,7 +283,14 @@ brew install cmake
 brew install g++
 ```
 
-Now we are ready to perform SuperBuild. Execute the following commands on your terminal.
+##### Compile ANTs
+
+We are ready to perform SuperBuild. Execute the following commands on your terminal.
+
+Do NOT run commands using an integrated terminal in a code editor like VSCode. The code editor will significantly slow down the build. Run the following commands in a separate, independent terminal.
+Close any applications you are not using.
+
+WARNING: This may take a while.
 
 ```bash
 workingDir=${PWD}
@@ -216,11 +305,17 @@ cd ANTS-build
 make install 2>&1 | tee install.log
 ```
 
-Warning: This might take a while.
+`make -j 4 2>&1 | tee build.log` may fail after running. Re-run the command using less threads if it fails repeatedly (e.g. `make -j 1 2>&1 | tee build.log`). Make sure to `cd` to the `build` folder before running.
 
-After sucessful ANTs SuperBuild, you will have to move 'antApplyTransforms', 'antsRegistration' and 'N4BisaFieldCorrection' files to `xe-gas-exchange-refactor/bin/`. Now we are ready to process MRI scan of human lung.
+`make install 2>&1 | tee install.log` may also fail and need to be re-ran. Make sure to `cd` to the `ANTS-build` folder before running.
 
-Note: If necesary, the details of ANTs Compilation can be seen [here](https://github.com/ANTsX/ANTs/wiki/Compiling-ANTs-on-Linux-and-Mac-OS)
+Once SuperBuild is finished, move the `antsApplyTransforms`, `antsRegistration`, and `n4BiasFieldCorrection` files to the bin folder (`xenon-gas-exchange-consortium/bin/`) with the following command:
+
+```bash
+mv ./Examples/antsApplyTransforms ./Examples/antsRegistration ./Examples/N4BiasFieldCorrection ../../bin
+```
+
+Note: The details of ANTs Compilation can be found [here](https://github.com/ANTsX/ANTs/wiki/Compiling-ANTs-on-Linux-and-Mac-OS).
 
 ## Usage
 
@@ -231,7 +326,8 @@ Note: If necesary, the details of ANTs Compilation can be seen [here](https://gi
 The pipeline accepts Siemens twix (.dat) or ISMRMRD (.h5) files for standard proton UTE, 1-point Dixon, and (optionally) calibration scans. Alternatively, if a subject scan has already been processed through the pipeline and you wish to reprocess the previously constructed images, you can run the pipeline on the subject's .mat file. ISMRMRD files must be named and formatted according to the <sup>129</sup>Xe MRI clinical trials consortium specifications: [https://github.com/Xe-MRI-CTC/xemrd-specification](https://github.com/Xe-MRI-CTC/xemrd-specification)
 
 More information on consortium protocol for the proton UTE, 1-point Dixon, and calibration scans can be found in the following reference:
->Niedbalski, PJ, Hall, CS, Castro, M, et al. Protocols for multi-site trials using hyperpolarized 129Xe MRI for imaging of ventilation, alveolar-airspace size, and gas exchange: A position paper from the 129Xe MRI clinical trials consortium. Magn Reson Med. 2021; 86: 2966–2986. https://doi.org/10.1002/mrm.28985
+
+> Niedbalski, PJ, Hall, CS, Castro, M, et al. Protocols for multi-site trials using hyperpolarized 129Xe MRI for imaging of ventilation, alveolar-airspace size, and gas exchange: A position paper from the 129Xe MRI clinical trials consortium. Magn Reson Med. 2021; 86: 2966–2986. https://doi.org/10.1002/mrm.28985
 
 #### 3.1.2 Config file
 
@@ -293,7 +389,7 @@ Warning: this is the Team Xenon workflow only. Other users do not have to follow
 
 7. Upload `.pdf` reports to Slack
 
-### 3.3  Manual Segmentation Workflow
+### 3.3 Manual Segmentation Workflow
 
 Note: The following steps are for correcting auto-generated gas image masks.
 
@@ -311,7 +407,6 @@ Note: The following steps are for correcting auto-generated gas image masks.
 
 7. Reprocess subject as specified in 3.1.3.
 
-
 ## Acknowledgements:
 
 Developers: Junlan Lu, Aryil Bechtel, Sakib Kabir, Suphachart Leewiwatwong, David Mummy.
@@ -322,9 +417,9 @@ Additional help: Isabelle Dummer, Joanna Nowakowska, Shuo Zhang
 
 Please contact David Mummy (david.mummy@duke.edu) for any correspondence.
 
-## How to Cite: 
+## How to Cite:
 
-We appreciate being cited! Please click the "Cite This Repository" button under "About" on the repository landing page to get APA and BibTex citations. You can also just copy the following BibTex code into a plain text file and load it into your favorite citation manager: 
+We appreciate being cited! Please click the "Cite This Repository" button under "About" on the repository landing page to get APA and BibTex citations. You can also just copy the following BibTex code into a plain text file and load it into your favorite citation manager:
 
 @software{Lu_Duke_University_Xenon_2024,
 author = {Lu, Junlan and Leewiwatwong, Suphachart and Bechtel, Ari and Kabir, Sakib and Wang, Ziyi},
@@ -334,4 +429,3 @@ url = {https://github.com/TeamXenonDuke/xenon-gas-exchange-consortium},
 version = {4.0},
 year = {2024}
 }
-
