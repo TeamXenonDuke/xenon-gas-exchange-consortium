@@ -21,7 +21,11 @@ NONE = "None"
 class IOFields(object):
     """General IOFields constants."""
 
+    AGE = "age"
+    SEX = "sex"
+    HEIGHT = "height"
     BANDWIDTH = "bandwidth"
+    USER_LUNG_VOLUME_VALUE ="user_lung_volume_value"
     BIASFIELD_KEY = "biasfield_key"
     BONUS_SPECTRA_LABELS = "bonus_spectra_labels"
     CONTRAST_LABELS = "contrast_labels"
@@ -246,6 +250,9 @@ class StatsIOFields(object):
     """Statistic IO Fields."""
 
     INFLATION = "inflation"
+    INFLATION_PCT='inflation_percentage'
+    INFLATION_AVG='inflation_avg'
+    INFLATION_DISPLAY='inflation_display'
     RBC_M_RATIO = "rbc_m_ratio"
     RBC_SNR = "rbc_snr"
     MEMBRANE_SNR = "membrane_snr"
@@ -423,28 +430,30 @@ class ReferenceDistribution(object):
     "reference_fit_rbc": (0.06106, 0.00543, 0.00277),
     "reference_fit_membrane": (0.0700, 0.00871, 0.00284),
     "reference_stats": {
-        "vent_defect_avg": "5",
-        "vent_defect_std": "3",
-        "vent_low_avg": "16",
-        "vent_low_std": "8",
-        "vent_high_avg": "15",
-        "vent_high_std": "5",
-        "membrane_defect_avg": "1",
-        "membrane_defect_std": "<1",
-        "membrane_low_avg": "8",
-        "membrane_low_std": "2",
-        "membrane_high_avg": "1",
-        "membrane_high_std": "1",
-        "rbc_defect_avg": "4",
-        "rbc_defect_std": "2",
+        "vent_defect_avg": "2",
+        "vent_defect_std": "",
+        "vent_low_avg": "14",
+        "vent_low_std": "",
+        "vent_high_avg": "16",
+        "vent_high_std": "",
+        "membrane_defect_avg": "2",
+        "membrane_defect_std": "0",
+        "membrane_low_avg": "14",
+        "membrane_low_std": "0",
+        "membrane_high_avg": "2",
+        "membrane_high_std": "0",
+        "rbc_defect_avg": "2",
+        "rbc_defect_std": "",
         "rbc_low_avg": "14",
-        "rbc_low_std": "6",
-        "rbc_high_avg": "15",
-        "rbc_high_std": "10",
-        "rbc_m_ratio_avg": "0.59",
+        "rbc_low_std": "",
+        "rbc_high_avg": "16",
+        "rbc_high_std": "",
+        "rbc_m_ratio_avg": "0.55",
         "rbc_m_ratio_std": "0.12",
         "inflation_avg": "3.4",
         "inflation_std": "0.33",
+        "inflation_percentage":"0.0",
+        "inflation_display":"0.0",
         }
     }
 
@@ -457,28 +466,30 @@ class ReferenceDistribution(object):
         "reference_fit_rbc": (0.06106, 0.00527, 0.00268),
         "reference_fit_membrane": (0.0700, 0.00950, 0.00309),
         "reference_stats": {
-            "vent_defect_avg": "5",
-            "vent_defect_std": "3",
-            "vent_low_avg": "16",
-            "vent_low_std": "8",
-            "vent_high_avg": "15",
-            "vent_high_std": "5",
-            "membrane_defect_avg": "1",
-            "membrane_defect_std": "<1",
-            "membrane_low_avg": "8",
-            "membrane_low_std": "2",
-            "membrane_high_avg": "1",
-            "membrane_high_std": "1",
-            "rbc_defect_avg": "4",
-            "rbc_defect_std": "2",
+            "vent_defect_avg": "2",
+            "vent_defect_std": "",
+            "vent_low_avg": "14",
+            "vent_low_std": "",
+            "vent_high_avg": "16",
+            "vent_high_std": "",
+            "membrane_defect_avg": "2",
+            "membrane_defect_std": "0",
+            "membrane_low_avg": "14",
+            "membrane_low_std": "0",
+            "membrane_high_avg": "2",
+            "membrane_high_std": "0",
+            "rbc_defect_avg": "2",
+            "rbc_defect_std": "",
             "rbc_low_avg": "14",
-            "rbc_low_std": "6",
-            "rbc_high_avg": "15",
-            "rbc_high_std": "10",
-            "rbc_m_ratio_avg": "0.59",
-            "rbc_m_ratio_std": "0.12",
+            "rbc_low_std": "",
+            "rbc_high_avg": "16",
+            "rbc_high_std": "",
+            "rbc_m_ratio_avg": "0.49",
+            "rbc_m_ratio_std": "0.11",
             "inflation_avg": "3.4",
             "inflation_std": "0.33",
+            "inflation_percentage":"0.0",
+            "inflation_display":"0.0",
             }
         }
     
@@ -491,28 +502,30 @@ class ReferenceDistribution(object):
         "reference_fit_rbc": (0.06106, 0.00527, 0.00268),
         "reference_fit_membrane": (0.0700, 0.00950, 0.00309),
         "reference_stats": {
-            "vent_defect_avg": "5",
-            "vent_defect_std": "3",
-            "vent_low_avg": "16",
-            "vent_low_std": "8",
-            "vent_high_avg": "15",
-            "vent_high_std": "5",
-            "membrane_defect_avg": "1",
-            "membrane_defect_std": "<1",
-            "membrane_low_avg": "8",
-            "membrane_low_std": "2",
-            "membrane_high_avg": "1",
-            "membrane_high_std": "1",
-            "rbc_defect_avg": "4",
-            "rbc_defect_std": "2",
-            "rbc_low_avg": "14",
-            "rbc_low_std": "6",
-            "rbc_high_avg": "15",
-            "rbc_high_std": "10",
+            "vent_defect_avg": "2.15",
+            "vent_defect_std": "",
+            "vent_low_avg": "13.59",
+            "vent_low_std": "",
+            "vent_high_avg": "15.74",
+            "vent_high_std": "",
+            "membrane_defect_avg": "2.15",
+            "membrane_defect_std": "0",
+            "membrane_low_avg": "13.59",
+            "membrane_low_std": "0",
+            "membrane_high_avg": "2.28",
+            "membrane_high_std": "0",
+            "rbc_defect_avg": "2.15",
+            "rbc_defect_std": "",
+            "rbc_low_avg": "13.59",
+            "rbc_low_std": "",
+            "rbc_high_avg": "15.74",
+            "rbc_high_std": "",
             "rbc_m_ratio_avg": "0.59",
             "rbc_m_ratio_std": "0.12",
             "inflation_avg": "3.4",
             "inflation_std": "0.33",
+            "inflation_percentage":"0.0",
+            "inflation_display":"0.0",
             }
         }
 

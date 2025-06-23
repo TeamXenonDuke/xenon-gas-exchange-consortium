@@ -7,6 +7,7 @@ from typing import Any, Dict
 
 import nibabel as nib
 import numpy as np
+import pandas as pd
 
 import biasfield
 import preprocessing as pp
@@ -103,6 +104,7 @@ class Subject(object):
         self.traj_ute = np.array([])
         self.reference_data_key = str()
         self.reference_data = {}
+        self.user_lung_volume_value = ""
 
     def read_twix_files(self):
         """Read in twix files to dictionary.
@@ -716,6 +718,63 @@ class Subject(object):
                 self.reference_data['reference_fit_rbc'][1],
             ),
         }
+        
+        if isinstance(self.config.patient_frc, (int, float)):
+            FRC_Volume = float(self.config.patient_frc)
+            User_Volume_FRC = f"{FRC_Volume}L"
+        else:
+            FRC_Volume = metrics.GLI_volume(
+                self.dict_dis[constants.IOFields.AGE],
+                self.dict_dis[constants.IOFields.SEX],
+                self.dict_dis[constants.IOFields.HEIGHT],
+                volume_type="frc"
+            )
+            User_Volume_FRC = "Predicted"
+
+        if isinstance(self.config.bag_volume, (int, float)):
+            Bag_Volume = float(self.config.bag_volume)
+            User_Volume_Bag = f"{Bag_Volume}L"
+        else:
+            User_Volume_Bag = "Predicted"
+            FVC_Volume = metrics.GLI_volume(
+                self.dict_dis[constants.IOFields.AGE],
+                self.dict_dis[constants.IOFields.SEX],
+                self.dict_dis[constants.IOFields.HEIGHT],
+                volume_type="fvc"
+            )
+            if isinstance(FVC_Volume, (int, float)) and not pd.isna(FVC_Volume):
+                Bag_Volume = metrics.get_bag_volume(FVC_Volume)
+            else:
+                Bag_Volume = np.nan
+
+        if pd.isna(FRC_Volume):
+            display_frc = "NA"
+        elif User_Volume_FRC == "Predicted":
+            display_frc = "Predicted"
+        else:
+            display_frc = User_Volume_FRC
+
+        if pd.isna(Bag_Volume):
+            display_bag = "NA"
+        elif User_Volume_Bag == "Predicted":
+            display_bag = "Predicted"
+        else:
+            display_bag = User_Volume_Bag
+
+        self.user_lung_volume_value = f"{display_frc}/ {display_bag}"
+
+        if pd.isna(FRC_Volume) or pd.isna(Bag_Volume):
+            self.reference_data['reference_stats'][constants.StatsIOFields.INFLATION_PCT] = "NA";
+            self.reference_data['reference_stats'][constants.StatsIOFields.INFLATION_AVG] ="NA";
+            self.reference_data['reference_stats'][constants.StatsIOFields.INFLATION_DISPLAY] ="NA";
+            self.dict_stats[constants.StatsIOFields.INFLATION] = round(self.dict_stats[constants.StatsIOFields.INFLATION],1);
+        else:
+            predicted_volume = FRC_Volume + Bag_Volume
+            self.reference_data['reference_stats'][constants.StatsIOFields.INFLATION_PCT] = int(round(self.dict_stats[constants.StatsIOFields.INFLATION] / predicted_volume * 100, 0));
+            self.reference_data['reference_stats'][constants.StatsIOFields.INFLATION_AVG] =round(predicted_volume,1);
+            self.reference_data['reference_stats'][constants.StatsIOFields.INFLATION_DISPLAY] = f"{self.reference_data['reference_stats'][constants.StatsIOFields.INFLATION_AVG] }L ({self.reference_data['reference_stats'][constants.StatsIOFields.INFLATION_PCT]}%)";
+            self.dict_stats[constants.StatsIOFields.INFLATION] = round(self.dict_stats[constants.StatsIOFields.INFLATION],1);
+
         return self.dict_stats
 
     def get_info(self) -> Dict[str, Any]:
@@ -798,6 +857,7 @@ class Subject(object):
             ),
             constants.IOFields.TE90: 1e6 * self.dict_dis[constants.IOFields.TE90],
             constants.IOFields.TR_DIS: 1e3 * self.dict_dis[constants.IOFields.TR],
+            constants.IOFields.USER_LUNG_VOLUME_VALUE:self.user_lung_volume_value,
         }
         return self.dict_info
 

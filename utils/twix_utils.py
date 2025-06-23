@@ -12,6 +12,68 @@ import numpy as np
 
 from utils import constants
 
+def get_patient_age(twix_obj: mapvbvd._attrdict.AttrDict) -> float:
+    """
+    Get the patient's age.
+
+    Args:
+        twix_obj: Twix object returned from the mapVBVD function.
+
+    Returns:
+        Patient age as a float.
+
+    Raises:
+        ValueError: If age information is not found in the twix object.
+    """
+    try:
+        return twix_obj.hdr.Meas.flPatientAge
+    except:
+        return np.nan
+
+    raise ValueError("Could not find age from twix object")
+
+
+def get_patient_sex(twix_obj: mapvbvd._attrdict.AttrDict) -> str:
+    """
+    Get the patient's sex.
+
+    Args:
+        twix_obj: Twix object returned from the mapVBVD function.
+
+    Returns:
+        Patient sex as a string: "M" for male, "F" for female.
+
+    Raises:
+        ValueError: If sex information is not found in the twix object.
+    """
+    try:
+        return "M" if twix_obj.hdr.Meas.lPatientSex == 1 else "F"
+    except:
+        return np.nan
+
+    raise ValueError("Could not find sex from twix object")
+
+
+def get_patient_height(twix_obj: mapvbvd._attrdict.AttrDict) -> float:
+    """
+    Get the patient's height in centimeters.
+
+    Args:
+        twix_obj: Twix object returned from the mapVBVD function.
+
+    Returns:
+        Patient height as a float (in cm).
+
+    Raises:
+        ValueError: If height information is not found in the twix object.
+    """
+    try:
+        return twix_obj.hdr.Meas.flPatientHeight / 10.0
+    except:
+        return np.nan
+
+    raise ValueError("Could not find height from twix object")
+
 
 def get_scan_date(twix_obj: mapvbvd._attrdict.AttrDict) -> str:
     """Get the scan date in MM-DD-YYYY format.
