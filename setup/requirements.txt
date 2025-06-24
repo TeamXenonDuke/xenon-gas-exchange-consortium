@@ -1,4 +1,4 @@
-typing_extensions; sys_platform == "linux" # WSL issue where missing or needed an update
+typing_extensions==4.13.2; sys_platform == "linux" # WSL issue where missing or needed an update
 pydicom; sys_platform == "linux" # WSL issue where missing or needed an update
 absl_py==1.2.0
 GitPython==3.1.37
