@@ -1,3 +1,5 @@
+typing_extensions; sys_platform == "linux" # WSL issue where missing or needed an update
+pydicom; sys_platform == "linux" # WSL issue where missing or needed an update
 absl_py==1.2.0
 GitPython==3.1.37
 ismrmrd==1.12.5
@@ -13,4 +15,5 @@ pyMapVBVD==0.4.8
 PyPDF2==3.0.1
 scikit_image==0.19.3
 scipy==1.9.1
-tensorflow_macos==2.10.0
+tensorflow_macos==2.10.0; sys_platform == "darwin" # for macOS
+tensorflow; sys_platform == "linux" # for WSL installation
