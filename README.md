@@ -28,6 +28,8 @@ WARNING: run time in WSL can be slower compared to Linux or Mac systems.
 
 The install process for WSL using Ubuntu can be found [here](https://www.youtube.com/watch?v=X-DHaQLrBi8&t=385s&ab_channel=ProgrammingKnowledge2ProgrammingKnowledge2). Note: If the link is broken, please search "How to Install Ubuntu on Windows 10 (WSL)" on YouTube.
 
+All terminal commands for Windows users should be through WSL on Ubuntu. You must use the Ubuntu terminal for setup, installation, and when using the pipeline.
+
 Further information for the Windows Subsystem for Linux installation process can be found in the [Microsoft documentation](https://docs.microsoft.com/en-us/windows/wsl/install-win10).
 
 ### 1.2. Xcode and Homebrew for Mac
@@ -148,7 +150,7 @@ The next steps will be for manual installation. Skip to [Usage](#usage) if you a
 
 You can rerun `setup.sh` to skip to the build and install step if there is a failure during the SuperBuild. You should have all required packages installed to your conda environment and native computer by the time the SuperBuild starts, so you can skip over that part of `setup.sh` and go straight to the build or install steps.
 
-If there was a failure during the build step, enter the following command to skip to the build step (Note: Repeated failures may mean you are using too many CPU cores. You may need to run the build step with only 1 thread!):
+If there was a failure during the build step, enter the following command to skip to the build step (Note: Repeated failures may mean you are using too many CPU cores or RAM. You may need to run the build step with only 1 thread!):
 
 ```bash
 ./setup.sh build-only 2>&1 | tee setup.log

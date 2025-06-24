@@ -3,6 +3,31 @@ RED='\033[0;31m'
 YELLOW='\033[1;33m'
 NC='\033[0m'
 
+failures=()
+
+error_catch() {
+    "$@"
+    local exit_code=$?
+    if [ $exit_code -ne 0 ]; then
+        failures+=("$*")
+    fi
+    return $exit_code
+}
+
+error_report() {
+    if [ ${#failures[@]} -ne 0 ]; then
+        echo -e "${YELLOW}========================================="
+        for cmd in "${failures[@]}"; do
+            echo -e "${RED}sudo/brew failed:${NC} $cmd"
+        done
+        echo -e "${YELLOW}=========================================${NC}"
+        echo "Please find a way to install the above failed packages before running 'setup.sh' again!"
+        echo "Exiting..."
+        exit 1
+    fi
+}
+
+
 echo "It is recommended to run this script with the following command './setup.sh 2>&1 | tee setup.log' in order to log all standard output and error in case of failure."
 
 # Should exit if there are 1. too many parameters, 2. an unknown parameter for p1, or 3. setup.sh was run in a directory that isn't the one that hosts the pipeline.
@@ -74,15 +99,17 @@ if !([[ "$1" == "build-only" ]] || [[ "$1" == "install-only" ]]); then
 
     # Install gcc to native computer
     if [[ "$OSTYPE" == "linux-gnu"* ]]; then
-        sudo apt-get update
-        sudo apt install gcc
+        error_catch sudo apt-get update
+        error_catch sudo apt install gcc
     elif [[ "$OSTYPE" == "darwin"* ]]; then
-        brew install gcc
+        error_catch brew install gcc
     else 
         echo -e "${RED}Error: Incorrect OS. ${NC}Please use WSL, Linux, or MacOS."
         echo "Exiting..."
         exit 1
     fi
+
+    error_report
 
     # Install packages in requirements.txt to the VE
     pip install -r setup/requirements.txt
@@ -106,16 +133,18 @@ if !([[ "$1" == "build-only" ]] || [[ "$1" == "install-only" ]]); then
 
     # Install remaining packages to native computer
     if [[ "$OSTYPE" == "linux-gnu"* ]]; then
-        sudo apt install wkhtmltopdf
-        sudo apt install poppler-utils
+        error_catch sudo apt install wkhtmltopdf
+        error_catch sudo apt install poppler-utils
     elif [[ "$OSTYPE" == "darwin"* ]]; then
-        brew install wkhtmltopdf
-        brew install poppler
+        error_catch brew install wkhtmltopdf
+        error_catch brew install poppler
     else 
         echo -e "${RED}Error: Incorrect OS. ${NC}Please use WSL, Linux, or MacOS."
         echo "Exiting..."
         exit 1
     fi
+
+    error_report
 
     # Prompt for user: pause to move the .h5 files to the correct directory from the Google Drive and confirm.
     echo -e "${YELLOW}\e]8;;https://drive.google.com/drive/folders/1gcwT14_6Tl_2zkLZ_MHsm-pAYHXWtVOA?usp=sharing\ahttps://drive.google.com/drive/folders/1gcwT14_6Tl_2zkLZ_MHsm-pAYHXWtVOA?usp=sharing\e]8;;\a${NC}"
@@ -136,21 +165,23 @@ if !([[ "$1" == "build-only" ]] || [[ "$1" == "install-only" ]]); then
 
     # Install git, cmake, g++, zlib to native computer
     if [[ "$OSTYPE" == "linux-gnu"* ]]; then
-        sudo apt-get -y install git
-        sudo apt-get -y install cmake
-        sudo apt install g++
-        sudo apt-get -y install zlib1g-dev
+        error_catch sudo apt-get -y install git
+        error_catch sudo apt-get -y install cmake
+        error_catch sudo apt install g++
+        error_catch sudo apt-get -y install zlib1g-dev
         #sudo apt install ccache
     elif [[ "$OSTYPE" == "darwin"* ]]; then
-        brew install git
-        brew install cmake
-        brew install g++
+        error_catch brew install git
+        error_catch brew install cmake
+        error_catch brew install g++
         #brew install ccache
     else 
         echo -e "${RED}Error: Incorrect OS. ${NC}Please use WSL, Linux, or MacOS."
         echo "Exiting..."
         exit 1
     fi
+
+    error_report
 
     # Begin setup for SuperBuild. Clone ANTs and create build and install directories
     workingDir=${PWD}
