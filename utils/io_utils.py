@@ -249,6 +249,9 @@ def read_dis_twix(path: str, config: Optional[ml_collections.ConfigDict] = None)
         path: str file path of twix file
     Returns: dictionary containing data and metadata extracted from the twix file.
     This includes:
+        - Age: Patient age as a float.
+        - Sex: Patient sex as a string ("M" or "F").
+        - Height: Patient height in centimeters as a float.
         - dwell time in seconds.
         - flip angle applied to dissolved phase in degrees.
         - flip angle applied to gas phase in degrees.
@@ -284,6 +287,9 @@ def read_dis_twix(path: str, config: Optional[ml_collections.ConfigDict] = None)
         logging.error("Gradient delay is not properly set in the config file")
 
     return {
+        constants.IOFields.AGE: twix_utils.get_patient_age(twix_obj),
+        constants.IOFields.SEX: twix_utils.get_patient_sex(twix_obj),
+        constants.IOFields.HEIGHT: twix_utils.get_patient_height(twix_obj),
         constants.IOFields.SAMPLE_TIME: twix_utils.get_sample_time(twix_obj),
         constants.IOFields.FA_DIS: twix_utils.get_flipangle_dissolved(twix_obj),
         constants.IOFields.FA_GAS: twix_utils.get_flipangle_gas(twix_obj),
@@ -405,6 +411,9 @@ def read_dis_mrd(path: str, multi_echo: bool) -> Dict[str, Any]:
         multi_echo: option to perform multi echo
     Returns: dictionary containing data and metadata extracted from the mrd file.
     This includes:
+        - Age: Patient age as a float.
+        - Sex: Patient sex as a string ("M" or "F").
+        - Height: Patient height in centimeters as a float.
         - dwell time in seconds.
         - flip angle applied to dissolved phase in degrees.
         - flip angle applied to gas phase in degrees.
@@ -433,6 +442,9 @@ def read_dis_mrd(path: str, multi_echo: bool) -> Dict[str, Any]:
 
     data_dict = mrd_utils.get_gx_data(dataset, multi_echo)
     return {
+        constants.IOFields.AGE: np.nan,
+        constants.IOFields.SEX: np.nan,
+        constants.IOFields.HEIGHT: np.nan,
         constants.IOFields.BANDWIDTH: np.nan,
         constants.IOFields.SAMPLE_TIME: mrd_utils.get_sample_time(dataset),
         constants.IOFields.FA_DIS: mrd_utils.get_flipangle_dissolved(header),

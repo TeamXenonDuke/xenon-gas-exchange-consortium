@@ -35,14 +35,15 @@ class Config(config_dict.ConfigDict):
     def __init__(self):
         """Initialize config parameters."""
         super().__init__()
-        # Standard parameters - MUST be specified
+        # Standard parameters - MUST be verified
         self.data_dir = ""
         self.subject_id = "test"
         self.rbc_m_ratio = 0.0
-        self.segmentation_key = constants.SegmentationKey.MANUAL_VENTvalue
+        self.patient_frc = "None"
+        self.bag_volume = "None"
+        self.segmentation_key = constants.SegmentationKey.CNN_VENT.value
         self.manual_seg_filepath = ""
         self.trachea_plus_lung_mask_filepath = ""
-        self.bag_volume = int
 
         # Additional options
         self.reference_data_key = constants.ReferenceDataKey.DUKE_REFERENCE.value

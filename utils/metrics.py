@@ -9,6 +9,9 @@ from scipy.ndimage.morphology import binary_dilation
 
 from utils import constants
 
+import pandas as pd
+import logging
+import numpy as np
 
 def _get_dilation_kernel(x: int) -> int:
     """Get dilation kernel for binary dilation in 1-dimension."""
@@ -83,6 +86,109 @@ def inflation_volume(mask: np.ndarray, fov: float) -> float:
         np.sum(mask) * fov**3 / np.shape(mask)[0] ** 3
     ) / constants.FOVINFLATIONSCALE3D
 
+
+def GLI_volume(age: float, sex: str, height: float, volume_type: str = "frc") -> float:
+    """
+    Calculate the GLI-predicted lung volume for a given age, sex, and height.
+
+    Args:
+        age: float, subject age in years.
+        sex: str, subject sex ("M" or "F").
+        height: float, subject height in cm.
+        volume_type: str, either "frc" (functional residual capacity) or "fvc" (forced vital capacity).
+
+    Returns:
+        Predicted lung volume (float) based on GLI lookup table. Returns np.nan if input is missing or match not found.
+    """
+    if pd.isna(age) or pd.isna(sex) or pd.isna(height):
+        return np.nan
+    lookup_df = pd.read_pickle('./assets/lut/GLI.pkl')
+
+    # Ensure sex is upper case, and volume_type is lower case
+    sex = sex.upper()
+    volume_type = volume_type.lower()
+
+    if volume_type == "frc":
+        column_name = 'frc_predicted'
+    elif volume_type == "fvc":
+        column_name = 'fvc_predicted'
+    else:
+        raise ValueError("volume_type must be either 'frc' or 'fvc'")
+
+    # Helper to get predicted value at specific age and height
+    def get_predicted(a, h):
+        row = lookup_df[(lookup_df['age'] == a) & (lookup_df['height'] == h) & (lookup_df['sex'] == sex)]
+        if not row.empty:
+            return row[column_name].values[0]
+        else:
+            return None
+
+    age_int = int(age) == age
+    height_int = int(height) == height
+
+    if age_int and height_int:
+        predicted_value = get_predicted(int(age), int(height))
+        return predicted_value if predicted_value is not None else 0.0
+
+    elif age_int or height_int:
+        if age_int:
+            h0 = int(np.floor(height))
+            h1 = h0 + 1
+            val0 = get_predicted(int(age), h0)
+            val1 = get_predicted(int(age), h1)
+            if val0 is not None and val1 is not None:
+                predicted_value = val0 + (height - h0) * (val1 - val0)
+                return predicted_value
+        else:
+            a0 = int(np.floor(age))
+            a1 = a0 + 1
+            val0 = get_predicted(a0, int(height))
+            val1 = get_predicted(a1, int(height))
+            if val0 is not None and val1 is not None:
+                predicted_value = val0 + (age - a0) * (val1 - val0)
+                return predicted_value
+
+    else:
+        a0 = int(np.floor(age))
+        a1 = a0 + 1
+        h0 = int(np.floor(height))
+        h1 = h0 + 1
+        val00 = get_predicted(a0, h0)
+        val01 = get_predicted(a0, h1)
+        val10 = get_predicted(a1, h0)
+        val11 = get_predicted(a1, h1)
+
+        if None not in [val00, val01, val10, val11]:
+            wa1 = age - a0
+            wa0 = 1 - wa1
+            wh1 = height - h0
+            wh0 = 1 - wh1
+
+            predicted_value = (
+                val00 * wa0 * wh0 +
+                val01 * wa0 * wh1 +
+                val10 * wa1 * wh0 +
+                val11 * wa1 * wh1
+            )
+            return predicted_value
+
+    return 0.0
+
+def get_bag_volume(fvc_volume: float) -> float:
+    """
+    Given FVC volume, calculate the bag volume as 20% of FVC,
+    rounded to the nearest 0.25 increment.
+    
+    Args:
+        fvc_volume (float): The FVC volume in liters.
+
+    Returns:
+        float: Bag volume rounded to the nearest 0.25 increment.
+    """
+    bag_volume = 0.2 * fvc_volume
+    # Round to the nearest 0.25
+    bag_volume_rounded = round(bag_volume * 4) / 4.0
+    return bag_volume_rounded
 
 def process_date() -> str:
     """Return the current date in YYYY-MM-DD format."""
