@@ -39,8 +39,10 @@ class Config(config_dict.ConfigDict):
         self.data_dir = ""
         self.subject_id = "test"
         self.rbc_m_ratio = 0.0
-        self.segmentation_key = constants.SegmentationKey.CNN_VENT.value
+        self.segmentation_key = constants.SegmentationKey.MANUAL_VENTvalue
         self.manual_seg_filepath = ""
+        self.trachea_plus_lung_mask_filepath = ""
+        self.bag_volume = int
 
         # Additional options
         self.reference_data_key = constants.ReferenceDataKey.DUKE_REFERENCE.value
@@ -82,9 +84,9 @@ class Recon(object):
     def __init__(self):
         """Initialize the reconstruction parameters."""
         # Gradient delays - MUST be specified
-        self.del_x = "None"
-        self.del_y = "None"
-        self.del_z = "None"
+        self.del_x = -5
+        self.del_y = -5
+        self.del_z = -5
 
         # Scan type
         self.scan_type = constants.ScanType.NORMALDIXON.value

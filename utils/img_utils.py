@@ -16,6 +16,7 @@ import skimage
 from scipy import ndimage
 
 from utils import constants, io_utils
+import nibabel as nb
 
 
 def remove_small_objects(mask: np.ndarray, scale: float = 0.1):
@@ -197,8 +198,9 @@ def interp(img: np.ndarray, factor: int = 1):
 def normalize(
     image: np.ndarray,
     mask: np.ndarray = np.array([0.0]),
-    method: str = constants.NormalizationMethods.PERCENTILE_MASKED,
+    method: str = constants.NormalizationMethods.FRAC_VENT,  # default method = PERCENTILE_MASKED
     percentile: float = 99.0,
+    bag_volume: float = None # Add bag_volume as a parameter with a default value
 ) -> np.ndarray:
     """Normalize the image to be between [0, 1.0].
 
@@ -212,7 +214,9 @@ def normalize(
     Returns:
         np.ndarray: normalized image
     """
-    if method == constants.NormalizationMethods.MAX:
+    if bag_volume is None:
+        raise ValueError("You must provide a numeric value for `bag_volume`.")
+    elif method == constants.NormalizationMethods.MAX:
         return image * 1.0 / np.max(image)
     elif method == constants.NormalizationMethods.PERCENTILE:
         return image * 1.0 / np.percentile(image, percentile)
@@ -225,6 +229,61 @@ def normalize(
         image[np.isnan(image)] = 0
         image[np.isinf(image)] = 0
         return image / np.mean(image[mask])
+    # frac_vent_modifications
+    elif method == constants.NormalizationMethods.FRAC_VENT:
+        # Correction factor for upper airways and dead tube space. This is very much a guess.
+        tcv_gas_vol = bag_volume - 10 #new estimate in mL
+        # Have the 10 on the constants 
+        
+
+        # What is mask volume in ml?
+        #in constants 
+        voxel_side = .3125  # cm
+        voxel_vol = voxel_side**3  # cm^3 = ml
+
+        # What is the amount of signal within the lung?
+        vent_img_mask = image.copy()  # Start with original vent image
+
+        print("vent_img_mask shape:", vent_img_mask.shape)
+        print("mask shape:", mask.shape)
+
+        vent_img_mask[mask == 0] = 0.0  # Zero out the non-lung voxels
+        
+
+        print('image' + str(np.sum(image)))
+        print('vent image mask' + str(np.sum(vent_img_mask)))
+
+        #signal_total = np.sum(image)  # sum it all up
+
+        #previous
+        signal_total = np.sum(vent_img_mask)  # sum it all up
+
+        # What is the conversion factor between signal and volume? semi-big assumption here
+        # Framing it as volume/signal so we can multiply by a voxel signal and get a volume
+        sig_vol_rat = tcv_gas_vol / signal_total
+
+        #up until this part is using the big mask 
+
+        # Fractional Vent in a voxel
+        # frac_vent = New gas volume / (old volume + new volume -- but that's just the voxel volume?)
+        frac_vent = (image * sig_vol_rat) / voxel_vol
+
+        # Create a NIfTI image
+        nifti_img = nb.Nifti1Image(frac_vent, affine=np.eye(4))
+
+        # Save the image to a file
+        nifti_img.to_filename('tmp/frac_vent_output.nii')
+
+        # New volume is just proportional to signal
+        # Flatten the 3D array to 1D for plotting the histogram
+        frac_vent_mask = frac_vent[mask == 1]  # For the purposes of the histogram, only count voxels in the thoracic cavity mask
+        flat_array = frac_vent_mask.flatten()
+
+        # and the mean
+        mean = np.mean(flat_array)
+
+        return frac_vent
+
     else:
         raise ValueError("Invalid normalization method")
 

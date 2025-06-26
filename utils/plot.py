@@ -491,3 +491,69 @@ def plot_histogram_with_thresholds(
     ax.tick_params(axis="x", which="major", labelsize=20)
     plt.tight_layout(pad=0.4, w_pad=0.5, h_pad=1.0)
     plt.savefig(path)
+
+
+def plot_histogram_ventilation(data: np.ndarray, path: str):
+    """Plot histogram of ventilation.
+
+    Args:
+        data (np.ndarray): data to plot histogram of.
+        path (str): path to save the image.
+    """
+
+    fig, ax = plt.subplots(figsize=(9, 6))
+
+    #without flattening data also works, what is this for? 
+    data = data.flatten()
+
+    #normalize the 99th percentile
+    #data = data / np.percentile(data, 99)
+    #data[data > 1] = 1
+
+    #weights used in plotting later
+    weights = np.ones_like(data) / float(len(data)) 
+
+    # plot histogram
+    _, bins, _ = ax.hist(
+        data,
+        bins=50,
+        color=(0.4196, 0.6824, 0.8392),
+        weights=weights,
+        edgecolor="black",
+    )
+
+    # plot healthy reference line
+    #refer_fit = np.array([0.04462, 0.52, 0.2713])
+    #normal = refer_fit[0] * np.exp(-(((bins - refer_fit[1]) / refer_fit[2]) ** 2))
+    #ax.plot(bins, normal, "--", color="k", linewidth=4)
+
+    # display mean of data as text in the top right corner
+    plt.legend(
+        [
+            "Mean: "
+            + str(round(np.mean(data), 10))
+            + " | SD: "
+            + str(round(np.std(data), 2))
+            + " | Median: "
+            + str(round(np.median(data), 2))
+        ],
+        fontsize=20,
+        loc="upper right",
+    )
+
+    print("Mean: "
+            + str(round(np.mean(data), 3))
+            + " | SD: "
+            + str(round(np.std(data), 3)))
+
+    ax.set_ylabel("Fraction of Total Pixels", fontsize=35)
+    # set plot parameters
+    plt.xlim((0, 1))
+    #plt.ylim((0, 0.09))
+    plt.rc("axes", linewidth=4)
+    plt.xticks(fontsize=40)
+    plt.yticks(fontsize=40)
+    fig.tight_layout()
+    plt.savefig(path)
+    plt.close()
+    
