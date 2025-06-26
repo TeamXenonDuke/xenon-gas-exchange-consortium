@@ -172,7 +172,7 @@ def GLI_volume(age: float, sex: str, height: float, volume_type: str = "frc") ->
             )
             return predicted_value
 
-    return 0.0
+    return np.nan
 
 def get_bag_volume(fvc_volume: float) -> float:
     """
