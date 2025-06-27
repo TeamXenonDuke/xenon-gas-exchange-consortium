@@ -277,6 +277,7 @@ class StatsIOFields(object):
     VENT_STDDEV = "vent_stddev"
     DLCO_EST = "dlco_est"
     KCO_EST = "kco_est"
+    RDP_BA = "rdp_ba"
     ALVEOLAR_VOLUME = "alveolar_volume"
 
 
