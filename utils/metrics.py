@@ -172,6 +172,11 @@ def GLI_volume(age: float, sex: str, height: float, volume_type: str = "frc") ->
             )
             return predicted_value
 
+    # Display warning message when the value is outside the GLI range
+    logging.warning("\n" + "#" * 40)
+    logging.warning("Age or height is outside the GLI estimated range")
+    logging.warning("#" * 40 + "\n")
+    
     return np.nan
 
 def get_bag_volume(fvc_volume: float) -> float:
