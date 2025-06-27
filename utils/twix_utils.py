@@ -47,7 +47,7 @@ def get_patient_sex(twix_obj: mapvbvd._attrdict.AttrDict) -> str:
         ValueError: If sex information is not found in the twix object.
     """
     try:
-        return "M" if twix_obj.hdr.Meas.lPatientSex == 1 else "F"
+        return "F" if twix_obj.hdr.Meas.lPatientSex == 1 else "M"
     except:
         return np.nan
 
