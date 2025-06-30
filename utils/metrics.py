@@ -1,11 +1,15 @@
 """Metrics for evaluating images."""
+import heapq
 import math
 import sys
 from datetime import datetime
 
+import cv2
+from scipy import ndimage
+
 sys.path.append("..")
 import numpy as np
-from scipy.ndimage.morphology import binary_dilation
+from scipy.ndimage import binary_dilation
 
 from utils import constants
 
