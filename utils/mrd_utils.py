@@ -337,8 +337,7 @@ def get_gx_data(dataset: ismrmrd.hdf5.Dataset, multi_echo: bool) -> Dict[str, An
         try:
             set_labels.append(acquisition_header.idx.set)
         except:
-            logging.info("#############################################")
-            logging.info("Unable to find set paramater from mrd object.")
+            logging.warning("Unable to find set paramater from mrd object.")
             set_included = False
 
     raw_fids = np.asarray(raw_fids)
@@ -384,11 +383,13 @@ def get_gx_data(dataset: ismrmrd.hdf5.Dataset, multi_echo: bool) -> Dict[str, An
                 (contrast_labels_truncated == constants.ContrastLabels.DISSOLVED) & (set_labels_truncated == set_label)
             ]
 
-            # Append gas_fids_set, dis_fids_set, and traj_set with an additional axis to represent the set dimension
-            gas_fids_all.append(np.expand_dims(gas_fids_set, axis=-1))
-            dis_fids_all.append(np.expand_dims(dis_fids_set, axis=-1))
-            gas_trajectories_all.append(np.expand_dims(gas_traj_set, axis=-1))
-            dis_trajectories_all.append(np.expand_dims(dis_traj_set, axis=-1))
+            if gas_fids_set.size > 0 and not np.all(gas_fids_set == 0):
+                gas_fids_all.append(np.expand_dims(gas_fids_set, axis=-1))
+                gas_trajectories_all.append(np.expand_dims(gas_traj_set, axis=-1))
+            if dis_fids_set.size > 0 and not np.all(dis_fids_set == 0):
+                dis_fids_all.append(np.expand_dims(dis_fids_set, axis=-1))
+                dis_trajectories_all.append(np.expand_dims(dis_traj_set, axis=-1))
+
 
         gas_fids_all = np.concatenate(gas_fids_all, axis=-1)
         dis_fids_all = np.concatenate(dis_fids_all, axis=-1)
@@ -433,6 +434,7 @@ def get_gx_data(dataset: ismrmrd.hdf5.Dataset, multi_echo: bool) -> Dict[str, An
             ],
             constants.IOFields.TRAJ: all_traj,
         }
+
 
 
 def get_ute_data(dataset: ismrmrd.hdf5.Dataset) -> Dict[str, Any]:
