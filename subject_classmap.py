@@ -7,7 +7,6 @@ from typing import Any, Dict
 
 import nibabel as nib
 import numpy as np
-import pandas as pd
 
 import biasfield
 import preprocessing as pp
@@ -102,9 +101,6 @@ class Subject(object):
         self.traj_dissolved = np.array([])
         self.traj_gas = np.array([])
         self.traj_ute = np.array([])
-        self.reference_data_key = str()
-        self.reference_data = {}
-        self.user_lung_volume_value = ""
 
     def read_twix_files(self):
         """Read in twix files to dictionary.
@@ -114,8 +110,7 @@ class Subject(object):
         """
 
         self.dict_dis = io_utils.read_dis_twix(
-            io_utils.get_dis_twix_files(str(self.config.data_dir)),
-            config = self.config
+            io_utils.get_dis_twix_files(str(self.config.data_dir))
         )
         try:
             self.dict_dyn = io_utils.read_dyn_twix(
@@ -135,8 +130,7 @@ class Subject(object):
         data.
         """
         self.dict_dis = io_utils.read_dis_mrd(
-            io_utils.get_dis_mrd_files(str(self.config.data_dir)), 
-            self.config.multi_echo
+            io_utils.get_dis_mrd_files(str(self.config.data_dir))
         )
         try:
             self.dict_dyn = io_utils.read_dyn_mrd(
@@ -222,13 +216,6 @@ class Subject(object):
         self.data_dissolved = self.dict_dis[constants.IOFields.FIDS_DIS]
         self.data_gas = self.dict_dis[constants.IOFields.FIDS_GAS]
 
-        if (
-            self.dict_dis[constants.IOFields.INSTITUTION]
-            == constants.Institution.IOWA.value
-            ):
-                self.data_dissolved =  np.conjugate(self.data_dissolved);
-                self.data_gas = np.conjugate(self.data_gas);
-
         # get or generate trajectories and trajectory scaling factors
         if constants.IOFields.TRAJ not in self.dict_dis.keys():
             self.traj_dissolved = pp.prepare_traj(self.dict_dis, config=self.config)
@@ -236,11 +223,8 @@ class Subject(object):
                 recon_size=int(self.config.recon.recon_size),
                 n_points=self.data_gas.shape[1],
             )
-            self.traj_gas = self.traj_dissolved
         else:
-            self.traj_gas = self.dict_dis[constants.IOFields.TRAJ][0]
-            self.traj_dissolved = self.dict_dis[constants.IOFields.TRAJ][1]
-
+            self.traj_dissolved = self.dict_dis[constants.IOFields.TRAJ]
             if (
                 self.dict_dis[constants.IOFields.INSTITUTION]
                 == constants.Institution.CCHMC.value
@@ -248,7 +232,7 @@ class Subject(object):
                 self.traj_scaling_factor = (
                     0.903  # cincinnati requires a unique scaling factor
                 )
-        
+        self.traj_gas = self.traj_dissolved
 
         # truncate gas and dissolved data and trajectories
         self.data_dissolved, self.traj_dissolved = pp.truncate_data_and_traj(
@@ -297,31 +281,6 @@ class Subject(object):
             # rescale trajectories
             self.traj_ute *= self.traj_scaling_factor
 
-        
-        # Choose appropriate reference distribution
-        self.reference_data_key = self.config.reference_data_key
-
-        if self.reference_data_key == constants.ReferenceDataKey.DUKE_REFERENCE.value:
-            # Choose between 208 ppmm and 218 ppm. 
-            # Default to 218 if other or no value for excitation found. 
-            if 216 <= self.dict_dis[
-                    constants.IOFields.XE_DISSOLVED_OFFSET_FREQUENCY
-                ] <= 220:
-                self.reference_data = constants.ReferenceDistribution.REFERENCE_218_PPM
-
-            elif 206 <= self.dict_dis[
-                    constants.IOFields.XE_DISSOLVED_OFFSET_FREQUENCY
-                ] <= 210:    
-                self.reference_data = constants.ReferenceDistribution.REFERENCE_208_PPM
-
-            else: 
-                self.reference_data = constants.ReferenceDistribution.REFERENCE_218_PPM
-                logging.info("Warning: Unrecognized excitation frequency")
-
-        elif self.reference_data_key == constants.ReferenceDataKey.MANUAL_REFERENCE.value:
-            self.reference_data = constants.ReferenceDistribution.REFERENCE_MANUAL
-            
-
     def reconstruction_ute(self):
         """Reconstruct the UTE image."""
         if self.config.recon.recon_key == constants.ReconKey.ROBERTSON.value:
@@ -333,7 +292,6 @@ class Subject(object):
                 image_size=int(self.config.recon.recon_size),
             )
             orientation = self.dict_ute[constants.IOFields.ORIENTATION]
-            system_vendor = self.dict_ute[constants.IOFields.SYSTEM_VENDOR]
         elif self.config.recon.recon_key == constants.ReconKey.PLUMMER.value:
             raise NotImplementedError("Plummer CS reconstruction not implemented.")
         else:
@@ -345,7 +303,6 @@ class Subject(object):
         self.image_proton = img_utils.flip_and_rotate_image(
             self.image_proton,
             orientation=orientation,
-            system_vendor=system_vendor,
         )
         io_utils.export_nii(np.abs(self.image_proton), "tmp/image_proton.nii")
 
@@ -367,7 +324,6 @@ class Subject(object):
                 image_size=int(self.config.recon.recon_size),
             )
             orientation = self.dict_dis[constants.IOFields.ORIENTATION]
-            system_vendor = self.dict_dis[constants.IOFields.SYSTEM_VENDOR]
         elif self.config.recon.recon_key == constants.ReconKey.PLUMMER.value:
             raise NotImplementedError("Plummer CS reconstruction not implemented.")
         else:
@@ -386,12 +342,10 @@ class Subject(object):
         self.image_gas_highsnr = img_utils.flip_and_rotate_image(
             self.image_gas_highsnr,
             orientation=orientation,
-            system_vendor=system_vendor,
         )
         self.image_gas_highreso = img_utils.flip_and_rotate_image(
             self.image_gas_highreso,
             orientation=orientation,
-            system_vendor=system_vendor,
         )
         io_utils.export_nii(np.abs(self.image_gas_highsnr), "tmp/image_gas_highsnr.nii")
         io_utils.export_nii(
@@ -409,7 +363,6 @@ class Subject(object):
                 image_size=int(self.config.recon.recon_size),
             )
             orientation = self.dict_dis[constants.IOFields.ORIENTATION]
-            system_vendor = self.dict_dis[constants.IOFields.SYSTEM_VENDOR]
         elif self.config.recon.recon_key == constants.ReconKey.PLUMMER.value:
             raise NotImplementedError("Plummer CS reconstruction not implemented.")
         else:
@@ -421,7 +374,6 @@ class Subject(object):
         self.image_dissolved = img_utils.flip_and_rotate_image(
             self.image_dissolved,
             orientation=orientation,
-            system_vendor=system_vendor,
         )
 
     def segmentation(self):
@@ -485,25 +437,6 @@ class Subject(object):
         else:
             raise ValueError("Invalid registration key.")
 
-        def convert_and_threshold_mask(mask):
-            """
-            Check if the mask is not boolean, then apply a threshold and convert to boolean.
-
-            Parameters:
-                mask (numpy.ndarray): Input mask array.
-
-            Returns:
-                numpy.ndarray: Mask array thresholded and converted to boolean if not already boolean.
-            """
-            if mask.dtype != bool:
-                mask = np.where(mask > 0.5, 1, 0)  # Apply threshold: >0.5 becomes 1, otherwise 0
-                mask = mask.astype(bool)          # Convert to boolean
-            return mask
-
-
-        self.mask = convert_and_threshold_mask(self.mask);
-
-
     def biasfield_correction(self):
         """Correct ventilation image for bias field."""
         if self.config.bias_key == constants.BiasfieldKey.SKIP.value:
@@ -527,7 +460,7 @@ class Subject(object):
         self.image_gas_binned = binning.linear_bin(
             image=img_utils.normalize(self.image_gas_cor, self.mask),
             mask=self.mask,
-            thresholds=self.reference_data['threshold_vent'],
+            thresholds=self.config.reference_data.threshold_vent,
         )
         self.mask_vent = np.logical_and(self.image_gas_binned > 1, self.mask)
 
@@ -572,6 +505,182 @@ class Subject(object):
                 raise ValueError("Invalid hemoglobin value")
         else:
             logging.info("Skipping hemoglobin correction")
+            
+    def vol_correction(self):
+        if self.config.vol_correction_key != constants.VolCorrectionKey.NONE.value:
+            if self.dict_stats["inflation"] > 0:
+                #get volume correction scaling factors
+                
+                (
+                    self.vol_correction_factor_rbc,
+                    self.vol_correction_factor_membrane,
+                    self.predicted_volume,
+                ) = signal_utils.get_vol_correction(self.dict_stats["inflation"], self.config.frc, self.config.baggie_vol)
+            
+                if (
+                    self.config.vol_correction_key 
+                    == constants.VolCorrectionKey.MEMBRANE_ONLY.value
+                ):
+                    logging.info("Applying volume correction to membrane signal only")
+                    self.vol_correction_factor_rbc = 1.0
+                else:
+                    logging.info(
+                        "Applying volume correction to membrane and RBC signal"
+                        f", Membrane correction factor = {self.vol_correction_factor_membrane}"
+                        f", RBC correction factor = {self.vol_correction_factor_rbc}"
+                    )
+                    
+
+                # scale dissolved phase signals by volume correction scaling factors
+                self.rbc_m_ratio /= (
+                    self.vol_correction_factor_rbc / self.vol_correction_factor_membrane
+                )
+                self.image_rbc /= self.vol_correction_factor_rbc
+                self.image_membrane /= self.vol_correction_factor_membrane
+
+                """Re-Calculate the dissolved-phase images relative to gas image."""
+                self.image_rbc2gas = img_utils.divide_images(
+                    image1=self.image_rbc,
+                    image2=np.abs(self.image_gas_highsnr),
+                    mask=self.mask_vent,
+                )
+                self.image_membrane2gas = img_utils.divide_images(
+                    image1=self.image_membrane,
+                    image2=np.abs(self.image_gas_highsnr),
+                    mask=self.mask_vent,
+                )
+                # scale by flip angle difference
+                flip_angle_scale_factor = signal_utils.calculate_flipangle_correction(
+                    self.dict_dis[constants.IOFields.FA_GAS],
+                    self.dict_dis[constants.IOFields.FA_DIS],
+                )
+                t2star_scale_factor_rbc = signal_utils.calculate_t2star_correction(
+                    self.dict_dis[constants.IOFields.TE90],
+                    constants.T2STAR_RBC_3T,
+                    self.dict_dis[constants.IOFields.FIELD_STRENGTH],
+                )
+                t2star_scale_factor_membrane = signal_utils.calculate_t2star_correction(
+                    self.dict_dis[constants.IOFields.TE90],
+                    constants.T2STAR_MEMBRANE_3T,
+                    self.dict_dis[constants.IOFields.FIELD_STRENGTH],
+                )
+                self.image_rbc2gas = (
+                    flip_angle_scale_factor * t2star_scale_factor_rbc * self.image_rbc2gas
+                )
+                self.image_membrane2gas = (
+                    flip_angle_scale_factor
+                    * t2star_scale_factor_membrane
+                    * self.image_membrane2gas
+            )
+                """Re-Bin dissolved images to colormap bins."""
+                self.image_rbc2gas_binned = binning.linear_bin(
+                    image=self.image_rbc2gas,
+                    mask=self.mask_vent,
+                    thresholds=self.config.reference_data.threshold_rbc,
+                )
+                self.image_membrane2gas_binned = binning.linear_bin(
+                    image=self.image_membrane2gas,
+                    mask=self.mask_vent,
+                    thresholds=self.config.reference_data.threshold_membrane,
+                )
+
+                """Re-Calculate image statistics."""
+                self.dict_stats = {
+                    constants.IOFields.SUBJECT_ID: self.config.subject_id,
+                    constants.IOFields.SCAN_DATE: self.dict_dis[constants.IOFields.SCAN_DATE],
+                    constants.IOFields.PROCESS_DATE: metrics.process_date(),
+                    constants.StatsIOFields.INFLATION: self.predicted_volume,
+                    constants.StatsIOFields.RBC_M_RATIO: self.rbc_m_ratio,
+                    constants.StatsIOFields.VENT_SNR: metrics.snr(
+                        np.abs(self.image_gas_highreso), self.mask
+                    )[1],
+                    constants.StatsIOFields.VENT_DEFECT_PCT: metrics.bin_percentage(
+                        self.image_gas_binned, np.array([1]), self.mask
+                    ),
+                    constants.StatsIOFields.VENT_LOW_PCT: metrics.bin_percentage(
+                        self.image_gas_binned, np.array([2]), self.mask
+                    ),
+                    constants.StatsIOFields.VENT_HIGH_PCT: metrics.bin_percentage(
+                        self.image_gas_binned, np.array([5, 6]), self.mask
+                    ),
+                    constants.StatsIOFields.VENT_MEAN: metrics.mean(
+                        img_utils.normalize(np.abs(self.image_gas_cor), self.mask), self.mask
+                    ),
+                    constants.StatsIOFields.VENT_MEDIAN: metrics.median(
+                        img_utils.normalize(np.abs(self.image_gas_cor), self.mask), self.mask
+                    ),
+                    constants.StatsIOFields.VENT_STDDEV: metrics.std(
+                        img_utils.normalize(np.abs(self.image_gas_cor), self.mask), self.mask
+                    ),
+                    constants.StatsIOFields.RBC_SNR: metrics.snr(self.image_rbc, self.mask)[0],
+                    constants.StatsIOFields.RBC_DEFECT_PCT: metrics.bin_percentage(
+                        self.image_rbc2gas_binned, np.array([1]), self.mask
+                    ),
+                    constants.StatsIOFields.RBC_LOW_PCT: metrics.bin_percentage(
+                        self.image_rbc2gas_binned, np.array([2]), self.mask
+                    ),
+                    constants.StatsIOFields.RBC_HIGH_PCT: metrics.bin_percentage(
+                        self.image_rbc2gas_binned, np.array([5, 6]), self.mask
+                    ),
+                    constants.StatsIOFields.RBC_MEAN: metrics.mean(
+                        self.image_rbc2gas, self.mask_vent
+                    ),
+                    constants.StatsIOFields.RBC_MEDIAN: metrics.median(
+                        self.image_rbc2gas, self.mask_vent
+                    ),
+                    constants.StatsIOFields.RBC_STDDEV: metrics.std(
+                        self.image_rbc2gas, self.mask_vent
+                    ),
+                    constants.StatsIOFields.MEMBRANE_SNR: metrics.snr(
+                        self.image_membrane, self.mask
+                    )[0],
+                    constants.StatsIOFields.MEMBRANE_DEFECT_PCT: metrics.bin_percentage(
+                        self.image_membrane2gas_binned, np.array([1]), self.mask
+                    ),
+                    constants.StatsIOFields.MEMBRANE_LOW_PCT: metrics.bin_percentage(
+                        self.image_membrane2gas_binned, np.array([2]), self.mask
+                    ),
+                    constants.StatsIOFields.MEMBRANE_HIGH_PCT: metrics.bin_percentage(
+                        self.image_membrane2gas_binned, np.array([6, 7, 8]), self.mask
+                    ),
+                    constants.StatsIOFields.MEMBRANE_MEAN: metrics.mean(
+                        self.image_membrane2gas, self.mask_vent
+                    ),
+                    constants.StatsIOFields.MEMBRANE_MEDIAN: metrics.median(
+                        self.image_membrane2gas, self.mask_vent
+                    ),
+                    constants.StatsIOFields.MEMBRANE_STDDEV: metrics.std(
+                        self.image_membrane2gas, self.mask_vent
+                    ),
+                    constants.StatsIOFields.ALVEOLAR_VOLUME: metrics.alveolar_volume(
+                        self.image_gas_binned, self.mask, self.dict_dis[constants.IOFields.FOV]
+                    ),
+                    constants.StatsIOFields.KCO_EST: metrics.kco(
+                        self.image_membrane2gas,
+                        self.image_rbc2gas,
+                        self.mask_vent,
+                        self.config.reference_data.reference_fit_membrane[1],
+                        self.config.reference_data.reference_fit_rbc[1],
+                    ),
+                    constants.StatsIOFields.DLCO_EST: metrics.dlco(
+                        self.image_gas_binned,
+                        self.image_membrane2gas,
+                        self.image_rbc2gas,
+                        self.mask,
+                        self.mask_vent,
+                        self.dict_dis[constants.IOFields.FOV],
+                        self.config.reference_data.reference_fit_membrane[1],
+                        self.config.reference_data.reference_fit_rbc[1],
+                    ),
+                }
+
+            else:
+                raise ValueError("Invalid volume value")
+        else:
+            logging.info("Skipping volume correction")
+
+                         
+     
 
     def dissolved_analysis(self):
         """Calculate the dissolved-phase images relative to gas image."""
@@ -614,12 +723,12 @@ class Subject(object):
         self.image_rbc2gas_binned = binning.linear_bin(
             image=self.image_rbc2gas,
             mask=self.mask_vent,
-            thresholds=self.reference_data["threshold_rbc"],
+            thresholds=self.config.reference_data.threshold_rbc,
         )
         self.image_membrane2gas_binned = binning.linear_bin(
             image=self.image_membrane2gas,
             mask=self.mask_vent,
-            thresholds=self.reference_data["threshold_membrane"],
+            thresholds=self.config.reference_data.threshold_membrane,
         )
 
     def get_statistics(self) -> Dict[str, Any]:
@@ -704,8 +813,8 @@ class Subject(object):
                 self.image_membrane2gas,
                 self.image_rbc2gas,
                 self.mask_vent,
-                self.reference_data['reference_fit_membrane'][1],
-                self.reference_data['reference_fit_rbc'][1],
+                self.config.reference_data.reference_fit_membrane[1],
+                self.config.reference_data.reference_fit_rbc[1],
             ),
             constants.StatsIOFields.DLCO_EST: metrics.dlco(
                 self.image_gas_binned,
@@ -714,70 +823,10 @@ class Subject(object):
                 self.mask,
                 self.mask_vent,
                 self.dict_dis[constants.IOFields.FOV],
-                self.reference_data['reference_fit_membrane'][1],
-                self.reference_data['reference_fit_rbc'][1],
+                self.config.reference_data.reference_fit_membrane[1],
+                self.config.reference_data.reference_fit_rbc[1],
             ),
-            constants.StatsIOFields.RDP_BA: round(metrics.rdp_ba(
-                self.image_rbc2gas_binned,
-                self.mask,
-            ), 1),
         }
-        
-        if isinstance(self.config.patient_frc, (int, float)):
-            FRC_Volume = float(self.config.patient_frc)
-            User_Volume_FRC = f"{FRC_Volume}L"
-        else:
-            FRC_Volume = metrics.GLI_volume(
-                self.dict_dis[constants.IOFields.AGE],
-                self.dict_dis[constants.IOFields.SEX],
-                self.dict_dis[constants.IOFields.HEIGHT],
-                volume_type="frc"
-            )
-            User_Volume_FRC = "Predicted"
-
-        if isinstance(self.config.bag_volume, (int, float)):
-            Bag_Volume = float(self.config.bag_volume)
-            User_Volume_Bag = f"{Bag_Volume}L"
-        else:
-            User_Volume_Bag = "Predicted"
-            FVC_Volume = metrics.GLI_volume(
-                self.dict_dis[constants.IOFields.AGE],
-                self.dict_dis[constants.IOFields.SEX],
-                self.dict_dis[constants.IOFields.HEIGHT],
-                volume_type="fvc"
-            )
-            if isinstance(FVC_Volume, (int, float)) and not pd.isna(FVC_Volume):
-                Bag_Volume = metrics.get_bag_volume(FVC_Volume)
-            else:
-                Bag_Volume = np.nan
-
-        if pd.isna(FRC_Volume):
-            display_frc = "NA"
-        elif User_Volume_FRC == "Predicted":
-            display_frc = "Predicted"
-        else:
-            display_frc = User_Volume_FRC
-
-        if pd.isna(Bag_Volume):
-            display_bag = "NA"
-        elif User_Volume_Bag == "Predicted":
-            display_bag = "Predicted"
-        else:
-            display_bag = User_Volume_Bag
-
-        self.user_lung_volume_value = f"{display_frc}/ {display_bag}"
-
-        if pd.isna(FRC_Volume) or pd.isna(Bag_Volume):
-            self.reference_data['reference_stats'][constants.StatsIOFields.INFLATION_PCT] = "NA";
-            self.reference_data['reference_stats'][constants.StatsIOFields.INFLATION_AVG] ="NA";
-            self.reference_data['reference_stats'][constants.StatsIOFields.INFLATION_DISPLAY] ="NA";
-            self.dict_stats[constants.StatsIOFields.INFLATION] = round(self.dict_stats[constants.StatsIOFields.INFLATION],1);
-        else:
-            predicted_volume = FRC_Volume + Bag_Volume
-            self.reference_data['reference_stats'][constants.StatsIOFields.INFLATION_PCT] = int(round(self.dict_stats[constants.StatsIOFields.INFLATION] / predicted_volume * 100, 0));
-            self.reference_data['reference_stats'][constants.StatsIOFields.INFLATION_AVG] =round(predicted_volume,1);
-            self.reference_data['reference_stats'][constants.StatsIOFields.INFLATION_DISPLAY] = f"{self.reference_data['reference_stats'][constants.StatsIOFields.INFLATION_AVG] }L ({self.reference_data['reference_stats'][constants.StatsIOFields.INFLATION_PCT]}%)";
-            self.dict_stats[constants.StatsIOFields.INFLATION] = round(self.dict_stats[constants.StatsIOFields.INFLATION],1);
 
         return self.dict_stats
 
@@ -797,7 +846,7 @@ class Subject(object):
                 constants.IOFields.SOFTWARE_VERSION
             ],
             constants.IOFields.GIT_BRANCH: report.get_git_branch(),
-            constants.IOFields.REFERENCE_DATA_KEY: self.reference_data['title'],
+            constants.IOFields.REFERENCE_DATA_KEY: self.config.reference_data_key,
             constants.IOFields.BANDWIDTH: self.dict_dis[constants.IOFields.BANDWIDTH],
             constants.IOFields.SAMPLE_TIME: (
                 1e6 * self.dict_dis[constants.IOFields.SAMPLE_TIME]
@@ -861,14 +910,12 @@ class Subject(object):
             ),
             constants.IOFields.TE90: 1e6 * self.dict_dis[constants.IOFields.TE90],
             constants.IOFields.TR_DIS: 1e3 * self.dict_dis[constants.IOFields.TR],
-            constants.IOFields.USER_LUNG_VOLUME_VALUE:self.user_lung_volume_value,
         }
+
         return self.dict_info
 
     def generate_figures(self):
         """Export image figures."""
-        #Issues with index_start, index_skip, index_end; all equal 0
-        #everything fine up to this point as far as I can tell
         index_start, index_skip = plot.get_plot_indices(self.mask)
         proton_reg = img_utils.normalize(
             np.abs(self.image_proton),
@@ -950,7 +997,7 @@ class Subject(object):
             xlim=constants.VENTHISTOGRAMFields.XLIM,
             ylim=constants.VENTHISTOGRAMFields.YLIM,
             num_bins=constants.VENTHISTOGRAMFields.NUMBINS,
-            refer_fit=self.reference_data['reference_fit_vent'],
+            refer_fit=self.config.reference_data.reference_fit_vent,
             xticks=constants.VENTHISTOGRAMFields.XTICKS,
             yticks=constants.VENTHISTOGRAMFields.YTICKS,
             xticklabels=constants.VENTHISTOGRAMFields.XTICKLABELS,
@@ -966,7 +1013,7 @@ class Subject(object):
             xlim=constants.RBCHISTOGRAMFields.XLIM,
             ylim=constants.RBCHISTOGRAMFields.YLIM,
             num_bins=constants.RBCHISTOGRAMFields.NUMBINS,
-            refer_fit=self.reference_data['reference_fit_rbc'],
+            refer_fit=self.config.reference_data.reference_fit_rbc,
             xticks=constants.RBCHISTOGRAMFields.XTICKS,
             yticks=constants.RBCHISTOGRAMFields.YTICKS,
             xticklabels=constants.RBCHISTOGRAMFields.XTICKLABELS,
@@ -982,7 +1029,7 @@ class Subject(object):
             xlim=constants.MEMBRANEHISTOGRAMFields.XLIM,
             ylim=constants.MEMBRANEHISTOGRAMFields.YLIM,
             num_bins=constants.MEMBRANEHISTOGRAMFields.NUMBINS,
-            refer_fit=self.reference_data['reference_fit_membrane'],
+            refer_fit=self.config.reference_data.reference_fit_membrane,
             xticks=constants.MEMBRANEHISTOGRAMFields.XTICKS,
             yticks=constants.MEMBRANEHISTOGRAMFields.YTICKS,
             xticklabels=constants.MEMBRANEHISTOGRAMFields.XTICKLABELS,
@@ -992,6 +1039,7 @@ class Subject(object):
 
     def generate_pdf(self):
         """Generate HTML and PDF files."""
+
         # generate individual PDFs
         pdf_list = [
             os.path.join("tmp", pdf)
@@ -999,15 +1047,15 @@ class Subject(object):
         ]
         report.intro(self.dict_info, path=pdf_list[0])
         report.clinical(
-            {**self.dict_stats, **self.reference_data['reference_stats']},
+            {**self.dict_stats, **self.config.reference_data.reference_stats},
             path=pdf_list[1],
         )
         report.grayscale(
-            {**self.dict_stats, **self.reference_data['reference_stats']},
+            {**self.dict_stats, **self.config.reference_data.reference_stats},
             path=pdf_list[2],
         )
         report.qa(
-            {**self.dict_stats, **self.reference_data['reference_stats']},
+            {**self.dict_stats, **self.config.reference_data.reference_stats},
             path=pdf_list[3],
         )
 
@@ -1137,10 +1185,6 @@ class Subject(object):
             "tmp/proton_reg.nii",
             "tmp/rbc2gas_rgb.nii",
         )
+
         # move files
-        subfolder = os.path.join(self.config.data_dir, "gx")
-        os.makedirs(subfolder, exist_ok=True)
-        io_utils.move_files(output_files, subfolder)
-
-
-
+        io_utils.move_files(output_files, self.config.data_dir)

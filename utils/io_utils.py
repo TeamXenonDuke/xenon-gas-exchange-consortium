@@ -16,8 +16,6 @@ import numpy as np
 import pandas as pd
 import pydicom
 import scipy.io as sio
-import logging
-import ml_collections
 from ml_collections import config_dict
 
 from utils import constants, img_utils, mrd_utils, twix_utils
@@ -129,7 +127,6 @@ def get_ute_twix_files(path: str) -> str:
             glob.glob(os.path.join(path, "**1H***.dat"))
             + glob.glob(os.path.join(path, "**BHUTE***.dat"))
             + glob.glob(os.path.join(path, "**ute***.dat"))
-            + glob.glob(os.path.join(path, "**h_radial***.dat"))
         )[0]
     except:
         raise ValueError("Can't find twix file in path.")
@@ -146,9 +143,7 @@ def get_dyn_mrd_files(path: str) -> str:
     try:
         return (
             glob.glob(os.path.join(path, "**Calibration***.h5"))
-            + glob.glob(os.path.join(path, "**calibration***.h5")) 
-            + glob.glob(os.path.join(path, "**Calibration***.mrd"))
-            + glob.glob(os.path.join(path, "**calibration***.mrd"))
+            + glob.glob(os.path.join(path, "**calibration***.h5"))
         )[0]
     except:
         raise ValueError("Can't find MRD file in path.")
@@ -163,10 +158,7 @@ def get_dis_mrd_files(path: str) -> str:
         str file path of MRD file
     """
     try:
-        return (
-            glob.glob(os.path.join(path, "**dixon***.h5"))
-            + glob.glob(os.path.join(path, "**dixon***.mrd"))
-        )[0]
+        return (glob.glob(os.path.join(path, "**dixon***.h5")))[0]
     except:
         raise ValueError("Can't find MRD file in path.")
 
@@ -180,10 +172,7 @@ def get_ute_mrd_files(path: str) -> str:
         str file path of MRD file
     """
     try:
-        return (
-            glob.glob(os.path.join(path, "**proton***.h5"))
-            + glob.glob(os.path.join(path, "**proton***.mrd"))
-        )[0]
+        return (glob.glob(os.path.join(path, "**proton***.h5")))[0]
     except:
         raise ValueError("Can't find MRD file in path.")
 
@@ -242,16 +231,13 @@ def read_dyn_twix(path: str) -> Dict[str, Any]:
     }
 
 
-def read_dis_twix(path: str, config: Optional[ml_collections.ConfigDict] = None) -> Dict[str, Any]:
+def read_dis_twix(path: str) -> Dict[str, Any]:
     """Read 1-point dixon disssolved phase imaging twix file.
 
     Args:
         path: str file path of twix file
     Returns: dictionary containing data and metadata extracted from the twix file.
     This includes:
-        - Age: Patient age as a float.
-        - Sex: Patient sex as a string ("M" or "F").
-        - Height: Patient height in centimeters as a float.
         - dwell time in seconds.
         - flip angle applied to dissolved phase in degrees.
         - flip angle applied to gas phase in degrees.
@@ -283,13 +269,7 @@ def read_dis_twix(path: str, config: Optional[ml_collections.ConfigDict] = None)
     data_dict = twix_utils.get_gx_data(twix_obj=twix_obj)
     filename = os.path.basename(path)
 
-    if config or config.recon.del_x is constants.NONE:  # type: ignore
-        logging.error("Gradient delay is not properly set in the config file")
-
     return {
-        constants.IOFields.AGE: twix_utils.get_patient_age(twix_obj),
-        constants.IOFields.SEX: twix_utils.get_patient_sex(twix_obj),
-        constants.IOFields.HEIGHT: twix_utils.get_patient_height(twix_obj),
         constants.IOFields.SAMPLE_TIME: twix_utils.get_sample_time(twix_obj),
         constants.IOFields.FA_DIS: twix_utils.get_flipangle_dissolved(twix_obj),
         constants.IOFields.FA_GAS: twix_utils.get_flipangle_gas(twix_obj),
@@ -302,11 +282,10 @@ def read_dis_twix(path: str, config: Optional[ml_collections.ConfigDict] = None)
         constants.IOFields.XE_DISSOLVED_OFFSET_FREQUENCY: twix_utils.get_excitation_freq(
             twix_obj
         ),
-        constants.IOFields.GRAD_DELAY_X: config.recon.del_x,
-        constants.IOFields.GRAD_DELAY_Y: config.recon.del_y,
-        constants.IOFields.GRAD_DELAY_Z: config.recon.del_z,
+        constants.IOFields.GRAD_DELAY_X: data_dict[constants.IOFields.GRAD_DELAY_X],
+        constants.IOFields.GRAD_DELAY_Y: data_dict[constants.IOFields.GRAD_DELAY_Y],
+        constants.IOFields.GRAD_DELAY_Z: data_dict[constants.IOFields.GRAD_DELAY_Z],
         constants.IOFields.INSTITUTION: twix_utils.get_institution_name(twix_obj),
-        constants.IOFields.SYSTEM_VENDOR: twix_utils.get_system_vendor(twix_obj),
         constants.IOFields.N_FRAMES: data_dict[constants.IOFields.N_FRAMES],
         constants.IOFields.N_SKIP_END: data_dict[constants.IOFields.N_SKIP_END],
         constants.IOFields.N_SKIP_START: data_dict[constants.IOFields.N_SKIP_START],
@@ -354,7 +333,6 @@ def read_ute_twix(path: str) -> Dict[str, Any]:
         constants.IOFields.SAMPLE_TIME: twix_utils.get_sample_time(twix_obj),
         constants.IOFields.FIDS: data_dict[constants.IOFields.FIDS],
         constants.IOFields.INSTITUTION: twix_utils.get_institution_name(twix_obj),
-        constants.IOFields.SYSTEM_VENDOR: twix_utils.get_system_vendor(twix_obj),
         constants.IOFields.RAMP_TIME: twix_utils.get_ramp_time(twix_obj),
         constants.IOFields.GRAD_DELAY_X: data_dict[constants.IOFields.GRAD_DELAY_X],
         constants.IOFields.GRAD_DELAY_Y: data_dict[constants.IOFields.GRAD_DELAY_Y],
@@ -403,17 +381,13 @@ def read_dyn_mrd(path: str) -> Dict[str, Any]:
     }
 
 
-def read_dis_mrd(path: str, multi_echo: bool) -> Dict[str, Any]:
+def read_dis_mrd(path: str) -> Dict[str, Any]:
     """Read 1-point dixon disssolved phase imaging mrd file.
 
     Args:
         path: str file path of mrd file
-        multi_echo: option to perform multi echo
     Returns: dictionary containing data and metadata extracted from the mrd file.
     This includes:
-        - Age: Patient age as a float.
-        - Sex: Patient sex as a string ("M" or "F").
-        - Height: Patient height in centimeters as a float.
         - dwell time in seconds.
         - flip angle applied to dissolved phase in degrees.
         - flip angle applied to gas phase in degrees.
@@ -440,11 +414,8 @@ def read_dis_mrd(path: str, multi_echo: bool) -> Dict[str, Any]:
     except:
         raise ValueError("Invalid mrd file.")
 
-    data_dict = mrd_utils.get_gx_data(dataset, multi_echo)
+    data_dict = mrd_utils.get_gx_data(dataset)
     return {
-        constants.IOFields.AGE: np.nan,
-        constants.IOFields.SEX: np.nan,
-        constants.IOFields.HEIGHT: np.nan,
         constants.IOFields.BANDWIDTH: np.nan,
         constants.IOFields.SAMPLE_TIME: mrd_utils.get_sample_time(dataset),
         constants.IOFields.FA_DIS: mrd_utils.get_flipangle_dissolved(header),
@@ -462,13 +433,11 @@ def read_dis_mrd(path: str, multi_echo: bool) -> Dict[str, Any]:
         constants.IOFields.GRAD_DELAY_Y: np.nan,
         constants.IOFields.GRAD_DELAY_Z: np.nan,
         constants.IOFields.INSTITUTION: mrd_utils.get_institution_name(header),
-        constants.IOFields.SYSTEM_VENDOR: mrd_utils.get_system_vendor(header),
         constants.IOFields.ORIENTATION: mrd_utils.get_orientation(header),
         constants.IOFields.PROTOCOL_NAME: mrd_utils.get_protocol_name(header),
         constants.IOFields.RAMP_TIME: mrd_utils.get_ramp_time(header),
         constants.IOFields.REMOVEOS: False,
         constants.IOFields.SCAN_DATE: mrd_utils.get_scan_date(header),
-        constants.IOFields.SYSTEM_VENDOR: mrd_utils.get_system_vendor(header),
         constants.IOFields.SOFTWARE_VERSION: "NA",
         constants.IOFields.TE90: mrd_utils.get_TE90(header),
         constants.IOFields.TR: mrd_utils.get_TR_dissolved(header),
@@ -496,7 +465,6 @@ def read_ute_mrd(path: str) -> Dict[str, Any]:
         constants.IOFields.SAMPLE_TIME: mrd_utils.get_sample_time(dataset),
         constants.IOFields.FIDS: data_dict[constants.IOFields.FIDS],
         constants.IOFields.ORIENTATION: mrd_utils.get_orientation(header),
-        constants.IOFields.SYSTEM_VENDOR: mrd_utils.get_system_vendor(header),
         constants.IOFields.RAMP_TIME: mrd_utils.get_ramp_time(header),
         constants.IOFields.GRAD_DELAY_X: np.nan,
         constants.IOFields.GRAD_DELAY_Y: np.nan,
@@ -564,10 +532,7 @@ def export_nii_4d(image, path, fov=None):
         path: str file path of nifti file
         fov: float field of view in cm
     """
-    # Scale values and clip to ensure they stay in the [0, 255] range
-    color = np.copy(image)*255  
-    color = np.clip(color, 0, 255).astype("uint8")
-
+    color = (np.copy(image) * 255).astype("uint8")  # need uint8 to save to RGB
     # some fancy and tricky re-arrange
     color = np.transpose(color, [2, 3, 0, 1])
     cline = np.reshape(color, (1, np.size(color)))
