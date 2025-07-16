@@ -69,3 +69,21 @@ def flatten_traj(traj: np.ndarray) -> np.ndarray:
         np.ndarray: flattened trajectory of shape (n_projections * n_points, 3)
     """
     return traj.reshape((traj.shape[0] * traj.shape[1], 3))
+
+def skip_from_flipangle(fa_dis: float) -> int:
+    """Calculate the number of skipped views based on dissolved anflip angle.
+
+    Uses the steady-state formula:
+        N_skip ≈ ln(0.1) / ln(cos(fa))
+
+    Args:
+        fa_dis (float): Dissolved flip angle in degrees.
+
+    Returns:
+        int: Number of views to skip, rounded up to the nearest integer.
+    """
+    cos_fa = np.cos(np.radians(fa_dis))
+
+    # Round *up* to ensure sufficient skip for stabilization
+    n_skip = np.log(0.1) / np.log(cos_fa)
+    return np.ceil(n_skip)
