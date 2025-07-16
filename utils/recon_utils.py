@@ -86,4 +86,4 @@ def skip_from_flipangle(fa_dis: float) -> int:
 
     # Round *up* to ensure sufficient skip for stabilization
     n_skip = np.log(0.1) / np.log(cos_fa)
-    return np.ceil(n_skip)
+    return int(np.ceil(n_skip))

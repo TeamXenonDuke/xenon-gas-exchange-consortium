@@ -249,8 +249,9 @@ class Subject(object):
                     0.903  # cincinnati requires a unique scaling factor
                 )
         
-        if self.config.recon.n_skip_start is None:
+        if np.isnan(self.config.recon.n_skip_start):
             self.config.recon.n_skip_start = recon_utils.skip_from_flipangle(self.dict_dis[constants.IOFields.FA_DIS])
+            logging.info('n_skip is:', {self.config.recon.n_skip_start})
         # truncate gas and dissolved data and trajectories
         # self.data_dissolved, self.traj_dissolved = pp.truncate_data_and_traj(
         #     self.data_dissolved,
@@ -792,7 +793,7 @@ class Subject(object):
             constants.IOFields.SUBJECT_ID: self.config.subject_id,
             constants.IOFields.SCAN_DATE: self.dict_dis[constants.IOFields.SCAN_DATE],
             constants.IOFields.PROCESS_DATE: metrics.process_date(),
-            constants.IOFields.SCAN_TYPE: self.config.recon.scan_type,
+            # constants.IOFields.SCAN_TYPE: self.config.recon.scan_type,
             constants.IOFields.PIPELINE_VERSION: constants.PipelineVersion.VERSION_NUMBER,
             constants.IOFields.SOFTWARE_VERSION: self.dict_dis[
                 constants.IOFields.SOFTWARE_VERSION

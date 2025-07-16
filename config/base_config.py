@@ -89,7 +89,7 @@ class Recon(object):
         self.del_z = "None"
 
         # Scan type
-        self.scan_type = constants.ScanType.NORMALDIXON.value
+        # self.scan_type = constants.ScanType.NORMALDIXON.value
 
         # Reconstruction and matrix sizes
         self.recon_size = 64

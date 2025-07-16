@@ -66,7 +66,7 @@ class IOFields(object):
     REMOVEOS = "removeos"
     REMOVE_NOISE = "remove_noise"
     SCAN_DATE = "scan_date"
-    SCAN_TYPE = "scan_type"
+    # SCAN_TYPE = "scan_type"
     SEGMENTATION_KEY = "segmentation_key"
     SHAPE_FIDS = "shape_fids"
     SHAPE_IMAGE = "shape_image"
@@ -174,12 +174,12 @@ class ReferenceDataKey(enum.Enum):
     MANUAL_REFERENCE = "manual_reference"
 
 
-class ScanType(enum.Enum):
-    """Scan type."""
+# class ScanType(enum.Enum):
+#     """Scan type."""
 
-    NORMALDIXON = "normal"
-    MEDIUMDIXON = "medium"
-    FASTDIXON = "fast"
+#     NORMALDIXON = "normal"
+#     MEDIUMDIXON = "medium"
+#     FASTDIXON = "fast"
 
 
 class Institution(enum.Enum):
