@@ -5,8 +5,6 @@ import sys
 import numpy as np
 from ml_collections import config_dict
 
-# from config import config_utils
-
 # parent directory
 sys.path.append("..")
 
