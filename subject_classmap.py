@@ -249,8 +249,10 @@ class Subject(object):
                     0.903  # cincinnati requires a unique scaling factor
                 )
         
+        # Calculate the number of frames to skip at the beginning by dissolved flip angle
         if np.isnan(self.config.recon.n_skip_start):
             self.config.recon.n_skip_start = recon_utils.skip_from_flipangle(self.dict_dis[constants.IOFields.FA_DIS])
+
         # truncate gas and dissolved data and trajectories
         self.data_dissolved, self.traj_dissolved = pp.truncate_data_and_traj(
             self.data_dissolved,

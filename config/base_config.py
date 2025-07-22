@@ -88,9 +88,6 @@ class Recon(object):
         self.del_y = "None"
         self.del_z = "None"
 
-        # Scan type
-        # self.scan_type = constants.ScanType.NORMALDIXON.value
-
         # Reconstruction and matrix sizes
         self.recon_size = 64
         self.matrix_size = 128
@@ -100,6 +97,7 @@ class Recon(object):
         self.recon_key = constants.ReconKey.ROBERTSON.value
         self.kernel_sharpness_lr = 0.14
         self.kernel_sharpness_hr = 0.32
+        # Set initial n_skip_start value as NaN, or user input an expected value
         self.n_skip_start = np.nan
         self.n_skip_end = 0
         self.remove_contamination = False

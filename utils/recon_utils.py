@@ -71,7 +71,7 @@ def flatten_traj(traj: np.ndarray) -> np.ndarray:
     return traj.reshape((traj.shape[0] * traj.shape[1], 3))
 
 def skip_from_flipangle(fa_dis: float) -> int:
-    """Calculate the number of skipped views based on dissolved anflip angle.
+    """Calculate the number of frames to skip at the beginning based on dissolved flip angle.
 
     Uses the steady-state formula:
         N_skip ≈ ln(0.1) / ln(cos(fa))
