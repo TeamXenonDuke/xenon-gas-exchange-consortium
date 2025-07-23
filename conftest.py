@@ -6,7 +6,7 @@ def pytest_addoption(parser):
     """ Add parameters to pytest for 'test_end_to_end.py'
 
     Enter the following in terminal:
-        pytest test_end_to_end.py config=<path-to-config> csv=<path-to-expected-csv> folder=<path-to-subject-folder>
+        pytest test_end_to_end.py -s --config=<path-to-config> --csv=<path-to-expected-csv> --folder=<path-to-subject-folder>
     """
     parser.addoption("--csv", action="store", default=False, help="Relative path to expected csv")
     parser.addoption("--config", action="store", default=False, help="Relative path to test config file")
@@ -16,7 +16,7 @@ def pytest_addoption(parser):
 def csv(request):
     """ Stores the relative path for the expected csv 
     
-    How-to-use: csv=<path-to-csv>
+    How-to-use: --csv=<path-to-csv>
     """
     return request.config.getoption("--csv")
 
@@ -24,7 +24,7 @@ def csv(request):
 def config(request):
     """ Stores the relative path for the config file
     
-    How-to-use: config=<path-to-config>
+    How-to-use: --config=<path-to-config>
     """
     return request.config.getoption("--config")
 
@@ -32,6 +32,6 @@ def config(request):
 def folder(request):
     """ Stores the relative path for the subject data folder
 
-    How-to-use: folder=<path-to-folder>
+    How-to-use: --folder=<path-to-folder>
     """
     return request.config.getoption("--folder")
