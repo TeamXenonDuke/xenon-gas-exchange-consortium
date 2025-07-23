@@ -37,7 +37,7 @@ class Config(config_dict.ConfigDict):
         """Initialize config parameters."""
         super().__init__()
         # Standard parameters - MUST be verified
-        self.data_dir = os.path.join("config", "tests", "009-028B_test")
+        self.data_dir = os.path.join("testing", "subjects", "009-028B")
         self.subject_id = "009-028B"
         self.rbc_m_ratio = 0.155330194558714
         self.patient_frc = "None"
