@@ -3,8 +3,12 @@ RED='\033[0;31m'
 YELLOW='\033[1;33m'
 NC='\033[0m'
 
+# Stores all command failures from error_catch
 failures=()
 
+# Catches if a command fails.
+# Only used for sudo and brew in this script.
+# If sudo or brew has an error during install, it will be recorded using this.
 error_catch() {
     "$@"
     local exit_code=$?
@@ -14,6 +18,7 @@ error_catch() {
     return $exit_code
 }
 
+# Gives a report of which sudo/brew command(s) failed. Reports what package(s) needs to be installed and then exits.
 error_report() {
     if [ ${#failures[@]} -ne 0 ]; then
         echo -e "${YELLOW}========================================="
@@ -136,7 +141,8 @@ if !([[ "$1" == "build-only" ]] || [[ "$1" == "install-only" ]]); then
         error_catch sudo apt install wkhtmltopdf
         error_catch sudo apt install poppler-utils
     elif [[ "$OSTYPE" == "darwin"* ]]; then
-        error_catch brew install wkhtmltopdf
+        error_catch curl -L https://github.com/wkhtmltopdf/packaging/releases/download/0.12.6-2/wkhtmltox-0.12.6-2.macos-cocoa.pkg -O
+        error_catch installer -pkg wkhtmltox-0.12.6-2.macos-cocoa.pkg -target ~
         error_catch brew install poppler
     else 
         echo -e "${RED}Error: Incorrect OS. ${NC}Please use WSL, Linux, or MacOS."
