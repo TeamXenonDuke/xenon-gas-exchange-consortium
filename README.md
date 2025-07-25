@@ -14,6 +14,8 @@ The xenon gas exchange pipeline, developed at the [Driehuys Lab](https://sites.d
 
 5. [How to Cite](#howtocite)
 
+6. [Appendix A: Additional Installation Information](#appendix-a-additional-installation-information)
+
 ## Setup
 
 The xenon gas exchange pipeline is a cross system-vendor program that works on Windows (WSL), Mac, and Linux system. At least 8GB of RAM is required to run this pipeline.
@@ -104,11 +106,11 @@ bash <filename>
 
 You can verify if you have conda by typing `which conda` in your terminal.
 
-### Installation Using `setup.sh`
+### Steps 2.2. and 2.3. `setup.sh`
 
-Steps 2.2 and 2.3 of installation can be completed automatically using the bash script `setup.sh` in the pipeline folder. If you wish to complete the process manually, skip to [Step 2.2](#22-virtual-environment-creation-and-package-installation).
+Steps 2.2 and 2.3 of installation can be completed automatically using the bash script `setup.sh` in the main pipeline directory. If you wish to complete the process manually, refer to [Manual Instructions for Steps 2.2. and 2.3.](#manual-instructions-for-steps-22-and-23) in [Appendix A: Additional Installation Information](#appendix-a-additional-installation-information).
 
-`cd` to the main pipeline folder (`xenon-gas-exchange-consortium`) before running the next commands!
+**`cd` to the main pipeline folder (`xenon-gas-exchange-consortium`) before running the next commands!**
 
 Run the following commands to automate steps 2.2 and 2.3. The first command will allow you to run `setup.sh` on your terminal.
 
@@ -134,45 +136,134 @@ The terminal will prompt you to complete steps that require some user input.
 
 4. You will be prompted to enter the number of threads you wish to use during the SuperBuild step. 4 is recommended. Using more can cause your OS to force cancel during build/installation. More threads will make the process faster. If you keep getting failures, switch to 1 thread.
 
-If you are having issues with the SuperBuild failing (build and install step), please see [Resolving Issues with `setup.sh` SuperBuild](#resolving-issues-with-setupsh-superbuild).
+If you are having issues with the SuperBuild failing (build and install step), please see [Resolving Issues with `setup.sh` SuperBuild](#resolving-issues-with-setupsh-superbuild) in [Appendix A: Additional Installation Information](#appendix-a-additional-installation-information).
 
 Setup and installation will be complete and the pipeline will be ready to use once `setup.sh` is ran successfully.
 
 Remember to use the following command before using the pipeline:
 
 ```bash
-conda activate <name_of_conda_environment>
+conda activate <name-of-conda-environment>
 ```
 
-The next steps will be for manual installation. Skip to [Usage](#usage) if you are finished with setup and installation.
+## Usage
 
-#### Resolving Issues with `setup.sh` SuperBuild
+### 3.1. General usage
 
-You can rerun `setup.sh` to skip to the build and install step if there is a failure during the SuperBuild. You should have all required packages installed to your conda environment and native computer by the time the SuperBuild starts, so you can skip over that part of `setup.sh` and go straight to the build or install steps.
+#### 3.1.1 Accepted file inputs
 
-If there was a failure during the build step, enter the following command to skip to the build step (Note: Repeated failures may mean you are using too many CPU cores or RAM. You may need to run the build step with only 1 thread!):
+The pipeline accepts Siemens twix (.dat) or ISMRMRD (.h5) files for standard proton UTE, 1-point Dixon, and (optionally) calibration scans. Alternatively, if a subject scan has already been processed through the pipeline and you wish to reprocess the previously constructed images, you can run the pipeline on the subject's .mat file. ISMRMRD files must be named and formatted according to the <sup>129</sup>Xe MRI clinical trials consortium specifications: [https://github.com/Xe-MRI-CTC/xemrd-specification](https://github.com/Xe-MRI-CTC/xemrd-specification)
+
+More information on consortium protocol for the proton UTE, 1-point Dixon, and calibration scans can be found in the following reference:
+
+> Niedbalski, PJ, Hall, CS, Castro, M, et al. Protocols for multi-site trials using hyperpolarized 129Xe MRI for imaging of ventilation, alveolar-airspace size, and gas exchange: A position paper from the 129Xe MRI clinical trials consortium. Magn Reson Med. 2021; 86: 2966–2986. https://doi.org/10.1002/mrm.28985
+
+#### 3.1.2 Config file
+
+All subject information and processing parameters are specified in a subject-specific configuration file. Default configuration settings are defined in `config/base_config.py`. The defaults are inhereted by subject-specific config files, unless overriden.
+<br />
+<br />`config/demo_config_basic.py` shows examples of basic config settings that you will usually want to change for each subject scan.
+
+- `data_dir`: Directory containing Dixon, proton, and (optionally) calibration scan files or .mat file. This is where output files will be saved.
+- `subject_id`: Subject ID number that will be used to label output files
+- `rbc_m_ratio`: RBC to membrane signal ratio for Dixon decomposition. If not set in config file, a calibartion scan file is required from which the ratio will be calculated.
+- `segmentation_key`: Defines what kind of segmentation to use. Typically set to CNN_VENT for automatic segmentation of the gas image or MANUAL_VENT for manual segmentation of the gas image.
+- `manual_seg_filepath`: Path of manual segmentation file, if MANUAL_VENT is chosen.
+
+`config/demo_config_advanced.py` shows examples of advanced config settings that may commonly be modified for more specific cases. See `config/base_config.py` for all config settings that can be modified.
+
+#### 3.1.3 Processing a subject
+
+First, copy one of the demo config files or the base_config file, rename it, and modify configuration settings. In terminal, navigate to the main pipeline directory and activate the virtual environment you set up earlier:
 
 ```bash
-./setup.sh build-only 2>&1 | tee setup.log
+conda activate <name-of-conda-environment>
 ```
 
-If you made it passed the build step successfully but had a failure during the install step, enter the following command to skip to the install step:
+#### Running full pipeline with image reconstruction
+
+Run the full pipeline with:
 
 ```bash
-./setup.sh install-only 2>&1 | tee setup.log
+python main.py --config <path-to-config-file>
 ```
 
-Setup and installation will be complete and the pipeline will be ready to use once `setup.sh` is ran successfully.
+#### Running previously processed subject scan from .mat file
 
-Remember to use the following command before using the pipeline:
+If a subject scan has already been processed through the pipeline and you wish to reprocess the previously constructed images, you can run the pipeline on the subject's .mat file with:
 
 ```bash
-conda activate <name_of_conda_environment>
+python main.py --config <path-to-config-file> --force_readin
 ```
 
-The next steps will be for manual installation. Skip to [Usage](#usage) if you are finished with setup and installation.
+### 3.2. Team Xenon Worflow for Duke Data Processing
 
-### 2.2. Virtual Environment Creation and Package Installation
+Warning: this is the Team Xenon workflow only. Other users do not have to follow the exact procedures.
+
+1. Create a new subject folder. This will typically have the format of `###-###` or `###-###X`.
+
+2. Then log onto the `smb://duhsnas-pri/xenon_MRI_raw/` drive and enter the directory of interest corresponding to the recently scanned subject. Copy the files on your computer. Determine how many dixon scans are there (usually 1 or 2). If there is only 1, create a subfolder named `###-###` in your new subject folder and copy all twix files(should be at least three files: dixon, calibration, and BHUTE) into that subfolder.(NOTE: scan can be processed using only one dixon scan. In that case, only one dixon should be in the subfolder) If there are 2 dixons, create subfolders `###-###_s1` (for the first dixon scan) and `###-###_s2`(for the second dixon scan) and copy the twix files corresponding to the first dixon (cali, dixon, ute, and optionally dedicated ventilation) and copy the twix files corresponding the second dixon (cali, dixon, ute) into the other.
+
+3. Process the spectroscopy using the MATLAB spectroscopy pipeline first. Instructions are on the repository ("Spectroscopy_Processing_Production").
+
+4. Before running the gas exchange pipline, make sure you have the latest updates. You can do this by
+
+   ```
+   git pull
+   ```
+
+5. Create a new config file titled "[subject_id].py" in lower case by copying one of the demo config files. Then, edit the parameters like subject id and rbc/m ratio and save it. Run the pipeline.
+
+6. Copy all the contents in the subject folder and paste it into `smb://duhsnas-pri/duhs_radiology/Private/TeamXenon/01_ClinicalOutput/Processed_Subjects`
+
+7. Upload `.pdf` reports to Slack
+
+### 3.3 Manual Segmentation Workflow
+
+Note: The following steps are for correcting auto-generated gas image masks.
+
+1. Ensure you have [version 3.8](https://sourceforge.net/projects/itk-snap/files/itk-snap/3.8.0/) of ITK-SNAP installed.
+
+2. Open `gas_highreso.nii` in ITK-SNAP as Main Image.
+
+3. Load `proton_reg.nii` as Additional Image and `mask_reg.nii` as Segmentation.
+
+4. Set Display Layout to Axial View and Thumbnail Layout.
+
+5. Correct the mask with the Paintbrush and save as `mask_reg_corrected.nii` when complete.
+
+6. In your config file, set `segmenation_key` to MANUAL_VENT and `manual_seg_filepath` to the corrected mask filepath.
+
+7. Reprocess subject as specified in 3.1.3.
+
+## Acknowledgements:
+
+Developers: Junlan Lu, Aryil Bechtel, Sakib Kabir, Suphachart Leewiwatwong, David Mummy.
+
+Code inspired by: Ziyi Wang
+
+Additional help: Isabelle Dummer, Joanna Nowakowska, Shuo Zhang
+
+Please contact David Mummy (david.mummy@duke.edu) for any correspondence.
+
+## How to Cite:
+
+We appreciate being cited! Please click the "Cite This Repository" button under "About" on the repository landing page to get APA and BibTex citations. You can also just copy the following BibTex code into a plain text file and load it into your favorite citation manager:
+
+@software{Lu_Duke_University_Xenon_2024,
+author = {Lu, Junlan and Leewiwatwong, Suphachart and Bechtel, Ari and Kabir, Sakib and Wang, Ziyi},
+month = jan,
+title = {{“Duke University Xenon Gas Exchange Imaging Pipeline”}},
+url = {https://github.com/TeamXenonDuke/xenon-gas-exchange-consortium},
+version = {4.0},
+year = {2024}
+}
+
+## Appendix A: Additional Installation Information
+
+### Manual Instructions for steps 2.2. and 2.3.
+
+#### 2.2. Virtual Environment Creation and Package Installation
 
 #### 2.2.1. Create Virtual Environment
 
@@ -250,11 +341,12 @@ sudo apt install poppler-utils
 Mac Users:
 
 ```bash
-brew install wkhtmltopdf
+curl -L https://github.com/wkhtmltopdf/packaging/releases/download/0.12.6-2/wkhtmltox-0.12.6-2.macos-cocoa.pkg -O
+sudo installer -pkg wkhtmltox-0.12.6-2.macos-cocoa.pkg -target ~
 brew install poppler
 ```
 
-### 2.3. Download Necessary Tools and Compile ANTs
+#### 2.3. Download Necessary Tools and Compile ANTs
 
 #### 2.3.1. Segmentation: Downloading the .h5 models for machine learning
 
@@ -319,115 +411,26 @@ mv ./Examples/antsApplyTransforms ./Examples/antsRegistration ./Examples/N4BiasF
 
 Note: The details of ANTs Compilation can be found [here](https://github.com/ANTsX/ANTs/wiki/Compiling-ANTs-on-Linux-and-Mac-OS).
 
-## Usage
+### Resolving Issues with `setup.sh` SuperBuild
 
-### 3.1. General usage
+You can rerun `setup.sh` to skip to the build and install step if there is a failure during the SuperBuild. You should have all required packages installed to your conda environment and native computer by the time the SuperBuild starts, so you can skip over that part of `setup.sh` and go straight to the build or install steps.
 
-#### 3.1.1 Accepted file inputs
-
-The pipeline accepts Siemens twix (.dat) or ISMRMRD (.h5) files for standard proton UTE, 1-point Dixon, and (optionally) calibration scans. Alternatively, if a subject scan has already been processed through the pipeline and you wish to reprocess the previously constructed images, you can run the pipeline on the subject's .mat file. ISMRMRD files must be named and formatted according to the <sup>129</sup>Xe MRI clinical trials consortium specifications: [https://github.com/Xe-MRI-CTC/xemrd-specification](https://github.com/Xe-MRI-CTC/xemrd-specification)
-
-More information on consortium protocol for the proton UTE, 1-point Dixon, and calibration scans can be found in the following reference:
-
-> Niedbalski, PJ, Hall, CS, Castro, M, et al. Protocols for multi-site trials using hyperpolarized 129Xe MRI for imaging of ventilation, alveolar-airspace size, and gas exchange: A position paper from the 129Xe MRI clinical trials consortium. Magn Reson Med. 2021; 86: 2966–2986. https://doi.org/10.1002/mrm.28985
-
-#### 3.1.2 Config file
-
-All subject information and processing parameters are specified in a subject-specific configuration file. Default configuration settings are defined in `config/base_config.py`. The defaults are inhereted by subject-specific config files, unless overriden.
-<br />
-<br />`config/demo_config_basic.py` shows examples of basic config settings that you will usually want to change for each subject scan.
-
-- `data_dir`: Directory containing Dixon, proton, and (optionally) calibration scan files or .mat file. This is where output files will be saved.
-- `subject_id`: Subject ID number that will be used to label output files
-- `rbc_m_ratio`: RBC to membrane signal ratio for Dixon decomposition. If not set in config file, a calibartion scan file is required from which the ratio will be calculated.
-- `segmentation_key`: Defines what kind of segmentation to use. Typically set to CNN_VENT for automatic segmentation of the gas image or MANUAL_VENT for manual segmentation of the gas image.
-- `manual_seg_filepath`: Path of manual segmentation file, if MANUAL_VENT is chosen.
-
-`config/demo_config_advanced.py` shows examples of advanced config settings that may commonly be modified for more specific cases. See `config/base_config.py` for all config settings that can be modified.
-
-#### 3.1.3 Processing a subject
-
-First, copy one of the demo config files or the base_config file, rename it, and modify configuration settings. In terminal, navigate to the main pipeline directory and activate the virtual environment you set up earlier:
+If there was a failure during the build step, enter the following command to skip to the build step (Note: Repeated failures may mean you are using too many CPU cores or RAM. You may need to run the build step with only 1 thread!):
 
 ```bash
-conda activate XeGas
+./setup.sh build-only 2>&1 | tee setup.log
 ```
 
-#### Running full pipeline with image reconstruction
-
-Run the full pipeline with:
+If you made it passed the build step successfully but had a failure during the install step, enter the following command to skip to the install step:
 
 ```bash
-python main.py --config [path-to-config-file]
+./setup.sh install-only 2>&1 | tee setup.log
 ```
 
-#### Running previously processed subject scan from .mat file
+Setup and installation will be complete and the pipeline will be ready to use once `setup.sh` is ran successfully.
 
-If a subject scan has already been processed through the pipeline and you wish to reprocess the previously constructed images, you can run the pipeline on the subject's .mat file with:
+Remember to use the following command before using the pipeline:
 
 ```bash
-python main.py --config [path-to-config-file] --force_readin
+conda activate <name-of-conda-environment>
 ```
-
-### 3.2. Team Xenon Worflow for Duke Data Processing
-
-Warning: this is the Team Xenon workflow only. Other users do not have to follow the exact procedures.
-
-1. Create a new subject folder. This will typically have the format of `###-###` or `###-###X`.
-
-2. Then log onto the `smb://duhsnas-pri/xenon_MRI_raw/` drive and enter the directory of interest corresponding to the recently scanned subject. Copy the files on your computer. Determine how many dixon scans are there (usually 1 or 2). If there is only 1, create a subfolder named `###-###` in your new subject folder and copy all twix files(should be at least three files: dixon, calibration, and BHUTE) into that subfolder.(NOTE: scan can be processed using only one dixon scan. In that case, only one dixon should be in the subfolder) If there are 2 dixons, create subfolders `###-###_s1` (for the first dixon scan) and `###-###_s2`(for the second dixon scan) and copy the twix files corresponding to the first dixon (cali, dixon, ute, and optionally dedicated ventilation) and copy the twix files corresponding the second dixon (cali, dixon, ute) into the other.
-
-3. Process the spectroscopy using the MATLAB spectroscopy pipeline first. Instructions are on the repository ("Spectroscopy_Processing_Production").
-
-4. Before running the gas exchange pipline, make sure you have the latest updates. You can do this by
-
-   ```
-   git pull
-   ```
-
-5. Create a new config file titled "[subject_id].py" in lower case by copying one of the demo config files. Then, edit the parameters like subject id and rbc/m ratio and save it. Run the pipeline.
-
-6. Copy all the contents in the subject folder and paste it into `smb://duhsnas-pri/duhs_radiology/Private/TeamXenon/01_ClinicalOutput/Processed_Subjects`
-
-7. Upload `.pdf` reports to Slack
-
-### 3.3 Manual Segmentation Workflow
-
-Note: The following steps are for correcting auto-generated gas image masks.
-
-1. Ensure you have [version 3.8](https://sourceforge.net/projects/itk-snap/files/itk-snap/3.8.0/) of ITK-SNAP installed.
-
-2. Open `gas_highreso.nii` in ITK-SNAP as Main Image.
-
-3. Load `proton_reg.nii` as Additional Image and `mask_reg.nii` as Segmentation.
-
-4. Set Display Layout to Axial View and Thumbnail Layout.
-
-5. Correct the mask with the Paintbrush and save as `mask_reg_corrected.nii` when complete.
-
-6. In your config file, set `segmenation_key` to MANUAL_VENT and `manual_seg_filepath` to the corrected mask filepath.
-
-7. Reprocess subject as specified in 3.1.3.
-
-## Acknowledgements:
-
-Developers: Junlan Lu, Aryil Bechtel, Sakib Kabir, Suphachart Leewiwatwong, David Mummy.
-
-Code inspired by: Ziyi Wang
-
-Additional help: Isabelle Dummer, Joanna Nowakowska, Shuo Zhang
-
-Please contact David Mummy (david.mummy@duke.edu) for any correspondence.
-
-## How to Cite:
-
-We appreciate being cited! Please click the "Cite This Repository" button under "About" on the repository landing page to get APA and BibTex citations. You can also just copy the following BibTex code into a plain text file and load it into your favorite citation manager:
-
-@software{Lu_Duke_University_Xenon_2024,
-author = {Lu, Junlan and Leewiwatwong, Suphachart and Bechtel, Ari and Kabir, Sakib and Wang, Ziyi},
-month = jan,
-title = {{“Duke University Xenon Gas Exchange Imaging Pipeline”}},
-url = {https://github.com/TeamXenonDuke/xenon-gas-exchange-consortium},
-version = {4.0},
-year = {2024}
-}

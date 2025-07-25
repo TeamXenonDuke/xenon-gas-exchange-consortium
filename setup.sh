@@ -114,6 +114,7 @@ if !([[ "$1" == "build-only" ]] || [[ "$1" == "install-only" ]]); then
         exit 1
     fi
 
+    # Report errors from sudo/brew
     error_report
 
     # Install packages in requirements.txt to the VE
