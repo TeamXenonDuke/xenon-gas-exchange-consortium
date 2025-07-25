@@ -100,13 +100,17 @@ def output(config, folder, csv):
     if not config:
         config_path = os.path.join("testing", "config", "009-028B.py")
 
-    csv_path = folder
+    actual_csv_path = folder
     if not folder:
-        csv_path = os.path.join("testing", "subjects", "009-028B", "gx", "009-028B_stats.csv")
+        actual_csv_path = os.path.join("testing", "subjects", "009-028B", "gx", "009-028B_stats.csv")
     else:
-        csv_path = os.path.join(folder, "gx", os.path.splitext(os.path.basename(config_path))[0] + "_stats.csv")
+        actual_csv_path = os.path.join(folder, "gx", os.path.splitext(os.path.basename(config_path))[0] + "_stats.csv")
 
-    program = subprocess.run(["python", "main.py", "--config", config_path])
+    if not folder:
+        program = subprocess.run(["python", "main.py", "--config", config_path])
+    else:
+        program = subprocess.run(["python", "main.py", "--config", config_path, "--folder", folder])
+
     if program.returncode != 0:
         pytest.exit("Program failed to run for subject: " + os.path.splitext(os.path.basename(config_path))[0], returncode=1)
 
@@ -114,7 +118,7 @@ def output(config, folder, csv):
         global expected
         expected = pd.read_csv(csv)
 
-    return pd.read_csv(csv_path)
+    return pd.read_csv(actual_csv_path)
 
 def test_headers(output):
     """
