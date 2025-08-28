@@ -34,7 +34,7 @@ def main(unused_argv):
     bias_list = ["rf"]
     for bias_correction in bias_list:
         data_vent = io_utils.import_np(
-            path=f"data/FV_healthy_ref/reference_dist.npy"
+            path=f"data/FV_healthy_ref/8-28_reference_dist.npy"
             # CHECK THIS
         )
 
@@ -67,7 +67,7 @@ def main(unused_argv):
         plot_color.plot_histogram_with_thresholds(
             data_vent,
             thresholds,
-            f"data/FV_healthy_ref/color_reference_dist_rf.png",
+            f"data/FV_healthy_ref/8-28_color_reference_dist_rf.png",
             index=bias_list.index(bias_correction)
             # bins=6,  # Set the number of bins to 6
         )

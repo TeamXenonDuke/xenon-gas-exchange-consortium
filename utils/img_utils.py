@@ -276,7 +276,14 @@ def normalize(
 
         # New volume is just proportional to signal
         # Flatten the 3D array to 1D for plotting the histogram
-        frac_vent_mask = frac_vent[mask == 1]  # For the purposes of the histogram, only count voxels in the thoracic cavity mask
+        # Create a masked image (zero elsewhere) for NIfTI
+        frac_vent_masked = np.zeros_like(frac_vent)
+        frac_vent_masked[mask == 1] = frac_vent[mask == 1]
+        frac_vent_mask_nifti_img = nb.Nifti1Image(frac_vent_masked, affine=np.eye(4))
+        frac_vent_mask_nifti_img.to_filename('tmp/frac_vent_mask.nii')
+
+        # For histogram/stats:
+        frac_vent_mask = frac_vent[mask == 1]
         flat_array = frac_vent_mask.flatten()
 
         # and the mean

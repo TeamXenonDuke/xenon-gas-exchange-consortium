@@ -444,9 +444,10 @@ class Subject(object):
         ):
             logging.info("Loading mask file specified by the user.")
             try:
-                loaded_mask = np.squeeze(
-                    np.array(nib.load(self.config.manual_seg_filepath).get_fdata())
-                ).astype(bool)
+                # Load small mask
+                loaded_mask = np.squeeze(np.array(nib.load(self.config.manual_seg_filepath).get_fdata())).astype(bool)
+                if np.sum(loaded_mask) == 0:
+                    raise ValueError("Loaded mask is empty (sum=0).")
                 self.mask = loaded_mask
                 self.big_mask = np.squeeze(
                     np.array(nib.load(self.config.trachea_plus_lung_mask_filepath).get_fdata())
@@ -540,12 +541,14 @@ class Subject(object):
             image=img_utils.normalize(self.image_gas_cor, self.big_mask, bag_volume=self.config.bag_volume), #big mask here 
             #the mask_reg above needs to be the big mask 
 
-            # mask=self.mask,
             mask=self.mask, #small mask (stay same)
 
             thresholds=self.reference_data['fv_threshold_vent'],
         )
         self.mask_vent = np.logical_and(self.image_gas_binned > 1, self.mask)
+
+        gas_nifti_img = nib.Nifti1Image(self.image_gas_binned, affine=np.eye(4))
+        gas_nifti_img.to_filename('tmp/image_gas_binned.nii')
 
     def dixon_decomposition(self):
         """Perform Dixon decomposition on the dissolved-phase images."""

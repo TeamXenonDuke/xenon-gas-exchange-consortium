@@ -91,13 +91,13 @@ def compile_distribution():
         io_utils.export_nii(np.float32(mask), "tmp/mask.nii")
         io_utils.export_nii(image_ventilation, "tmp/ventilation.nii")
         plt.hist(image_ventilation[mask > 0], bins=50)
-        plt.savefig("data/FV_healthy_ref/{}/blue_histogram.png".format(config.subject_id))
+        plt.savefig("data/FV_healthy_ref/{}/8-28_blue_histogram.png".format(config.subject_id))
         plt.show()
         testing_subject_mean = np.mean(data_vent)
         logging.info("mean: {}".format(testing_subject_mean))
 
     io_utils.export_np(
-        data_vent, "data/FV_healthy_ref/reference_dist.npy"
+        data_vent, "data/FV_healthy_ref/8-28_reference_dist.npy"
     )  # MODIFY THIS!!!!
 
 
@@ -109,9 +109,9 @@ def get_thresholds():  # need box plots
     """
 
     data_vent = io_utils.import_np(
-        path="data/FV_healthy_ref/reference_dist.npy"
+        path="data/FV_healthy_ref/8-28_reference_dist.npy"
     )  # MODIFY THIS!!!!
-    scale_factor = 1
+    scale_factor = 0
     assert data_vent is not None, "Error: No data_osc found."
     # Check if data_osc and scale_factor have enough values
     data_trans, lambda_ = signal_utils.boxcox(data=data_vent + scale_factor)
@@ -121,7 +121,7 @@ def get_thresholds():  # need box plots
     logging.info("std: {}".format(np.std(data_vent)))
     plot.plot_histogram_ventilation(
         data_vent,
-        "data/FV_healthy_ref/reference_dist.png"
+        "data/FV_healthy_ref/8-28_reference_dist.png"
         # MODIFY THIS TITLE!!!!
         # REMEBER TO CHANGE INDEX WITH EACH HISTOGRAM
     )

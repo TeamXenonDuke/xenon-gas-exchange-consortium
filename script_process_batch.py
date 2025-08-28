@@ -1,76 +1,70 @@
-"""Scripts to run gas exchange mapping pipeline in batches."""
+"""Run the gas exchange imaging pipeline across subjects (batch).
+
+Example usage:
+ python script_process_batch.py --cohort=FV_healthy_ref
+ """
+
 import glob
 import importlib
 import logging
 import os
-import pdb
+from pathlib import Path
 
 from absl import app, flags
 
+import main as gx_main
 from main import gx_mapping_readin, gx_mapping_reconstruction
 
 FLAGS = flags.FLAGS
 
-flags.DEFINE_string("cohort", "healthy", "cohort folder name in config folder")
+flags.adopt_module_key_flags(gx_main)
 
-CONFIG_PATH = "config/"
+flags.DEFINE_string(
+    "cohort",
+    "FV_healthy_ref",
+    "Cohort(s): single like 'FV_healthy_ref', hyphen list like 'cteph-ild', or 'all'.",
+)
 
+CONFIG_ROOT = "config"
 
-def main(argv):
-    """Run the gas exchange imaging pipeline in multiple subjects.
+def _subjects_for(cohort: str):
+    pat = os.path.join(CONFIG_ROOT, cohort, "*.py")
+    return sorted(p for p in glob.glob(pat) if not os.path.basename(p).startswith("_"))
 
-    Import the config file and run the gas exchange imaging pipeline on all
-    subjects specified in by the cohort flag.
-    """
-    if FLAGS.cohort == "healthy":
-        subjects = glob.glob(os.path.join(CONFIG_PATH, "healthy", "*py"))
-    elif FLAGS.cohort == "cteph":
-        subjects = glob.glob(os.path.join(CONFIG_PATH, "cteph", "*py"))
-    elif FLAGS.cohort == "ild":
-        subjects = glob.glob(os.path.join(CONFIG_PATH, "ild", "*py"))
-    elif FLAGS.cohort == "tyvaso":
-        subjects = glob.glob(os.path.join(CONFIG_PATH, "tyvaso", "*py"))
-    elif FLAGS.cohort == "jupiter":
-        subjects = glob.glob(os.path.join(CONFIG_PATH, "jupiter", "*py"))
-    elif FLAGS.cohort == "all":
-        subjects = glob.glob(os.path.join(CONFIG_PATH, "healthy", "*py"))
-        subjects += glob.glob(os.path.join(CONFIG_PATH, "cteph", "*py"))
-        subjects += glob.glob(os.path.join(CONFIG_PATH, "ild", "*py"))
-        subjects += glob.glob(os.path.join(CONFIG_PATH, "tyvaso", "*py"))
+def main(_):
+    if FLAGS.cohort == "all":
+        cohorts = ["FV_healthy_ref", "cteph", "ild", "tyvaso", "jupiter"]
     elif "-" in FLAGS.cohort:
         cohorts = FLAGS.cohort.split("-")
-        subjects = []
-        for cohort in cohorts:
-            if cohort == "healthy":
-                subjects += glob.glob(os.path.join(CONFIG_PATH, "healthy", "*py"))
-            elif cohort == "cteph":
-                subjects += glob.glob(os.path.join(CONFIG_PATH, "cteph", "*py"))
-            elif cohort == "ild":
-                subjects += glob.glob(os.path.join(CONFIG_PATH, "ild", "*py"))
-            elif cohort == "tyvaso":
-                subjects += glob.glob(os.path.join(CONFIG_PATH, "tyvaso", "*py"))
-            else:
-                raise ValueError("Invalid cohort name")
     else:
-        raise ValueError("Invalid cohort name")
+        cohorts = [FLAGS.cohort]
 
-    for subject in subjects:
-        config_obj = importlib.import_module(
-            name=subject[:-3].replace("/", "."), package=None
-        )
-        config = config_obj.get_config()
-        logging.info("Processing subject: %s", config.subject_id)
-        if FLAGS.force_recon:
+    subjects = []
+    for c in cohorts:
+        if c not in {"FV_healthy_ref", "cteph", "ild", "tyvaso", "jupiter"}:
+            raise ValueError(f"Invalid cohort name: {c}")
+        subjects += _subjects_for(c)
+
+    if not subjects:
+        raise FileNotFoundError(f"No subject configs found for: {cohorts}")
+
+    for cfg_path in subjects:
+        module_name = Path(os.path.splitext(cfg_path)[0]).as_posix().replace("/", ".")
+        cfg_mod = importlib.import_module(module_name)
+        config = cfg_mod.get_config()
+
+        logging.info("Processing subject: %s", getattr(config, "subject_id", cfg_path))
+
+        if getattr(FLAGS, "force_recon", False):
             gx_mapping_reconstruction(config)
-        elif FLAGS.force_readin:
+        elif getattr(FLAGS, "force_readin", False):
             gx_mapping_readin(config)
-        elif config.processes.gx_mapping_recon:
+        elif getattr(config.processes, "gx_mapping_recon", False):
             gx_mapping_reconstruction(config)
-        elif config.processes.gx_mapping_readin:
+        elif getattr(config.processes, "gx_mapping_readin", False):
             gx_mapping_readin(config)
         else:
-            pass
-
+            logging.info("No processes enabled for %s; skipping.", cfg_path)
 
 if __name__ == "__main__":
     app.run(main)

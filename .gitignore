@@ -201,3 +201,18 @@ scripts/.gitkeep
 
 # recon/cs
 recon/cs/**
+
+add_nii_files.py
+colormap_3_grayscale_comparison.png
+colormap_axial.py
+colormap_compare.png
+continuous_colormap_3_slices.py
+continuous_colormap_3_slices_grayscale.py
+continuous_colormap_coronal.py
+continuous_colormap_sag.py
+coronal_ventilation_compare.png
+extract_hexcodes.py
+otsu_tracha_lung_mask_creation.py
+rgb_axial_compare.png
+rgb_coronal_compare.png
+void/
