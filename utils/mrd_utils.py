@@ -324,37 +324,41 @@ def get_gx_data(dataset: ismrmrd.hdf5.Dataset, multi_echo: bool) -> Dict[str, An
     """
     # get the raw FIDs, contrast labels, and bonus spectra labels
     raw_fids = []
+    bonus_spectra_fids = []
+
+
     contrast_labels = []
-    bonus_spectra_labels = []
+    bs_contrast_labels = []
+
     set_labels = []
     set_included = True
     n_projections = dataset.number_of_acquisitions()
     for i in range(0, int(n_projections)):
         acquisition_header = dataset.read_acquisition(i).getHead()
-        raw_fids.append(dataset.read_acquisition(i).data[0].flatten())
-        contrast_labels.append(acquisition_header.idx.contrast)
-        bonus_spectra_labels.append(acquisition_header.measurement_uid)
-        try:
-            set_labels.append(acquisition_header.idx.set)
-        except:
-            logging.warning("Unable to find set paramater from mrd object.")
-            set_included = False
 
-    raw_fids = np.asarray(raw_fids)
-    contrast_labels = np.asarray(contrast_labels)
-    bonus_spectra_labels = np.asarray(bonus_spectra_labels)
-    set_labels = np.asarray(set_labels)
 
-    # remove bonus spectra
-    raw_fids_truncated = raw_fids[
-        bonus_spectra_labels == constants.BonusSpectraLabels.NOT_BONUS, :
-    ]
-    contrast_labels_truncated = contrast_labels[
-        bonus_spectra_labels == constants.BonusSpectraLabels.NOT_BONUS
-    ]
-    set_labels_truncated = set_labels[
-        bonus_spectra_labels == constants.BonusSpectraLabels.NOT_BONUS
-    ]
+        bonus_spectra_flag = acquisition_header.measurement_uid;
+
+        if bonus_spectra_flag:
+            bonus_spectra_fids.append(dataset.read_acquisition(i).data[0].flatten())
+            bs_contrast_labels.append(acquisition_header.idx.contrast)
+
+        else:
+
+            raw_fids.append(dataset.read_acquisition(i).data[0].flatten())
+            contrast_labels.append(acquisition_header.idx.contrast)
+            try:
+                set_labels.append(acquisition_header.idx.set)
+            except:
+                set_included = False
+
+    bonus_spectra_fids = np.asarray(bonus_spectra_fids)
+    bs_contrast_labels = np.asarray(bs_contrast_labels)
+
+    raw_fids_truncated = np.asarray(raw_fids)
+    contrast_labels_truncated = np.asarray(contrast_labels)
+    set_labels_truncated = np.asarray(set_labels)
+
 
     # get the trajectories
     raw_traj = np.empty((raw_fids_truncated.shape[0], raw_fids_truncated.shape[1], 3))
