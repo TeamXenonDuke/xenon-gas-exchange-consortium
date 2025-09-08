@@ -292,11 +292,13 @@ def dixon_decomposition(
     # correct for B0 inhomogeneity
     diffphase = correct_b0(image_gas, mask)
     # calculate phase shift to separate RBC and membrane
+    image_dissolved_b0 = np.multiply(image_dissolved, np.exp(1j * (-diffphase)))
+    
     desired_angle = np.arctan2(rbc_m_ratio, 1.0)
-    current_angle = np.angle(np.sum(image_dissolved[mask > 0]))
+    current_angle = np.angle(np.sum(image_dissolved_b0[mask > 0]))
     delta_angle = desired_angle - current_angle
-    image_dixon = np.multiply(image_dissolved, np.exp(1j * (delta_angle)))
-    image_dixon = np.multiply(image_dixon, np.exp(1j * (-diffphase)))
+    image_dixon = np.multiply(image_dissolved_b0, np.exp(1j * (delta_angle)))
+    #image_dixon = np.multiply(image_dixon, np.exp(1j * (-diffphase)))
     # separate RBC and membrane components
     image_rbc = (
         np.imag(image_dixon)
