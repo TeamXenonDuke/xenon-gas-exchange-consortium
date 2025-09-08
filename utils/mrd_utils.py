@@ -76,6 +76,49 @@ def get_sample_time(dataset: ismrmrd.hdf5.Dataset) -> float:
     acq_header = dataset.read_acquisition(0).getHead()
     return acq_header.sample_time_us * 1e-6
 
+def get_sample_time_gas_exchange(dataset: ismrmrd.hdf5.Dataset) -> float:
+    """
+    Get the sample (dwell) time from the MRD dataset.
+
+    Reads from the first non-bonus spectrum acquisition.
+
+    Args:
+        dataset (ismrmrd.hdf5.Dataset): MRD data object
+    Returns:
+        float: dwell time in seconds
+    """
+    n_acq = dataset.number_of_acquisitions()
+    for i in range(n_acq):
+        acq = dataset.read_acquisition(i)
+        head = acq.getHead()
+
+        if head.measurement_uid != 1:
+            return head.sample_time_us * 1e-6
+
+    raise RuntimeError("No valid acquisitions found to determine sample time.")
+
+def get_sample_time_bonus_spectra(dataset: ismrmrd.hdf5.Dataset) -> float:
+    """
+    Get the sample (dwell) time for bonus spectra from the MRD dataset.
+
+    Uses the first acquisition identified as a bonus spectrum.
+
+    Args:
+        dataset (ismrmrd.hdf5.Dataset): MRD data object
+
+    Returns:
+        float: dwell time in seconds
+    """
+    n_acq = dataset.number_of_acquisitions()
+    for i in range(n_acq):
+        acq = dataset.read_acquisition(i)
+        head = acq.getHead()
+
+        if head.measurement_uid: 
+            return head.sample_time_us * 1e-6
+
+    raise RuntimeError("No bonus spectra acquisitions found to determine sample time.")
+
 
 def get_dyn_fids(dataset: ismrmrd.hdf5.Dataset, n_skip_end: int = 20) -> np.ndarray:
     """Get the dissolved phase FIDS used for dyn. spectroscopy from mrd object.
@@ -335,7 +378,6 @@ def get_gx_data(dataset: ismrmrd.hdf5.Dataset, multi_echo: bool) -> Dict[str, An
     n_projections = dataset.number_of_acquisitions()
     for i in range(0, int(n_projections)):
         acquisition_header = dataset.read_acquisition(i).getHead()
-
 
         bonus_spectra_flag = acquisition_header.measurement_uid;
 
