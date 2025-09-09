@@ -493,6 +493,85 @@ def plot_histogram_with_thresholds(
     plt.savefig(path)
 
 
+def plot_histogram_with_thresholds_color(
+    data: np.ndarray, thresholds: List[float], path: str, index
+):
+    bias_correction_types = ["N4ITK", "RF Depolarization", "Template", "Skipped"]
+
+    """Generate the histogram for the healthy reference distribution.
+
+    Plot histogram of the data with the thresholds each having a different color by
+    setting the face color in matplotlib. All values below the first threshold are
+    red, all values between the first and second threshold are orange, all values above
+    last threshold are purple.
+
+    Args:
+        data (np.ndarray): data to plot
+        thresholds (List[float]): list of thresholds to plot of length 7.
+        path (str): path to save the figure.
+        graph title: the type of bias correction
+    """
+    _, ax = plt.subplots(figsize=(10, 5), dpi=300)
+    ax.hist(data, bins=500, density=True)
+
+    # Plot the thresholds
+    for threshold in thresholds:
+        ax.axvline(threshold, color="k", linestyle="--", linewidth=1)
+    # Set the face color for the thresholds
+    i = 0
+    while ax.patches[i].get_x() < thresholds[0]:
+        ax.patches[i].set_facecolor((1, 0, 0))  # red
+        i += 1
+
+    while (
+        i < len(ax.patches)
+        and ax.patches[i].get_x() >= thresholds[0]
+        and ax.patches[i].get_x() < thresholds[1]
+    ):
+        ax.patches[i].set_facecolor((1, 0.7143, 0))
+        i += 1
+    while (
+        i < len(ax.patches)
+        and ax.patches[i].get_x() >= thresholds[1]
+        and ax.patches[i].get_x() < thresholds[2]
+    ):
+        ax.patches[i].set_facecolor((0.4, 0.7, 0.4))
+        i += 1
+    while (
+        i < len(ax.patches)
+        and ax.patches[i].get_x() >= thresholds[2]
+        and ax.patches[i].get_x() < thresholds[3]
+    ):
+        ax.patches[i].set_facecolor((0, 1, 0))
+        i += 1
+    while (
+        i < len(ax.patches)
+        and ax.patches[i].get_x() >= thresholds[3]
+        and ax.patches[i].get_x() < thresholds[4]
+    ):
+        ax.patches[i].set_facecolor((45.0 / 255.0, 160.0 / 255.0, 150.0 / 255.0))
+        i += 1
+    while i < len(ax.patches) and ax.patches[i].get_x() >= thresholds[4]:
+        ax.patches[i].set_facecolor((0, 0, 1))
+        i += 1
+    # increase the size of the tick labels
+    ax.set_xlabel("Ventilation (%)", fontsize=20)
+    x_min = 0
+    x_max = 1.1
+    plt.xlim(x_min, x_max)
+    ax.set_ylabel("Fraction of Total Pixels", fontsize=20)
+
+    bias_correction = bias_correction_types[index]
+    ax.set_title(
+        "Healthy Reference Color Bins", fontsize=20
+    )  # MODIFY TITLE
+
+    ax.set_yticks([])
+    ax.tick_params(axis="x", which="major", labelsize=20)
+    plt.tight_layout(pad=0.4, w_pad=0.5, h_pad=1.0)
+    plt.savefig(path)
+
+
 def plot_histogram_ventilation(data: np.ndarray, path: str):
     """Plot histogram of ventilation.
 

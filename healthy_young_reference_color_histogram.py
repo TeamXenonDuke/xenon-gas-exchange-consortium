@@ -21,7 +21,7 @@ from absl import app, flags
 from utils import signal_utils
 
 sys.path.append(".")
-from utils import constants, io_utils, plot_color
+from utils import constants, io_utils, plot
 
 
 def main(unused_argv):
@@ -64,7 +64,7 @@ def main(unused_argv):
             threshold = np.mean(data_vent) + z * np.std(data_vent)
             logging.info("Gaussian threshold: %s", threshold)
 
-        plot_color.plot_histogram_with_thresholds(
+        plot.plot_histogram_with_thresholds_color(
             data_vent,
             thresholds,
             f"data/FV_healthy_ref/8-28_color_reference_dist_rf.png",

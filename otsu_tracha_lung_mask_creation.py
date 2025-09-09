@@ -8,9 +8,9 @@ from skimage.measure import label
 from skimage.morphology import remove_small_objects, binary_closing, ball
 
 # default parameters (tweak as needed depedning on how well mass output matches gas.nii)
-BASE_LOW_FACTOR = 0.55  # starting point for low threshold scaling
+BASE_LOW_FACTOR = 0.50  # starting point for low threshold scaling
 # This is the most important parameter to tweak if results are too noisy or too sparse
-LOW_CLIP        = 0.55  # tweak this, don't go below this (too permissive invites noise)
+LOW_CLIP        = 0.50  # tweak this, don't go below this (too permissive invites noise)
 
 HIGH_CLIP       = 0.7  # don't go above this (too strict might miss signal)
 ALPHA           = 0.05  # how strongly skew affects LOW_FACTOR
@@ -67,7 +67,7 @@ def otsu_hysteresis_segment(input_path, output_path):
 
 if __name__ == "__main__":
     # Example usage
-    SUBJECT = "003-017B_s2"
+    SUBJECT = "003-025B_s2"
     input_file = f"data/repeatability/{SUBJECT}/GAS_{SUBJECT}.nii"
     output_file = f"data/repeatability/{SUBJECT}/{SUBJECT}_mask_trachea_lung_corrected.nii"
     otsu_hysteresis_segment(input_file, output_file)

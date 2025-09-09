@@ -49,15 +49,15 @@ def ventilation_frac_vent_analysis(config: base_config.Config) -> np.ndarray:
         subject.segmentation()
 
     image_gas_cor = subject.image_gas_cor  # Shape (128,128,128)
-    big_mask = subject.big_mask  # Possible wrong shape
+    mask_include_trachea = subject.mask_include_trachea  # Possible wrong shape
     
     # return the ventilation image that is normalized between 0 and 1, masked
     # this needs to be normalized by the 99th percentile
     # TODO: do not rescale by 99th percentile with fractional ventilation
     # Debugging print
-    print(f"Before reshape: image shape = {image_gas_cor.shape}, mask shape = {big_mask.shape}")
+    print(f"Before reshape: image shape = {image_gas_cor.shape}, mask shape = {mask_include_trachea.shape}")
     
-    return img_utils.normalize(subject.image_gas_cor, subject.big_mask, bag_volume=config.bag_volume), subject.mask
+    return img_utils.normalize(subject.image_gas_cor, subject.mask_include_trachea, bag_volume=config.bag_volume), subject.mask
 
 
 def compile_distribution():

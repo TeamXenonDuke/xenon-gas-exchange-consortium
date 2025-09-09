@@ -102,7 +102,7 @@ class SegmentationKey(enum.Enum):
     MANUAL_PROTON = "manual_proton"
     SKIP = "skip"
     THRESHOLD_VENT = "threshold_vent"
-    FV_THRESHOLD_VENT = "fv_threshold_vent"
+    THRESHOLDS_FRACTIONAL_VENTILATION = "thresholds_fractional_ventilation"
 
 class RegistrationKey(enum.Enum):
     """Registration flags.
@@ -425,7 +425,7 @@ class ReferenceDistribution(object):
     REFERENCE_218_PPM = {
     "title": "REFERENCE_218_PPM",
     #frac vent theshold vent:
-    "fv_threshold_vent": [0.126229, 0.198441, 0.271045, 0.343936, 0.417054],
+    "thresholds_fractional_ventilation": [0.126229, 0.198441, 0.271045, 0.343936, 0.417054],
     "threshold_vent": [0.3908, 0.5741, 0.7180, 0.8413, 0.9511],
     "threshold_rbc": [0.001007, 0.002723, 0.005120, 0.008140, 0.011743],
     "threshold_membrane": [0.003826, 0.005928, 0.008486, 0.011498, 0.014964, 0.018883, 0.023254],
@@ -462,7 +462,7 @@ class ReferenceDistribution(object):
 
     REFERENCE_208_PPM = {
         "title": "REFERENCE_208_PPM",
-        "fv_threshold_vent": [0.126229, 0.198441, 0.271045, 0.343936, 0.417054],
+        "thresholds_fractional_ventilation": [0.126229, 0.198441, 0.271045, 0.343936, 0.417054],
         "threshold_vent": [0.3908, 0.5741, 0.7180, 0.8413, 0.9511],
         "threshold_rbc": [0.000977, 0.002641, 0.004967, 0.007896, 0.011391],
         "threshold_membrane": [0.004170, 0.006461, 0.009249, 0.012532, 0.016309, 0.020580, 0.025344],
@@ -499,7 +499,7 @@ class ReferenceDistribution(object):
     
     REFERENCE_MANUAL = {
         "title": "MANUAL",
-        "fv_threshold_vent": [0.126229, 0.198441, 0.271045, 0.343936, 0.417054],
+        "thresholds_fractional_ventilation": [0.126229, 0.198441, 0.271045, 0.343936, 0.417054],
         "threshold_vent": [0.3908, 0.5741, 0.7180, 0.8413, 0.9511],
         "threshold_rbc": [0.001007, 0.002723, 0.00512, 0.00814, 0.011743],
         "threshold_membrane": [0.004170, 0.006461, 0.009249, 0.012532, 0.016309, 0.020580, 0.025344],
