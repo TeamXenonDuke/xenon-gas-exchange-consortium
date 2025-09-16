@@ -41,6 +41,7 @@ class Config(config_dict.ConfigDict):
         self.bag_volume = "None"
         self.segmentation_key = constants.SegmentationKey.CNN_VENT.value
         self.manual_seg_filepath = ""
+        self.trachea_plus_lung_mask_filepath = ""
 
         # Additional options
         self.reference_data_key = constants.ReferenceDataKey.DUKE_REFERENCE.value
@@ -82,9 +83,9 @@ class Recon(object):
     def __init__(self):
         """Initialize the reconstruction parameters."""
         # Gradient delays - MUST be specified
-        self.del_x = "None"
-        self.del_y = "None"
-        self.del_z = "None"
+        self.del_x = -5
+        self.del_y = -5
+        self.del_z = -5
 
         # Reconstruction and matrix sizes
         self.recon_size = 64

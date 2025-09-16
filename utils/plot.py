@@ -491,3 +491,148 @@ def plot_histogram_with_thresholds(
     ax.tick_params(axis="x", which="major", labelsize=20)
     plt.tight_layout(pad=0.4, w_pad=0.5, h_pad=1.0)
     plt.savefig(path)
+
+
+def plot_histogram_with_thresholds_color(
+    data: np.ndarray, thresholds: List[float], path: str, index
+):
+    bias_correction_types = ["N4ITK", "RF Depolarization", "Template", "Skipped"]
+
+    """Generate the histogram for the healthy reference distribution.
+
+    Plot histogram of the data with the thresholds each having a different color by
+    setting the face color in matplotlib. All values below the first threshold are
+    red, all values between the first and second threshold are orange, all values above
+    last threshold are purple.
+
+    Args:
+        data (np.ndarray): data to plot
+        thresholds (List[float]): list of thresholds to plot of length 7.
+        path (str): path to save the figure.
+        graph title: the type of bias correction
+    """
+    _, ax = plt.subplots(figsize=(10, 5), dpi=300)
+    ax.hist(data, bins=500, density=True)
+
+    # Plot the thresholds
+    for threshold in thresholds:
+        ax.axvline(threshold, color="k", linestyle="--", linewidth=1)
+    # Set the face color for the thresholds
+    i = 0
+    while ax.patches[i].get_x() < thresholds[0]:
+        ax.patches[i].set_facecolor((1, 0, 0))  # red
+        i += 1
+
+    while (
+        i < len(ax.patches)
+        and ax.patches[i].get_x() >= thresholds[0]
+        and ax.patches[i].get_x() < thresholds[1]
+    ):
+        ax.patches[i].set_facecolor((1, 0.7143, 0))
+        i += 1
+    while (
+        i < len(ax.patches)
+        and ax.patches[i].get_x() >= thresholds[1]
+        and ax.patches[i].get_x() < thresholds[2]
+    ):
+        ax.patches[i].set_facecolor((0.4, 0.7, 0.4))
+        i += 1
+    while (
+        i < len(ax.patches)
+        and ax.patches[i].get_x() >= thresholds[2]
+        and ax.patches[i].get_x() < thresholds[3]
+    ):
+        ax.patches[i].set_facecolor((0, 1, 0))
+        i += 1
+    while (
+        i < len(ax.patches)
+        and ax.patches[i].get_x() >= thresholds[3]
+        and ax.patches[i].get_x() < thresholds[4]
+    ):
+        ax.patches[i].set_facecolor((45.0 / 255.0, 160.0 / 255.0, 150.0 / 255.0))
+        i += 1
+    while i < len(ax.patches) and ax.patches[i].get_x() >= thresholds[4]:
+        ax.patches[i].set_facecolor((0, 0, 1))
+        i += 1
+    # increase the size of the tick labels
+    ax.set_xlabel("Ventilation (%)", fontsize=20)
+    x_min = 0
+    x_max = 1.1
+    plt.xlim(x_min, x_max)
+    ax.set_ylabel("Fraction of Total Pixels", fontsize=20)
+
+    bias_correction = bias_correction_types[index]
+    ax.set_title(
+        "Healthy Reference Color Bins", fontsize=20
+    )  # MODIFY TITLE
+
+    ax.set_yticks([])
+    ax.tick_params(axis="x", which="major", labelsize=20)
+    plt.tight_layout(pad=0.4, w_pad=0.5, h_pad=1.0)
+    plt.savefig(path)
+
+
+def plot_histogram_ventilation(data: np.ndarray, path: str):
+    """Plot histogram of ventilation.
+
+    Args:
+        data (np.ndarray): data to plot histogram of.
+        path (str): path to save the image.
+    """
+
+    fig, ax = plt.subplots(figsize=(9, 6))
+
+    #without flattening data also works, what is this for? 
+    data = data.flatten()
+
+    #normalize the 99th percentile
+    #data = data / np.percentile(data, 99)
+    #data[data > 1] = 1
+
+    #weights used in plotting later
+    weights = np.ones_like(data) / float(len(data)) 
+
+    # plot histogram
+    _, bins, _ = ax.hist(
+        data,
+        bins=50,
+        color=(0.4196, 0.6824, 0.8392),
+        weights=weights,
+        edgecolor="black",
+    )
+
+    # plot healthy reference line
+    #refer_fit = np.array([0.04462, 0.52, 0.2713])
+    #normal = refer_fit[0] * np.exp(-(((bins - refer_fit[1]) / refer_fit[2]) ** 2))
+    #ax.plot(bins, normal, "--", color="k", linewidth=4)
+
+    # display mean of data as text in the top right corner
+    plt.legend(
+        [
+            "Mean: "
+            + str(round(np.mean(data), 10))
+            + " | SD: "
+            + str(round(np.std(data), 2))
+            + " | Median: "
+            + str(round(np.median(data), 2))
+        ],
+        fontsize=20,
+        loc="upper right",
+    )
+
+    print("Mean: "
+            + str(round(np.mean(data), 3))
+            + " | SD: "
+            + str(round(np.std(data), 3)))
+
+    ax.set_ylabel("Fraction of Total Pixels", fontsize=35)
+    # set plot parameters
+    plt.xlim((0, 1))
+    #plt.ylim((0, 0.09))
+    plt.rc("axes", linewidth=4)
+    plt.xticks(fontsize=40)
+    plt.yticks(fontsize=40)
+    fig.tight_layout()
+    plt.savefig(path)
+    plt.close()
+    
