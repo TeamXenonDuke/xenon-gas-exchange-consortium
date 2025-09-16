@@ -181,6 +181,10 @@ assets/tests/**/**.csv
 data/*
 !data/.gitkeep
 
+# ignore the void folder
+void/*
+!void/.gitkeep
+
 
 # Ignore all tests
 **/test_*.py
