@@ -212,7 +212,7 @@ def interp(img: np.ndarray, factor: int = 1):
 def normalize(
     image: np.ndarray,
     mask: np.ndarray = np.array([0.0]),
-    method: str = constants.NormalizationMethods.PERCENTILE_MASKED,  # default method = PERCENTILE_MASKED
+    method: str = constants.NormalizationMethods.FRAC_VENT,  # default method = PERCENTILE_MASKED
     percentile: float = 99.0,
     bag_volume: float = None # Add bag_volume as a parameter with a default value
 ) -> np.ndarray:

@@ -185,7 +185,7 @@ class Institution(enum.Enum):
 class SystemVendor(enum.Enum):
     """Scanner system_vendor."""
 
-    SIEMENS = "Siemens"
+    SIEMENS = "SIEMENS"
     GE = "GE"
     PHILIPS = "Philips"
 

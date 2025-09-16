@@ -543,7 +543,7 @@ class Subject(object):
         self.image_gas_binned = binning.linear_bin(
             image=img_utils.normalize(self.image_gas_cor, self.mask_include_trachea, bag_volume=self.config.bag_volume), #big mask here 
             mask=self.mask,
-            thresholds=self.reference_data['threshold_vent'],
+            thresholds=self.reference_data['thresholds_fractional_ventilation'],
         )
         self.mask_vent = np.logical_and(self.image_gas_binned > 1, self.mask)
 
