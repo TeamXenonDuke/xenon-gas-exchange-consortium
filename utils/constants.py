@@ -101,6 +101,7 @@ class SegmentationKey(enum.Enum):
     MANUAL_PROTON = "manual_proton"
     SKIP = "skip"
     THRESHOLD_VENT = "threshold_vent"
+    THRESHOLD_FRACTIONAL_VENTILATION = "threshold_fractional_ventilation"
 
 
 class RegistrationKey(enum.Enum):
@@ -337,6 +338,7 @@ class NormalizationMethods(object):
     PERCENTILE_MASKED = "percentile_masked"
     PERCENTILE = "percentile"
     MEAN = "mean"
+    FRAC_VENT = "frac_vent"
 
 
 class CMAP(object):
@@ -416,6 +418,7 @@ class ReferenceDistribution(object):
     REFERENCE_218_PPM = {
     "title": "REFERENCE_218_PPM",
     "threshold_vent": [0.3891, 0.5753, 0.7203, 0.8440, 0.9539],
+    "threshold_fractional_ventilation": [0.126229, 0.198441, 0.271045, 0.343936, 0.417054],
     "threshold_rbc": [0.001393, 0.002891, 0.004772, 0.006991, 0.009518],
     "threshold_membrane": [0.004881, 0.006522, 0.008603, 0.011216, 0.014466, 0.018471, 0.023370],
     "reference_fit_vent": (0.04074, 0.7085, 0.1408),
@@ -452,6 +455,7 @@ class ReferenceDistribution(object):
     REFERENCE_208_PPM = {
         "title": "REFERENCE_208_PPM",
         "threshold_vent": [0.3891, 0.5753, 0.7203, 0.8440, 0.9539],
+        "threshold_fractional_ventilation": [0.126229, 0.198441, 0.271045, 0.343936, 0.417054],
         "threshold_rbc": [0.001351, 0.002804, 0.004629, 0.006781, 0.009232],
         "threshold_membrane": [0.005320, 0.007108, 0.009377, 0.012224, 0.015766, 0.020132, 0.025471],
         "reference_fit_vent": (0.04074, 0.7085, 0.1408),
@@ -488,6 +492,7 @@ class ReferenceDistribution(object):
     REFERENCE_MANUAL = {
         "title": "MANUAL",
         "threshold_vent": [0.3891, 0.5753, 0.7203, 0.8440, 0.9539],
+        "threshold_fractional_ventilation": [0.126229, 0.198441, 0.271045, 0.343936, 0.417054],
         "threshold_rbc": [0.001393, 0.002891, 0.004772, 0.006991, 0.009518],
         "threshold_membrane": [0.004881, 0.006522, 0.008603, 0.011216, 0.014466, 0.018471, 0.023370],
         "reference_fit_vent": (0.04074, 0.7085, 0.1408),

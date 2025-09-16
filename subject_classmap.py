@@ -95,6 +95,7 @@ class Subject(object):
         self.rbc_hb_correction_factor = 1.0
         self.mask = np.array([0.0])
         self.mask_vent = np.array([0.0])
+        self.mask_including_trachea = np.array([0.0])
         self.rbc_m_ratio = 0.0
         self.dict_stats = {}
         self.dict_info = {}
@@ -179,6 +180,7 @@ class Subject(object):
         self.image_biasfield = mdict["image_biasfield"]
         self.mask = mdict["mask"].astype(bool)
         self.mask_vent = mdict["mask_vent"].astype(bool)
+        self.mask_including_trachea = mdict["mask_including_trachea"].astype(bool)
         self.traj_dissolved = mdict["traj_dissolved"]
         self.traj_gas = mdict["traj_gas"]
         if self.config.rbc_m_ratio > 0:
