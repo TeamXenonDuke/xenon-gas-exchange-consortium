@@ -253,6 +253,9 @@ class Subject(object):
                     0.903  # cincinnati requires a unique scaling factor
                 )
         
+        # Calculate the number of frames to skip at the beginning by dissolved flip angle
+        if np.isnan(self.config.recon.n_skip_start):
+            self.config.recon.n_skip_start = recon_utils.skip_from_flipangle(self.dict_dis[constants.IOFields.FA_DIS])
 
         # truncate gas and dissolved data and trajectories
         self.data_dissolved, self.traj_dissolved = pp.truncate_data_and_traj(
@@ -733,6 +736,10 @@ class Subject(object):
                 self.reference_data['reference_fit_membrane'][1],
                 self.reference_data['reference_fit_rbc'][1],
             ),
+            constants.StatsIOFields.RDP_BA: round(metrics.rdp_ba(
+                self.image_rbc2gas_binned,
+                self.mask,
+            ), 1),
         }
         
         if isinstance(self.config.patient_frc, (int, float)):
@@ -803,7 +810,6 @@ class Subject(object):
             constants.IOFields.SUBJECT_ID: self.config.subject_id,
             constants.IOFields.SCAN_DATE: self.dict_dis[constants.IOFields.SCAN_DATE],
             constants.IOFields.PROCESS_DATE: metrics.process_date(),
-            constants.IOFields.SCAN_TYPE: self.config.recon.scan_type,
             constants.IOFields.PIPELINE_VERSION: constants.PipelineVersion.VERSION_NUMBER,
             constants.IOFields.SOFTWARE_VERSION: self.dict_dis[
                 constants.IOFields.SOFTWARE_VERSION

@@ -1,11 +1,15 @@
 """Metrics for evaluating images."""
+import heapq
 import math
 import sys
 from datetime import datetime
 
+import cv2
+from scipy import ndimage
+
 sys.path.append("..")
 import numpy as np
-from scipy.ndimage.morphology import binary_dilation
+from scipy.ndimage import binary_dilation
 
 from utils import constants
 
@@ -172,7 +176,12 @@ def GLI_volume(age: float, sex: str, height: float, volume_type: str = "frc") ->
             )
             return predicted_value
 
-    return 0.0
+    # Display warning message when the value is outside the GLI range
+    logging.warning("\n" + "#" * 40)
+    logging.warning("Age or height is outside the GLI estimated range")
+    logging.warning("#" * 40 + "\n")
+    
+    return np.nan
 
 def get_bag_volume(fvc_volume: float) -> float:
     """
@@ -328,3 +337,127 @@ def kco(
     return 1 / (
         1 / (constants.KCO_ALPHA * membrane_rel) + 1 / (constants.KCO_BETA * rbc_rel)
     )
+
+
+def rdp_ba(
+    image_rbc_binned: np.ndarray,
+    mask: np.ndarray,
+) -> float:
+    """
+    Compute the RBC defect bias from apical (top) to basilar (bottom) regions across both lungs.
+
+    This metric (ΔRDP_BA) is designed to quantify how RBC defects are distributed spatially 
+    from the top to the bottom of the lungs using binarized RBC images (bin 1 or 2 indicates RBC defect).
+    It focuses only on the middle 40%-80% of valid axial slices to avoid extreme slices with noisy segmentation.
+
+    Args:
+        image_rbc_binned (np.ndarray): 3D array (height x width x slices) where voxel values are binned RBC signal.
+                                       Bin 1 and 2 represent RBC defects.
+        mask (np.ndarray): 3D binary mask (same shape as image_rbc_binned) defining the lung region of interest.
+
+    Returns:
+        float: ΔRDP_BA value — a scalar representing the RBC defect bias towards the basilar region.
+               Positive values indicate higher RBC defect in the lower lung; negative indicates upper bias.
+    """
+    data_images = image_rbc_binned
+
+    # number of split 
+    ns = 3
+    valid_slices = []  # Store indices where mask is non-zero
+    total_mean=[]
+
+    # Loop over each slice (assuming 128 slices)
+    for ij in range(128):
+        bar2gas_current = ndimage.rotate(image_rbc_binned[:, :, ij], 0)
+        mask_current = ndimage.rotate(mask[:, :, ij], 0)
+
+        if np.sum(mask_current) > 0:
+            valid_slices.append(ij)
+    if len(valid_slices) > 0:
+        start_idx = int(len(valid_slices) * 0.4)  # Get 40% index (integer part)
+        end_idx = int(len(valid_slices) * 0.8)    # Get 80% index (integer part)
+
+        selected_slices = valid_slices[start_idx:end_idx]  # Extract the range
+
+    for ij in selected_slices:
+        bar2gas_current = ndimage.rotate(image_rbc_binned[:, :, ij], 0)
+        mask_current = ndimage.rotate(mask[:, :, ij], 0)
+
+        mask_current = mask_current.astype(np.uint8)
+        
+        output=cv2.connectedComponentsWithStats(mask_current,4)
+
+        num_labels = output[0]
+        labels_im = output[1]
+        stats=output[2]
+        centroid=output[3]
+
+        if(num_labels<=2):
+            continue
+
+        area=stats[:,4]
+        # Delete the background label.
+        area=area[1:]
+
+        # Choose the label with largest and second largest except background
+        index_label=np.array(heapq.nlargest(2, range(len(area)), key=area.__getitem__))+1
+
+        # Find which is left or right
+        index_1 = index_label[0]
+        index_2 = index_label[1]
+        if (centroid[index_1,0]<centroid[index_2,0]):
+            left_label=index_1
+            right_label=index_2
+        else:
+            left_label=index_2
+            right_label=index_1
+
+        top_left= stats[left_label,1]
+        height_left = stats[left_label,3]
+
+        top_right= stats[right_label,1]
+        height_right = stats[right_label,3]
+
+        [m,n] = mask_current.shape
+        # Initialize sum_all and num_all correctly
+        sum_all = np.zeros(ns * 2)
+        num_all = np.zeros(ns * 2)
+
+        # Create ns equally spaced intervals for splitting
+        split_indices_left = np.linspace(top_left, top_left + height_left, ns+1, dtype=int)
+        split_indices_right = np.linspace(top_right, top_right + height_right, ns+1, dtype=int)
+
+        for i in range(m):
+            for j in range(n):
+                if labels_im[i, j] == left_label:
+                    for nlf in range(ns):
+                        lower_l_left, upper_l_left = split_indices_left[nlf], split_indices_left[nlf+1]
+                        if lower_l_left <= i < upper_l_left:
+                            if data_images[i, j, ij] in [1,2]:
+                                num_all[nlf] += data_images[i, j, ij]
+                            sum_all[nlf] += data_images[i, j, ij]
+
+                elif labels_im[i, j] == right_label:
+                    for nlf in range(ns):
+                        lower_l_right, upper_l_right = split_indices_right[nlf], split_indices_right[nlf+1]
+                        if lower_l_right <= i < upper_l_right:
+                            if data_images[i, j, ij] in [1,2]:
+                                num_all[nlf + ns] += data_images[i, j, ij]
+                            sum_all[nlf + ns] += data_images[i, j, ij]
+
+        mean=[]
+        for nlf in range(ns * 2):
+            if(sum_all[nlf]!=0):
+                mean.append(num_all[nlf]/sum_all[nlf])
+            else:
+                mean.append(np.nan)
+
+        total_mean.append(mean)
+    total_mean=np.array(total_mean)
+    total_mean=np.nanmean(total_mean,axis=0)
+
+    bottom = total_mean[2]+total_mean[5]
+    top = total_mean[0]+total_mean[1]+total_mean[3]+total_mean[4]
+    b_t = (bottom - top/2) / 2 * 100
+    return b_t
+    

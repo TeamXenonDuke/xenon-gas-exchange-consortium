@@ -5,8 +5,6 @@ import sys
 import numpy as np
 from ml_collections import config_dict
 
-from config import config_utils
-
 # parent directory
 sys.path.append("..")
 
@@ -89,9 +87,6 @@ class Recon(object):
         self.del_y = -5
         self.del_z = -5
 
-        # Scan type
-        self.scan_type = constants.ScanType.NORMALDIXON.value
-
         # Reconstruction and matrix sizes
         self.recon_size = 64
         self.matrix_size = 128
@@ -101,7 +96,8 @@ class Recon(object):
         self.recon_key = constants.ReconKey.ROBERTSON.value
         self.kernel_sharpness_lr = 0.14
         self.kernel_sharpness_hr = 0.32
-        self.n_skip_start = config_utils.get_n_skip_start(self.scan_type)
+        # Set initial n_skip_start value as NaN, or user input an expected value
+        self.n_skip_start = np.nan
         self.n_skip_end = 0
         self.remove_contamination = False
         self.remove_noisy_projections = True

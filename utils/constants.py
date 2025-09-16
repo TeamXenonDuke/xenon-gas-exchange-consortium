@@ -7,8 +7,8 @@ import numpy as np
 FOVINFLATIONSCALE3D = 1000.0
 GRYOMAGNETIC_RATIO = 11.777  # MHz/T
 T2STAR_GAS = 1.8e-2  # seconds
-T2STAR_RBC_3T = 1.0502 * 1e-3  # seconds
-T2STAR_MEMBRANE_3T = 1.1416 * 1e-3  # seconds
+T2STAR_RBC_3T = 1.044575 * 1e-3  # seconds
+T2STAR_MEMBRANE_3T = 0.988588  * 1e-3  # seconds
 
 
 KCO_ALPHA = 11.2  # membrane
@@ -66,7 +66,6 @@ class IOFields(object):
     REMOVEOS = "removeos"
     REMOVE_NOISE = "remove_noise"
     SCAN_DATE = "scan_date"
-    SCAN_TYPE = "scan_type"
     SEGMENTATION_KEY = "segmentation_key"
     SHAPE_FIDS = "shape_fids"
     SHAPE_IMAGE = "shape_image"
@@ -174,14 +173,6 @@ class ReferenceDataKey(enum.Enum):
     MANUAL_REFERENCE = "manual_reference"
 
 
-class ScanType(enum.Enum):
-    """Scan type."""
-
-    NORMALDIXON = "normal"
-    MEDIUMDIXON = "medium"
-    FASTDIXON = "fast"
-
-
 class Institution(enum.Enum):
     """Institution name."""
 
@@ -277,6 +268,7 @@ class StatsIOFields(object):
     VENT_STDDEV = "vent_stddev"
     DLCO_EST = "dlco_est"
     KCO_EST = "kco_est"
+    RDP_BA = "rdp_ba"
     ALVEOLAR_VOLUME = "alveolar_volume"
 
 
@@ -426,12 +418,12 @@ class ReferenceDistribution(object):
     "title": "REFERENCE_218_PPM",
     #frac vent theshold vent:
     "thresholds_fractional_ventilation": [0.126229, 0.198441, 0.271045, 0.343936, 0.417054],
-    "threshold_vent": [0.3908, 0.5741, 0.7180, 0.8413, 0.9511],
-    "threshold_rbc": [0.001007, 0.002723, 0.005120, 0.008140, 0.011743],
-    "threshold_membrane": [0.003826, 0.005928, 0.008486, 0.011498, 0.014964, 0.018883, 0.023254],
-    "reference_fit_vent": (0.04074, 0.707, 0.140),
-    "reference_fit_rbc": (0.06106, 0.00543, 0.00277),
-    "reference_fit_membrane": (0.0700, 0.00871, 0.00284),
+    "threshold_vent": [0.3891, 0.5753, 0.7203, 0.8440, 0.9539],
+    "threshold_rbc": [0.001393, 0.002891, 0.004772, 0.006991, 0.009518],
+    "threshold_membrane": [0.004881, 0.006522, 0.008603, 0.011216, 0.014466, 0.018471, 0.023370],
+    "reference_fit_vent": (0.04074, 0.7085, 0.1408),
+    "reference_fit_rbc": (0.06106, 0.004942, 0.002060),
+    "reference_fit_membrane": (0.0700, 0.008871, 0.002420),
     "reference_stats": {
         "vent_defect_avg": "2",
         "vent_defect_std": "",
@@ -463,12 +455,12 @@ class ReferenceDistribution(object):
     REFERENCE_208_PPM = {
         "title": "REFERENCE_208_PPM",
         "thresholds_fractional_ventilation": [0.126229, 0.198441, 0.271045, 0.343936, 0.417054],
-        "threshold_vent": [0.3908, 0.5741, 0.7180, 0.8413, 0.9511],
-        "threshold_rbc": [0.000977, 0.002641, 0.004967, 0.007896, 0.011391],
-        "threshold_membrane": [0.004170, 0.006461, 0.009249, 0.012532, 0.016309, 0.020580, 0.025344],
-        "reference_fit_vent": (0.04074, 0.707, 0.140),
-        "reference_fit_rbc": (0.06106, 0.00527, 0.00268),
-        "reference_fit_membrane": (0.0700, 0.00950, 0.00309),
+        "threshold_vent": [0.3891, 0.5753, 0.7203, 0.8440, 0.9539],
+        "threshold_rbc": [0.001351, 0.002804, 0.004629, 0.006781, 0.009232],
+        "threshold_membrane": [0.005320, 0.007108, 0.009377, 0.012224, 0.015766, 0.020132, 0.025471],
+        "reference_fit_vent": (0.04074, 0.7085, 0.1408),
+        "reference_fit_rbc": (0.06106, 0.004794, 0.001998),
+        "reference_fit_membrane": (0.0700, 0.009668, 0.002638),
         "reference_stats": {
             "vent_defect_avg": "2",
             "vent_defect_std": "",
@@ -500,12 +492,12 @@ class ReferenceDistribution(object):
     REFERENCE_MANUAL = {
         "title": "MANUAL",
         "thresholds_fractional_ventilation": [0.126229, 0.198441, 0.271045, 0.343936, 0.417054],
-        "threshold_vent": [0.3908, 0.5741, 0.7180, 0.8413, 0.9511],
-        "threshold_rbc": [0.001007, 0.002723, 0.00512, 0.00814, 0.011743],
-        "threshold_membrane": [0.004170, 0.006461, 0.009249, 0.012532, 0.016309, 0.020580, 0.025344],
-        "reference_fit_vent": (0.04074, 0.707, 0.140),
-        "reference_fit_rbc": (0.06106, 0.00527, 0.00268),
-        "reference_fit_membrane": (0.0700, 0.00950, 0.00309),
+        "threshold_vent": [0.3891, 0.5753, 0.7203, 0.8440, 0.9539],
+        "threshold_rbc": [0.001393, 0.002891, 0.004772, 0.006991, 0.009518],
+        "threshold_membrane": [0.004881, 0.006522, 0.008603, 0.011216, 0.014466, 0.018471, 0.023370],
+        "reference_fit_vent": (0.04074, 0.7085, 0.1408),
+        "reference_fit_rbc": (0.06106, 0.004942, 0.002060),
+        "reference_fit_membrane": (0.0700, 0.008871, 0.002420),
         "reference_stats": {
             "vent_defect_avg": "2.15",
             "vent_defect_std": "",
