@@ -42,6 +42,9 @@ class Config(config_dict.ConfigDict):
         self.segmentation_key = constants.SegmentationKey.CNN_VENT.value
         self.manual_seg_filepath = ""
         self.trachea_plus_lung_mask_filepath = ""
+        
+        # default 99th percentile rescaling method
+        self.vent_normalization_method = constants.NormalizationMethods.PERCENTILE_MASKED
 
         # Additional options
         self.reference_data_key = constants.ReferenceDataKey.DUKE_REFERENCE.value

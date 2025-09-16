@@ -278,7 +278,7 @@ class VENTHISTOGRAMFields(object):
 
     COLOR = (0.4196, 0.6824, 0.8392)
     XLIM = 1.0
-    YLIM = 0.07
+    YLIM = 0.25
     NUMBINS = 50
     XTICKS = np.linspace(0, XLIM, 4)
     YTICKS = np.linspace(0, YLIM, 5)

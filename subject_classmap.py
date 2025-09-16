@@ -431,6 +431,9 @@ class Subject(object):
 
     def segmentation(self):
         """Segment the thoracic cavity."""
+        self.mask_including_trachea = np.squeeze(
+                    np.array(nib.load(self.config.trachea_plus_lung_mask_filepath).get_fdata())
+                ).astype(bool)
         if self.config.segmentation_key == constants.SegmentationKey.CNN_VENT.value:
             logging.info("Performing neural network segmenation.")
             self.mask = segmentation.predict(self.image_gas_highreso)
@@ -529,12 +532,25 @@ class Subject(object):
 
     def gas_binning(self):
         """Bin gas images to colormap bins."""
-        self.image_gas_binned = binning.linear_bin(
-            image=img_utils.normalize(self.image_gas_cor, self.mask),
-            mask=self.mask,
-            thresholds=self.reference_data['threshold_vent'],
-        )
-        self.mask_vent = np.logical_and(self.image_gas_binned > 1, self.mask)
+        if self.config.vent_normalization_method == constants.NormalizationMethods.PERCENTILE_MASKED:
+            self.image_gas_binned = binning.linear_bin(
+                image=img_utils.normalize(self.image_gas_cor, self.mask),
+                mask=self.mask,
+                thresholds=self.reference_data['threshold_vent'],
+            )
+            self.mask_vent = np.logical_and(self.image_gas_binned > 1, self.mask)
+
+        elif self.config.vent_normalization_method == constants.NormalizationMethods.FRAC_VENT:
+            self.image_gas_binned = binning.linear_bin(
+                image=img_utils.normalize(image=self.image_gas_cor, 
+                                          mask=self.mask, 
+                                          method=constants.NormalizationMethods.FRAC_VENT,
+                                          mask_including_trachea=self.mask_including_trachea,
+                                          bag_volume=self.config.bag_volume),
+                mask=self.mask,
+                thresholds=self.reference_data['threshold_fractional_ventilation'],
+            )
+            self.mask_vent = np.logical_and(self.image_gas_binned > 1, self.mask)
 
     def dixon_decomposition(self):
         """Perform Dixon decomposition on the dissolved-phase images."""
@@ -654,13 +670,28 @@ class Subject(object):
                 self.image_gas_binned, np.array([5, 6]), self.mask
             ),
             constants.StatsIOFields.VENT_MEAN: metrics.mean(
-                img_utils.normalize(np.abs(self.image_gas_cor), self.mask), self.mask
+                img_utils.normalize(image=np.abs(self.image_gas_cor), 
+                                    mask=self.mask, 
+                                    method=self.config.vent_normalization_method,
+                                    mask_including_trachea=self.mask_including_trachea, 
+                                    bag_volume=self.config.bag_volume), 
+                                    self.mask
             ),
             constants.StatsIOFields.VENT_MEDIAN: metrics.median(
-                img_utils.normalize(np.abs(self.image_gas_cor), self.mask), self.mask
+                img_utils.normalize(image=np.abs(self.image_gas_cor), 
+                                    mask=self.mask,
+                                    method=self.config.vent_normalization_method,
+                                    mask_including_trachea=self.mask_including_trachea, 
+                                    bag_volume=self.config.bag_volume), 
+                                    self.mask
             ),
             constants.StatsIOFields.VENT_STDDEV: metrics.std(
-                img_utils.normalize(np.abs(self.image_gas_cor), self.mask), self.mask
+                img_utils.normalize(image=np.abs(self.image_gas_cor), 
+                                    mask=self.mask, 
+                                    method=self.config.vent_normalization_method,
+                                    mask_including_trachea=self.mask_including_trachea, 
+                                    bag_volume=self.config.bag_volume), 
+                                    self.mask
             ),
             constants.StatsIOFields.RBC_SNR: metrics.snr(self.image_rbc, self.mask)[0],
             constants.StatsIOFields.RBC_DEFECT_PCT: metrics.bin_percentage(
@@ -946,7 +977,11 @@ class Subject(object):
             index_skip=index_skip,
         )
         plot.plot_histogram(
-            data=img_utils.normalize(self.image_gas_cor, self.mask)[
+            data=img_utils.normalize(image=self.image_gas_cor, 
+                                     mask=self.mask,
+                                     mask_including_trachea=self.mask_including_trachea,
+                                     method=self.config.vent_normalization_method,
+                                     bag_volume=self.config.bag_volume)[
                 np.array(self.mask, dtype=bool)
             ].flatten(),
             path="tmp/hist_vent.png",
