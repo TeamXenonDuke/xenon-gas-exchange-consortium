@@ -48,6 +48,8 @@ class Config(config_dict.ConfigDict):
         self.bias_key = constants.BiasfieldKey.N4ITK.value
         self.hb_correction_key = constants.HbCorrectionKey.NONE.value
         self.hb = 0.0
+        self.vol_correction_key = constants.VolCorrectionKey.RBC_AND_MEMBRANE.value
+        self.vol = 0.0
         self.dicom_proton_dir = ""
         self.multi_echo = False
         self.registration_key = constants.RegistrationKey.SKIP.value

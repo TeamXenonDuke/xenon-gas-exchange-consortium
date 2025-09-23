@@ -1,6 +1,7 @@
 """Signal processing util functions."""
 import sys
 from typing import Tuple
+import math
 
 sys.path.append("..")
 import numpy as np
@@ -454,3 +455,25 @@ def get_hb_correction(hb: float) -> Tuple[float, float]:
     )
 
     return rbc_hb_correction_factor, membrane_hb_correction_factor
+
+
+def get_vol_correction(vol: float, frc: float, baggie_vol: float) -> Tuple[float, float, float, float, float]:
+    """Get scaling factors for volume correction.
+    Args:
+        vol (float): volume of lung mask in L
+        frc (float): FRC as defined by GLI calculator in L
+        baggie_vol (float): baggie vol in L
+    Returns:
+        vol_correction_factor_rbc (float): rbc volume correction factor
+        vol_correction_factor_membrane (float): membrane volume correction factor
+    """
+    print(frc, type(frc))
+    print(baggie_vol, type(baggie_vol))
+    V2 = float(frc) + float(baggie_vol)
+
+    vol_correction_factor_rbc = (vol *( 1 + constants.VolCorrection.ALPHA_RBC) + V2 * (1 - constants.VolCorrection.ALPHA_RBC))/(vol * (1 - constants.VolCorrection.ALPHA_RBC) + V2 * (1 + constants.VolCorrection.ALPHA_RBC))
+    print("VCF_RBC = " + str(vol_correction_factor_rbc))
+    vol_correction_factor_membrane = (vol *( 1 + constants.VolCorrection.ALPHA_MEM) + V2 * (1 - constants.VolCorrection.ALPHA_MEM))/(vol * (1 - constants.VolCorrection.ALPHA_MEM) + V2 * (1 + constants.VolCorrection.ALPHA_MEM))
+    print("VCF_mem = " + str(vol_correction_factor_membrane))
+
+    return vol_correction_factor_rbc, vol_correction_factor_membrane, V2

@@ -79,6 +79,9 @@ class IOFields(object):
     TR_DIS = "tr_dis"
     TRAJ = "traj"
     SYSTEM_VENDOR = "system_vendor"
+    VOL_CORRECTION_KEY = "vol_correction_key"
+    VOL_CORRECTION_FACTOR_MEMBRANE  = "vol_correction_factor_membrane"
+    VOL_CORRECTION_FACTOR_RBC = "vol_correction_factor_rbc"
 
 
 class CNNPaths(object):
@@ -159,6 +162,18 @@ class HbCorrectionKey(enum.Enum):
     NONE = "none"
     RBC_AND_MEMBRANE = "rbc_and_membrane"
     RBC_ONLY = "rbc_only"
+
+
+class VolCorrectionKey(enum.Enum):
+    """Vol correction flags.
+    Defines what level of volume correction to apply to dissolved-phase signal. Options:
+    NONE: Apply no hb correction
+    RBC_AND_MEMBRANE: Apply Hb correction to both RBC and membrane signals
+    MEMBRANE_ONLY: Apply Hb correction only to membrane signal
+    """
+
+    NONE = "none"
+    RBC_AND_MEMBRANE = "rbc_and_membrane"
 
 
 class ReferenceDataKey(enum.Enum):
@@ -385,6 +400,15 @@ class HbCorrection(object):
     R1 = 0.288  # coefficient of rbc hb correction equation
     M1 = 0.029  # first coefficient of membrane hb correction equation
     M2 = 0.011  # second coefficient of membrane hb correction equation
+
+
+class VolCorrection(object):
+    """Coefficients for volume correction scaling factor equations
+    
+    Reference DOI: 10.1183/13993003.00289-2020
+    """
+    ALPHA_RBC = -0.15963  # slope of trend in rbc equation
+    ALPHA_MEM = -0.38665   # slope of trend in membrane equation
 
 
 class ContrastLabels(object):
