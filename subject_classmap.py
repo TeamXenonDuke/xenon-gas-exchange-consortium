@@ -582,22 +582,14 @@ class Subject(object):
         self.mask, self.dict_dis[constants.IOFields.FOV])}
         if self.config.vol_correction_key != constants.VolCorrectionKey.NONE.value:
             if self.dict_stats["inflation"] > 0:
-                if isinstance(self.config.patient_frc, (int, float)):
-                    FRC_Volume = float(self.config.patient_frc)
-                else:
-                    FRC_Volume = metrics.GLI_volume(
-                        self.dict_dis[constants.IOFields.AGE],
-                        self.dict_dis[constants.IOFields.SEX],
-                        self.dict_dis[constants.IOFields.HEIGHT],
-                        volume_type="frc"
-                    )
+                self.corrected_lung_volume = self.config.corrected_lung_volume
                 #get volume correction scaling factors
                 
                 (
                     self.vol_correction_factor_rbc,
                     self.vol_correction_factor_membrane,
                     self.predicted_volume,
-                ) = signal_utils.get_vol_correction(self.dict_stats["inflation"], FRC_Volume, self.config.bag_volume)
+                ) = signal_utils.get_vol_correction(self.dict_stats["inflation"], self.corrected_lung_volume)
             
                 if (
                     self.config.vol_correction_key 
@@ -615,146 +607,12 @@ class Subject(object):
                 )
                 self.image_rbc /= self.vol_correction_factor_rbc
                 self.image_membrane /= self.vol_correction_factor_membrane
-
-                # """Re-Calculate the dissolved-phase images relative to gas image."""
-                # self.image_rbc2gas = img_utils.divide_images(
-                #     image1=self.image_rbc,
-                #     image2=np.abs(self.image_gas_highsnr),
-                #     mask=self.mask_vent,
-                # )
-                # self.image_membrane2gas = img_utils.divide_images(
-                #     image1=self.image_membrane,
-                #     image2=np.abs(self.image_gas_highsnr),
-                #     mask=self.mask_vent,
-                # )
-                # # scale by flip angle difference
-                # flip_angle_scale_factor = signal_utils.calculate_flipangle_correction(
-                #     self.dict_dis[constants.IOFields.FA_GAS],
-                #     self.dict_dis[constants.IOFields.FA_DIS],
-                # )
-                # t2star_scale_factor_rbc = signal_utils.calculate_t2star_correction(
-                #     self.dict_dis[constants.IOFields.TE90],
-                #     constants.T2STAR_RBC_3T,
-                #     self.dict_dis[constants.IOFields.FIELD_STRENGTH],
-                # )
-                # t2star_scale_factor_membrane = signal_utils.calculate_t2star_correction(
-                #     self.dict_dis[constants.IOFields.TE90],
-                #     constants.T2STAR_MEMBRANE_3T,
-                #     self.dict_dis[constants.IOFields.FIELD_STRENGTH],
-                # )
-                # self.image_rbc2gas = (
-                #     flip_angle_scale_factor * t2star_scale_factor_rbc * self.image_rbc2gas
-                # )
-                # self.image_membrane2gas = (
-                #     flip_angle_scale_factor
-                #     * t2star_scale_factor_membrane
-                #     * self.image_membrane2gas
-                # )
-                # """Re-Bin dissolved images to colormap bins."""
-                # self.image_rbc2gas_binned = binning.linear_bin(
-                #     image=self.image_rbc2gas,
-                #     mask=self.mask_vent,
-                #     thresholds=self.reference_data['threshold_rbc'],
-                # )
-                # self.image_membrane2gas_binned = binning.linear_bin(
-                #     image=self.image_membrane2gas,
-                #     mask=self.mask_vent,
-                #     thresholds=self.reference_data['threshold_membrane'],
-                # )
-
-                # """Re-Calculate image statistics."""
-                # self.dict_stats = {
-                #     constants.IOFields.SUBJECT_ID: self.config.subject_id,
-                #     constants.IOFields.SCAN_DATE: self.dict_dis[constants.IOFields.SCAN_DATE],
-                #     constants.IOFields.PROCESS_DATE: metrics.process_date(),
-                #     constants.StatsIOFields.INFLATION: self.predicted_volume,
-                #     constants.StatsIOFields.RBC_M_RATIO: self.rbc_m_ratio,
-                #     constants.StatsIOFields.VENT_SNR: metrics.snr(
-                #         np.abs(self.image_gas_highreso), self.mask
-                #     )[1],
-                #     constants.StatsIOFields.VENT_DEFECT_PCT: metrics.bin_percentage(
-                #         self.image_gas_binned, np.array([1]), self.mask
-                #     ),
-                #     constants.StatsIOFields.VENT_LOW_PCT: metrics.bin_percentage(
-                #         self.image_gas_binned, np.array([2]), self.mask
-                #     ),
-                #     constants.StatsIOFields.VENT_HIGH_PCT: metrics.bin_percentage(
-                #         self.image_gas_binned, np.array([5, 6]), self.mask
-                #     ),
-                #     constants.StatsIOFields.VENT_MEAN: metrics.mean(
-                #         img_utils.normalize(np.abs(self.image_gas_cor), self.mask), self.mask
-                #     ),
-                #     constants.StatsIOFields.VENT_MEDIAN: metrics.median(
-                #         img_utils.normalize(np.abs(self.image_gas_cor), self.mask), self.mask
-                #     ),
-                #     constants.StatsIOFields.VENT_STDDEV: metrics.std(
-                #         img_utils.normalize(np.abs(self.image_gas_cor), self.mask), self.mask
-                #     ),
-                #     constants.StatsIOFields.RBC_SNR: metrics.snr(self.image_rbc, self.mask)[0],
-                #     constants.StatsIOFields.RBC_DEFECT_PCT: metrics.bin_percentage(
-                #         self.image_rbc2gas_binned, np.array([1]), self.mask
-                #     ),
-                #     constants.StatsIOFields.RBC_LOW_PCT: metrics.bin_percentage(
-                #         self.image_rbc2gas_binned, np.array([2]), self.mask
-                #     ),
-                #     constants.StatsIOFields.RBC_HIGH_PCT: metrics.bin_percentage(
-                #         self.image_rbc2gas_binned, np.array([5, 6]), self.mask
-                #     ),
-                #     constants.StatsIOFields.RBC_MEAN: metrics.mean(
-                #         self.image_rbc2gas, self.mask_vent
-                #     ),
-                #     constants.StatsIOFields.RBC_MEDIAN: metrics.median(
-                #         self.image_rbc2gas, self.mask_vent
-                #     ),
-                #     constants.StatsIOFields.RBC_STDDEV: metrics.std(
-                #         self.image_rbc2gas, self.mask_vent
-                #     ),
-                #     constants.StatsIOFields.MEMBRANE_SNR: metrics.snr(
-                #         self.image_membrane, self.mask
-                #     )[0],
-                #     constants.StatsIOFields.MEMBRANE_DEFECT_PCT: metrics.bin_percentage(
-                #         self.image_membrane2gas_binned, np.array([1]), self.mask
-                #     ),
-                #     constants.StatsIOFields.MEMBRANE_LOW_PCT: metrics.bin_percentage(
-                #         self.image_membrane2gas_binned, np.array([2]), self.mask
-                #     ),
-                #     constants.StatsIOFields.MEMBRANE_HIGH_PCT: metrics.bin_percentage(
-                #         self.image_membrane2gas_binned, np.array([6, 7, 8]), self.mask
-                #     ),
-                #     constants.StatsIOFields.MEMBRANE_MEAN: metrics.mean(
-                #         self.image_membrane2gas, self.mask_vent
-                #     ),
-                #     constants.StatsIOFields.MEMBRANE_MEDIAN: metrics.median(
-                #         self.image_membrane2gas, self.mask_vent
-                #     ),
-                #     constants.StatsIOFields.MEMBRANE_STDDEV: metrics.std(
-                #         self.image_membrane2gas, self.mask_vent
-                #     ),
-                #     constants.StatsIOFields.ALVEOLAR_VOLUME: metrics.alveolar_volume(
-                #         self.image_gas_binned, self.mask, self.dict_dis[constants.IOFields.FOV]
-                #     ),
-                #     constants.StatsIOFields.KCO_EST: metrics.kco(
-                #         self.image_membrane2gas,
-                #         self.image_rbc2gas,
-                #         self.mask_vent,
-                #         self.reference_data['reference_fit_membrane'][1],
-                #         self.reference_data['reference_fit_rbc'][1],
-                #     ),
-                #     constants.StatsIOFields.DLCO_EST: metrics.dlco(
-                #         self.image_gas_binned,
-                #         self.image_membrane2gas,
-                #         self.image_rbc2gas,
-                #         self.mask,
-                #         self.mask_vent,
-                #         self.dict_dis[constants.IOFields.FOV],
-                #         self.reference_data['reference_fit_membrane'][1],
-                #         self.reference_data['reference_fit_rbc'][1],
-                #     ),
-                # }
-
             else:
                 raise ValueError("Invalid volume value")
         else:
+            self.vol_correction_factor_rbc = "NA"
+            self.vol_correction_factor_membrane ="NA"
+            self.corrected_lung_volume = "NA"
             logging.info("Skipping volume correction")
  
 
@@ -1013,6 +871,7 @@ class Subject(object):
             constants.IOFields.RBC_HB_CORRECTION_FACTOR: self.rbc_hb_correction_factor,
             constants.IOFields.MEMBRANE_HB_CORRECTION_FACTOR: self.membrane_hb_correction_factor,
             constants.IOFields.VOL_CORRECTION_KEY: self.config.vol_correction_key,
+            constants.IOFields.CORRECTED_LUNG_VOLUME: self.corrected_lung_volume,
             constants.IOFields.VOL_CORRECTION_FACTOR_MEMBRANE: self.vol_correction_factor_membrane,
             constants.IOFields.VOL_CORRECTION_FACTOR_RBC: self.vol_correction_factor_rbc,
             constants.IOFields.KERNEL_SHARPNESS: self.config.recon.kernel_sharpness_hr,

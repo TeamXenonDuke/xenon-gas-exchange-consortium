@@ -457,7 +457,7 @@ def get_hb_correction(hb: float) -> Tuple[float, float]:
     return rbc_hb_correction_factor, membrane_hb_correction_factor
 
 
-def get_vol_correction(vol: float, frc: float, baggie_vol: float) -> Tuple[float, float, float, float, float]:
+def get_vol_correction(vol: float, expected_lung_volume: float) -> Tuple[float, float, float]:
     """Get scaling factors for volume correction.
     Args:
         vol (float): volume of lung mask in L
@@ -467,9 +467,7 @@ def get_vol_correction(vol: float, frc: float, baggie_vol: float) -> Tuple[float
         vol_correction_factor_rbc (float): rbc volume correction factor
         vol_correction_factor_membrane (float): membrane volume correction factor
     """
-    print(frc, type(frc))
-    print(baggie_vol, type(baggie_vol))
-    V2 = float(frc) + float(baggie_vol)
+    V2 = expected_lung_volume
 
     vol_correction_factor_rbc = (vol *( 1 + constants.VolCorrection.ALPHA_RBC) + V2 * (1 - constants.VolCorrection.ALPHA_RBC))/(vol * (1 - constants.VolCorrection.ALPHA_RBC) + V2 * (1 + constants.VolCorrection.ALPHA_RBC))
     print("VCF_RBC = " + str(vol_correction_factor_rbc))

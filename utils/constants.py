@@ -82,6 +82,7 @@ class IOFields(object):
     VOL_CORRECTION_KEY = "vol_correction_key"
     VOL_CORRECTION_FACTOR_MEMBRANE  = "vol_correction_factor_membrane"
     VOL_CORRECTION_FACTOR_RBC = "vol_correction_factor_rbc"
+    CORRECTED_LUNG_VOLUME = "corrected_lung_volume"
 
 
 class CNNPaths(object):
@@ -167,13 +168,12 @@ class HbCorrectionKey(enum.Enum):
 class VolCorrectionKey(enum.Enum):
     """Vol correction flags.
     Defines what level of volume correction to apply to dissolved-phase signal. Options:
-    NONE: Apply no hb correction
-    RBC_AND_MEMBRANE: Apply Hb correction to both RBC and membrane signals
-    MEMBRANE_ONLY: Apply Hb correction only to membrane signal
+    NONE: Apply no vol correction
+    RBC_AND_MEMBRANE: Apply vol correction to both RBC and membrane signals
     """
 
-    NONE = "none"
-    RBC_AND_MEMBRANE = "rbc_and_membrane"
+    NONE = "NONE"
+    RBC_AND_MEMBRANE = "YES"
 
 
 class ReferenceDataKey(enum.Enum):
