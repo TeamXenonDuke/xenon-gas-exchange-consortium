@@ -86,13 +86,13 @@ class Subject(object):
         self.image_membrane = np.array([0.0])
         self.image_membrane2gas = np.array([0.0])
         self.image_membrane2gas_binned = np.array([0.0])
-        self.membrane_hb_correction_factor = 1.0
+        self.membrane_hb_correction_factor = "NA"
         self.image_proton = np.array([0.0])
         self.image_proton_reg = np.array([0.0])
         self.image_rbc = np.array([0.0])
         self.image_rbc2gas = np.array([0.0])
         self.image_rbc2gas_binned = np.array([0.0])
-        self.rbc_hb_correction_factor = 1.0
+        self.rbc_hb_correction_factor = "NA"
         self.mask = np.array([0.0])
         self.mask_vent = np.array([0.0])
         self.rbc_m_ratio = 0.0
@@ -552,18 +552,7 @@ class Subject(object):
                     self.rbc_hb_correction_factor,
                     self.membrane_hb_correction_factor,
                 ) = signal_utils.get_hb_correction(self.config.hb)
-
-                # if only applying correction to rbc signal, set membrane factor to 1
-                if (
-                    self.config.hb_correction_key
-                    == constants.HbCorrectionKey.RBC_ONLY.value
-                ):
-                    logging.info("Applying hemoglobin correction to RBC signal only")
-                    self.membrane_hb_correction_factor = 1.0
-                else:
-                    logging.info(
-                        "Applying hemoglobin correction to RBC and membrane signal"
-                    )
+                logging.info("Applying hemoglobin correction to RBC and membrane signal")
 
                 # scale dissolved phase signals by hb correction scaling factors
                 self.rbc_m_ratio *= (
