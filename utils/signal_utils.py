@@ -461,8 +461,7 @@ def get_vol_correction(vol: float, expected_lung_volume: float) -> Tuple[float, 
     """Get scaling factors for volume correction.
     Args:
         vol (float): volume of lung mask in L
-        frc (float): FRC as defined by GLI calculator in L
-        baggie_vol (float): baggie vol in L
+        expected_lung_volume (float): user input target lung volume in L
     Returns:
         vol_correction_factor_rbc (float): rbc volume correction factor
         vol_correction_factor_membrane (float): membrane volume correction factor
