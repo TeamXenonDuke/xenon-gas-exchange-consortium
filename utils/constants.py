@@ -172,7 +172,7 @@ class VolCorrectionKey(enum.Enum):
     RBC_AND_MEMBRANE: Apply vol correction to both RBC and membrane signals
     """
 
-    NONE = "NONE"
+    NONE = "NO"
     RBC_AND_MEMBRANE = "YES"
 
 

@@ -67,6 +67,8 @@ class Subject(object):
         traj_gas (np.array): gas-phase trajectory of shape (n_projections, n_points, 3)
         traj_scaling_factor (float): scaling factor for trajectory
         traj_ute (np.array): UTE proton trajectory of shape
+        vol_correction_factor_rbc (float): rbc volume correction factor
+        vol_correction_factor_membrane (float): membrane volume correction factor
     """
 
     def __init__(self, config: base_config.Config):
@@ -105,6 +107,8 @@ class Subject(object):
         self.reference_data_key = str()
         self.reference_data = {}
         self.user_lung_volume_value = ""
+        self.vol_correction_factor_rbc = "NA"
+        self.vol_correction_factor_membrane ="NA"        
 
     def read_twix_files(self):
         """Read in twix files to dictionary.
@@ -610,8 +614,6 @@ class Subject(object):
             else:
                 raise ValueError("Invalid volume value")
         else:
-            self.vol_correction_factor_rbc = "NA"
-            self.vol_correction_factor_membrane ="NA"
             self.corrected_lung_volume = "NA"
             logging.info("Skipping volume correction")
  
