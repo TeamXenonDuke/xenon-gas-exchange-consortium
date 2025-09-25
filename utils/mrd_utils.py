@@ -367,6 +367,7 @@ def get_gx_data(dataset: ismrmrd.hdf5.Dataset, multi_echo: bool) -> Dict[str, An
     """
     # get the raw FIDs, contrast labels, and bonus spectra labels
     raw_fids = []
+    raw_traj = []
     bonus_spectra_fids = []
 
 
@@ -389,6 +390,7 @@ def get_gx_data(dataset: ismrmrd.hdf5.Dataset, multi_echo: bool) -> Dict[str, An
 
             raw_fids.append(dataset.read_acquisition(i).data[0].flatten())
             contrast_labels.append(acquisition_header.idx.contrast)
+            raw_traj.append(dataset.read_acquisition(i).traj)
             try:
                 set_labels.append(acquisition_header.idx.set)
             except:
@@ -400,12 +402,7 @@ def get_gx_data(dataset: ismrmrd.hdf5.Dataset, multi_echo: bool) -> Dict[str, An
     raw_fids_truncated = np.asarray(raw_fids)
     contrast_labels_truncated = np.asarray(contrast_labels)
     set_labels_truncated = np.asarray(set_labels)
-
-
-    # get the trajectories
-    raw_traj = np.empty((raw_fids_truncated.shape[0], raw_fids_truncated.shape[1], 3))
-    for i in range(0, raw_fids_truncated.shape[0]):
-        raw_traj[i, :, :] = dataset.read_acquisition(i).traj
+    raw_traj = np.asarray(raw_traj)
 
     if(set_included):
         unique_set_labels = np.unique(set_labels_truncated)
