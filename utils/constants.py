@@ -155,8 +155,8 @@ class HbCorrectionKey(enum.Enum):
     RBC_AND_MEMBRANE: Apply Hb correction to both RBC and membrane signals
     """
 
-    NONE = "NO"
-    RBC_AND_MEMBRANE = "YES"
+    NONE = "False"
+    RBC_AND_MEMBRANE = "True"
 
 
 class ReferenceDataKey(enum.Enum):
