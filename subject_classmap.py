@@ -978,26 +978,50 @@ class Subject(object):
             index_start=index_start,
             index_skip=index_skip,
         )
-        plot.plot_histogram(
-            data=img_utils.normalize(image=self.image_gas_cor, 
-                                     mask=self.mask,
-                                     mask_including_trachea=self.mask_including_trachea,
-                                     method=self.config.vent_normalization_method,
-                                     bag_volume=self.config.bag_volume)[
-                np.array(self.mask, dtype=bool)
-            ].flatten(),
-            path="tmp/hist_vent.png",
-            color=constants.VENTHISTOGRAMFields.COLOR,
-            xlim=constants.VENTHISTOGRAMFields.XLIM,
-            ylim=constants.VENTHISTOGRAMFields.YLIM,
-            num_bins=constants.VENTHISTOGRAMFields.NUMBINS,
-            refer_fit=self.reference_data['reference_fit_vent'],
-            xticks=constants.VENTHISTOGRAMFields.XTICKS,
-            yticks=constants.VENTHISTOGRAMFields.YTICKS,
-            xticklabels=constants.VENTHISTOGRAMFields.XTICKLABELS,
-            yticklabels=constants.VENTHISTOGRAMFields.YTICKLABELS,
-            title=constants.VENTHISTOGRAMFields.TITLE,
+        if self.config.vent_normalization_method == constants.NormalizationMethods.PERCENTILE_MASKED:
+            plot.plot_histogram(
+                data=img_utils.normalize(image=self.image_gas_cor, 
+                                        mask=self.mask,
+                                        mask_including_trachea=self.mask_including_trachea,
+                                        method=self.config.vent_normalization_method,
+                                        bag_volume=self.config.bag_volume)[
+                    np.array(self.mask, dtype=bool)
+                ].flatten(),
+                path="tmp/hist_vent.png",
+                color=constants.VENTHISTOGRAMFields.COLOR,
+                xlim=constants.VENTHISTOGRAMFields.XLIM,
+                ylim=constants.VENTHISTOGRAMFields.YLIM,
+                num_bins=constants.VENTHISTOGRAMFields.NUMBINS,
+                refer_fit=self.reference_data['reference_fit_vent'],
+                xticks=constants.VENTHISTOGRAMFields.XTICKS,
+                yticks=constants.VENTHISTOGRAMFields.YTICKS,
+                xticklabels=constants.VENTHISTOGRAMFields.XTICKLABELS,
+                yticklabels=constants.VENTHISTOGRAMFields.YTICKLABELS,
+                title=constants.VENTHISTOGRAMFields.TITLE,
         )
+
+
+        elif self.config.vent_normalization_method == constants.NormalizationMethods.FRAC_VENT:
+            plot.plot_histogram(
+                data=img_utils.normalize(image=self.image_gas_cor, 
+                                        mask=self.mask,
+                                        mask_including_trachea=self.mask_including_trachea,
+                                        method=self.config.vent_normalization_method,
+                                        bag_volume=self.config.bag_volume)[
+                    np.array(self.mask, dtype=bool)
+                ].flatten(),
+                path="tmp/hist_fractional_ventilation_vent.png",
+                color=constants.VENTHISTOGRAMFields.COLOR,
+                xlim=constants.VENTHISTOGRAMFields.XLIM,
+                ylim=constants.VENTHISTOGRAMFields.YLIM,
+                num_bins=constants.VENTHISTOGRAMFields.NUMBINS,
+                refer_fit=self.reference_data["reference_FV_fit_vent"],
+                xticks=constants.VENTHISTOGRAMFields.XTICKS,
+                yticks=constants.VENTHISTOGRAMFields.YTICKS,
+                xticklabels=constants.VENTHISTOGRAMFields.XTICKLABELS,
+                yticklabels=constants.VENTHISTOGRAMFields.YTICKLABELS,
+                title=constants.VENTHISTOGRAMFields.TITLE,
+            )
         plot.plot_histogram(
             data=np.abs(self.image_rbc2gas)[
                 np.array(self.mask_vent, dtype=bool)

@@ -422,6 +422,7 @@ class ReferenceDistribution(object):
     "threshold_rbc": [0.001393, 0.002891, 0.004772, 0.006991, 0.009518],
     "threshold_membrane": [0.004881, 0.006522, 0.008603, 0.011216, 0.014466, 0.018471, 0.023370],
     "reference_fit_vent": (0.04074, 0.7085, 0.1408),
+    "reference_FV_fit_vent": (0.04074, 0.7085, 0.1408), #CHANGE THIS
     "reference_fit_rbc": (0.06106, 0.004942, 0.002060),
     "reference_fit_membrane": (0.0700, 0.008871, 0.002420),
     "reference_stats": {
