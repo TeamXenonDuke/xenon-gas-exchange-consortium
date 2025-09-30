@@ -538,7 +538,8 @@ class Subject(object):
                 mask=self.mask,
                 thresholds=self.reference_data['threshold_vent'],
             )
-            self.mask_vent = np.logical_and(self.image_gas_binned > 1, self.mask)
+            self.mask_vent = np.logical_and(self.image_gas_binned > 1, self.mask) # ventilation mask excludes defects
+            io_utils.export_nii(np.abs(self.image_gas_binned), "tmp/image_gas_binned.nii")
 
         elif self.config.vent_normalization_method == constants.NormalizationMethods.FRAC_VENT:
             self.image_gas_binned = binning.linear_bin(
@@ -550,7 +551,8 @@ class Subject(object):
                 mask=self.mask,
                 thresholds=self.reference_data['threshold_fractional_ventilation'],
             )
-            self.mask_vent = np.logical_and(self.image_gas_binned > 1, self.mask)
+            self.mask_vent = np.logical_and(self.image_gas_binned > 1, self.mask) # ventilation mask excludes defects
+            io_utils.export_nii(np.abs(self.image_gas_binned), "tmp/image_gas_binned.nii")
 
     def dixon_decomposition(self):
         """Perform Dixon decomposition on the dissolved-phase images."""
