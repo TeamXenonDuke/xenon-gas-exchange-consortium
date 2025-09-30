@@ -999,8 +999,6 @@ class Subject(object):
                 yticklabels=constants.VENTHISTOGRAMFields.YTICKLABELS,
                 title=constants.VENTHISTOGRAMFields.TITLE,
         )
-
-
         elif self.config.vent_normalization_method == constants.NormalizationMethods.FRAC_VENT:
             plot.plot_histogram(
                 data=img_utils.normalize(image=self.image_gas_cor, 
@@ -1015,7 +1013,7 @@ class Subject(object):
                 xlim=constants.VENTHISTOGRAMFields.XLIM,
                 ylim=constants.VENTHISTOGRAMFields.YLIM,
                 num_bins=constants.VENTHISTOGRAMFields.NUMBINS,
-                refer_fit=self.reference_data["reference_FV_fit_vent"],
+                refer_fit=self.reference_data["reference_fractional_ventilation_fit_vent"],
                 xticks=constants.VENTHISTOGRAMFields.XTICKS,
                 yticks=constants.VENTHISTOGRAMFields.YTICKS,
                 xticklabels=constants.VENTHISTOGRAMFields.XTICKLABELS,
