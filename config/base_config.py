@@ -28,6 +28,8 @@ class Config(config_dict.ConfigDict):
         remove_noisy_projections: bool, whether to remove noisy projections
         segmentation_key: str, the segmentation key (CNN_VENT, MANUAL)
         subject_id: str, the subject id
+        vol_correction_key: str,lung vollume correction key (NONE, RBC_AND_MEMBRANE)
+        corrected_lung_volume: float, target lung volume in L
     """
 
     def __init__(self):
@@ -48,6 +50,8 @@ class Config(config_dict.ConfigDict):
         self.bias_key = constants.BiasfieldKey.N4ITK.value
         self.hb_correction_key = constants.HbCorrectionKey.NONE.value
         self.hb = "NA"
+        self.vol_correction_key = constants.VolCorrectionKey.NONE.value 
+        self.corrected_lung_volume = "NA"
         self.dicom_proton_dir = ""
         self.multi_echo = False
         self.registration_key = constants.RegistrationKey.SKIP.value
