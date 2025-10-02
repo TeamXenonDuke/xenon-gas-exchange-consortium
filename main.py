@@ -15,6 +15,7 @@ _CONFIG = config_flags.DEFINE_config_file("config", None, "config file.")
 flags.DEFINE_boolean("force_recon", False, "force reconstruction for the subject")
 flags.DEFINE_boolean("force_readin", False, "force read in .mat for the subject")
 flags.DEFINE_bool("force_segmentation", False, "run segmentation again.")
+flags.DEFINE_string("folder", None, "relative path to subject data folder.")
 
 
 def gx_mapping_reconstruction(config: base_config.Config):
@@ -98,6 +99,8 @@ def main(argv):
     Either run the reconstruction or read in the .mat file.
     """
     config = _CONFIG.value
+    if FLAGS.folder:
+        config.data_dir = FLAGS.folder
     if FLAGS.force_recon:
         logging.info("Gas exchange imaging mapping with reconstruction.")
         gx_mapping_reconstruction(config)
