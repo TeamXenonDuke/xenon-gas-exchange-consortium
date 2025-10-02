@@ -46,8 +46,7 @@ class Config(config_dict.ConfigDict):
         self.reference_data_key = constants.ReferenceDataKey.DUKE_REFERENCE.value
         self.registration_key = constants.RegistrationKey.SKIP.value
         self.bias_key = constants.BiasfieldKey.N4ITK.value
-        # Hb correction key option: NONE, RBC_AND_MEMBRANE
-        self.hb_correction_key = constants.HbCorrectionKey.RBC_AND_MEMBRANE.value
+        self.hb_correction_key = constants.HbCorrectionKey.NONE.value
         self.hb = "NA"
         self.dicom_proton_dir = ""
         self.multi_echo = False
