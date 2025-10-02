@@ -16,7 +16,7 @@ class Config(config_dict.ConfigDict):
 
     Attributes:
         data_dir: str, path to directory with subject imaging files
-        hb_correction_key: str, hemoglobin correction key
+        hb_correction_key: str, hemoglobin correction key (NONE, RBC_AND_MEMBRANE)
         hb: float, subject hb value in g/dL
         manual_reg_filepath: str, path to manual registration nifti file
         manual_seg_filepath: str, path to the manual segmentation nifti file
@@ -49,7 +49,7 @@ class Config(config_dict.ConfigDict):
         self.registration_key = constants.RegistrationKey.SKIP.value
         self.bias_key = constants.BiasfieldKey.N4ITK.value
         self.hb_correction_key = constants.HbCorrectionKey.NONE.value
-        self.hb = 0.0
+        self.hb = "NA"
         self.vol_correction_key = constants.VolCorrectionKey.NONE.value 
         self.corrected_lung_volume = "NA"
         self.dicom_proton_dir = ""
