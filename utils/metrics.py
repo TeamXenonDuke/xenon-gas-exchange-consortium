@@ -363,21 +363,27 @@ def rdp_ba(
 
     # number of split 
     ns = 3
-    valid_slices = []  # Store indices where mask is non-zero
+
     total_mean=[]
+    valid_slices = []  # Store indices where mask is non-zero
+    lung_area = []        # store lung‐mask area for each valid slice
 
-    # Loop over each slice (assuming 128 slices)
-    for ij in range(128):
-        bar2gas_current = ndimage.rotate(image_rbc_binned[:, :, ij], 0)
+    for ij in range(rz):  # use rz from your loaded mask shape
         mask_current = ndimage.rotate(mask[:, :, ij], 0)
-
-        if np.sum(mask_current) > 0:
+        a = np.sum(mask_current)
+        if a > 0:
             valid_slices.append(ij)
-    if len(valid_slices) > 0:
-        start_idx = int(len(valid_slices) * 0.4)  # Get 40% index (integer part)
-        end_idx = int(len(valid_slices) * 0.8)    # Get 80% index (integer part)
+            lung_area.append(a)
 
-        selected_slices = valid_slices[start_idx:end_idx]  # Extract the range
+    if valid_slices:
+        lung_area = np.array(lung_area)
+        cumsum = np.cumsum(lung_area)
+        total = cumsum[-1]
+        lower_idx = np.searchsorted(cumsum, 0.25 * total)
+        upper_idx = np.searchsorted(cumsum, 0.85 * total)
+        selected_slices = valid_slices[lower_idx:upper_idx]
+    else:
+        selected_slices = []
 
     for ij in selected_slices:
         bar2gas_current = ndimage.rotate(image_rbc_binned[:, :, ij], 0)
