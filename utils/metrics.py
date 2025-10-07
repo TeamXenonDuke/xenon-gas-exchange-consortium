@@ -368,7 +368,7 @@ def rdp_ba(
     valid_slices = []  # Store indices where mask is non-zero
     lung_area = []        # store lung‐mask area for each valid slice
 
-    for ij in range(128):
+    for ij in range(mask.shape[2]):
         mask_current = ndimage.rotate(mask[:, :, ij], 0)
         a = np.sum(mask_current)
         if a > 0:
