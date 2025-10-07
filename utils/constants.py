@@ -186,7 +186,7 @@ class Institution(enum.Enum):
 class SystemVendor(enum.Enum):
     """Scanner system_vendor."""
 
-    SIEMENS = "SIEMENS"
+    SIEMENS = "Siemens"
     GE = "GE"
     PHILIPS = "Philips"
 
@@ -249,6 +249,7 @@ class StatsIOFields(object):
     RBC_SNR = "rbc_snr"
     MEMBRANE_SNR = "membrane_snr"
     VENT_SNR = "vent_snr"
+    VENT_SNR_FRAC_VENT = "vent_snr_frac_vent"
     RBC_HIGH_PCT = "rbc_high_pct"
     RBC_LOW_PCT = "rbc_low_pct"
     RBC_DEFECT_PCT = "rbc_defect_pct"
@@ -258,15 +259,21 @@ class StatsIOFields(object):
     VENT_HIGH_PCT = "vent_high_pct"
     VENT_LOW_PCT = "vent_low_pct"
     VENT_DEFECT_PCT = "vent_defect_pct"
+    VENT_HIGH_PCT_FRAC_VENT = "vent_high_pct_frac_vent"
+    VENT_LOW_PCT_FRAC_VENT = "vent_low_pct_frac_vent"
+    VENT_DEFECT_PCT_FRAC_VENT = "vent_defect_pct_frac_vent"
     RBC_MEAN = "rbc_mean"
     MEMBRANE_MEAN = "membrane_mean"
     VENT_MEAN = "vent_mean"
+    VENT_MEAN_FRAC_VENT = "vent_mean_frac_vent"
     RBC_MEDIAN = "rbc_median"
     MEMBRANE_MEDIAN = "membrane_median"
     VENT_MEDIAN = "vent_median"
+    VENT_MEDIAN_FRAC_VENT = "vent_median_frac_vent"
     RBC_STDDEV = "rbc_stddev"
     MEMBRANE_STDDEV = "membrane_stddev"
     VENT_STDDEV = "vent_stddev"
+    VENT_STDDEV_FRAC_VENT = "vent_stddev_frac_vent"
     DLCO_EST = "dlco_est"
     KCO_EST = "kco_est"
     RDP_BA = "rdp_ba"
@@ -460,6 +467,7 @@ class ReferenceDistribution(object):
         "threshold_rbc": [0.001351, 0.002804, 0.004629, 0.006781, 0.009232],
         "threshold_membrane": [0.005320, 0.007108, 0.009377, 0.012224, 0.015766, 0.020132, 0.025471],
         "reference_fit_vent": (0.04074, 0.7085, 0.1408),
+        "reference_fractional_ventilation_fit_vent": (0.0654281965334782, 0.27119297933193004, 0.07271780094487755),
         "reference_fit_rbc": (0.06106, 0.004794, 0.001998),
         "reference_fit_membrane": (0.0700, 0.009668, 0.002638),
         "reference_stats": {
@@ -497,6 +505,7 @@ class ReferenceDistribution(object):
         "threshold_rbc": [0.001393, 0.002891, 0.004772, 0.006991, 0.009518],
         "threshold_membrane": [0.004881, 0.006522, 0.008603, 0.011216, 0.014466, 0.018471, 0.023370],
         "reference_fit_vent": (0.04074, 0.7085, 0.1408),
+        "reference_fractional_ventilation_fit_vent": (0.0654281965334782, 0.27119297933193004, 0.07271780094487755),
         "reference_fit_rbc": (0.06106, 0.004942, 0.002060),
         "reference_fit_membrane": (0.0700, 0.008871, 0.002420),
         "reference_stats": {

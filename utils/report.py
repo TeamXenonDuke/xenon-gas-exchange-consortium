@@ -190,6 +190,30 @@ def qa(dict_stats: Dict[str, Any], path: str):
     pdfkit.from_file(path_html, path, options=PDF_OPTIONS)
 
 
+def frac_vent(dict_stats: Dict[str, Any], path: str):
+    """Make frac vent clinical report with colormap images.
+
+    First converts dictionary to html format. Then saves to path.
+    Args:
+        dict_stats (Dict[str, Any]): dictionary of statistics
+        path (str): path to save report
+    """
+    dict_stats = format_dict(dict_stats)
+    current_path = os.path.dirname(__file__)
+    path_clinical = os.path.abspath(
+        os.path.join(current_path, os.pardir, "assets", "html", "frac_vent.html")
+    )
+    path_html = os.path.join("tmp", "frac_vent.html")
+    # write report to html
+    with open(path_clinical, "r") as f:
+        file = f.read()
+        rendered = file.format(**dict_stats)
+    with open(path_html, "w") as o:
+        o.write(rendered)
+    # write clinical report to pdf
+    pdfkit.from_file(path_html, path, options=PDF_OPTIONS)
+
+
 def combine_pdfs(pdf_list: list, path: str):
     """Combine PDFs into one.
 

@@ -47,16 +47,17 @@ def gx_mapping_reconstruction(config: base_config.Config):
     subject.registration()
     subject.biasfield_correction()
     subject.gas_binning()
+    subject.gas_binning_frac_vent()
     subject.dixon_decomposition()
     subject.hb_correction()
     subject.dissolved_analysis()
     subject.dissolved_binning()
-    subject.get_statistics()
+    subject.get_statistics() #includes frac vent statistics
     subject.get_info()
     subject.save_subject_to_mat()
-    subject.write_stats_to_csv()
-    subject.generate_figures()
-    subject.generate_pdf()
+    subject.write_stats_to_csv() #includes frac vent statistics
+    subject.generate_figures() #includes frac vent statistics
+    subject.generate_pdf() # includes frac vent statistics
     subject.save_files()
     subject.save_config_as_json()
     subject.move_output_files()
