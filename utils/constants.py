@@ -278,7 +278,16 @@ class StatsIOFields(object):
     KCO_EST = "kco_est"
     RDP_BA = "rdp_ba"
     ALVEOLAR_VOLUME = "alveolar_volume"
-
+    RBC_MEAN_FRAC_VENT = "rbc_mean_frac_vent"
+    RBC_MEDIAN_FRAC_VENT = "rbc_median_frac_vent"
+    RBC_STDDEV_FRAC_VENT = "rbc_stddev_frac_vent"
+    MEMBRANE_MEAN_FRAC_VENT = "membrane_mean_frac_vent"
+    MEMBRANE_MEDIAN_FRAC_VENT   = "membrane_median_frac_vent"
+    MEMBRANE_STDDEV_FRAC_VENT = "membrane_stddev_frac_vent"
+    ALVEOLAR_VOLUME_FRAC_VENT = "alveolar_volume_frac_vent"
+    KCO_EST_FRAC_VENT = "kco_est_frac_vent"
+    DLCO_ES_FRAC_VENT = "dlco_est_frac_vent"
+    RDP_BA_FRAC_VENT    = "rdp_ba_frac_vent"
 
 class VENTHISTOGRAMFields(object):
     """Ventilation histogram fields."""
