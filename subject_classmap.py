@@ -67,6 +67,8 @@ class Subject(object):
         traj_gas (np.array): gas-phase trajectory of shape (n_projections, n_points, 3)
         traj_scaling_factor (float): scaling factor for trajectory
         traj_ute (np.array): UTE proton trajectory of shape
+        vol_correction_factor_rbc (float): rbc volume correction factor
+        vol_correction_factor_membrane (float): membrane volume correction factor
     """
 
     def __init__(self, config: base_config.Config):
@@ -86,13 +88,13 @@ class Subject(object):
         self.image_membrane = np.array([0.0])
         self.image_membrane2gas = np.array([0.0])
         self.image_membrane2gas_binned = np.array([0.0])
-        self.membrane_hb_correction_factor = 1.0
+        self.membrane_hb_correction_factor = "NA"
         self.image_proton = np.array([0.0])
         self.image_proton_reg = np.array([0.0])
         self.image_rbc = np.array([0.0])
         self.image_rbc2gas = np.array([0.0])
         self.image_rbc2gas_binned = np.array([0.0])
-        self.rbc_hb_correction_factor = 1.0
+        self.rbc_hb_correction_factor = "NA"
         self.mask = np.array([0.0])
         self.mask_vent = np.array([0.0])
         self.mask_including_trachea = np.array([0.0])
@@ -106,6 +108,8 @@ class Subject(object):
         self.reference_data_key = str()
         self.reference_data = {}
         self.user_lung_volume_value = ""
+        self.vol_correction_factor_rbc = "NA"
+        self.vol_correction_factor_membrane ="NA"        
 
     def read_twix_files(self):
         """Read in twix files to dictionary.
@@ -554,18 +558,7 @@ class Subject(object):
                     self.rbc_hb_correction_factor,
                     self.membrane_hb_correction_factor,
                 ) = signal_utils.get_hb_correction(self.config.hb)
-
-                # if only applying correction to rbc signal, set membrane factor to 1
-                if (
-                    self.config.hb_correction_key
-                    == constants.HbCorrectionKey.RBC_ONLY.value
-                ):
-                    logging.info("Applying hemoglobin correction to RBC signal only")
-                    self.membrane_hb_correction_factor = 1.0
-                else:
-                    logging.info(
-                        "Applying hemoglobin correction to RBC and membrane signal"
-                    )
+                logging.info("Applying hemoglobin correction to RBC and membrane signal")
 
                 # scale dissolved phase signals by hb correction scaling factors
                 self.rbc_m_ratio *= (
@@ -577,6 +570,44 @@ class Subject(object):
                 raise ValueError("Invalid hemoglobin value")
         else:
             logging.info("Skipping hemoglobin correction")
+            
+    def vol_correction(self):
+        self.dict_stats = {
+            constants.StatsIOFields.INFLATION: metrics.inflation_volume(
+        self.mask, self.dict_dis[constants.IOFields.FOV])}
+        if self.config.vol_correction_key != constants.VolCorrectionKey.NONE.value:
+            if self.dict_stats["inflation"] > 0:
+                self.corrected_lung_volume = self.config.corrected_lung_volume
+                #get volume correction scaling factors
+                
+                (
+                    self.vol_correction_factor_rbc,
+                    self.vol_correction_factor_membrane,
+                    self.predicted_volume,
+                ) = signal_utils.get_vol_correction(self.dict_stats["inflation"], self.corrected_lung_volume)
+            
+                if (
+                    self.config.vol_correction_key 
+                    == constants.VolCorrectionKey.RBC_AND_MEMBRANE.value
+                ):
+                    logging.info(
+                        "Applying volume correction to membrane and RBC signal"
+                        f", Membrane correction factor = {self.vol_correction_factor_membrane}"
+                        f", RBC correction factor = {self.vol_correction_factor_rbc}"
+                    )
+
+                # scale dissolved phase signals by volume correction scaling factors
+                self.rbc_m_ratio /= (
+                    self.vol_correction_factor_rbc / self.vol_correction_factor_membrane
+                )
+                self.image_rbc /= self.vol_correction_factor_rbc
+                self.image_membrane /= self.vol_correction_factor_membrane
+            else:
+                raise ValueError("Invalid volume value")
+        else:
+            self.corrected_lung_volume = "NA"
+            logging.info("Skipping volume correction")
+ 
 
     def dissolved_analysis(self):
         """Calculate the dissolved-phase images relative to gas image."""
@@ -832,6 +863,10 @@ class Subject(object):
             constants.IOFields.HB: self.config.hb,
             constants.IOFields.RBC_HB_CORRECTION_FACTOR: self.rbc_hb_correction_factor,
             constants.IOFields.MEMBRANE_HB_CORRECTION_FACTOR: self.membrane_hb_correction_factor,
+            constants.IOFields.VOL_CORRECTION_KEY: self.config.vol_correction_key,
+            constants.IOFields.CORRECTED_LUNG_VOLUME: self.corrected_lung_volume,
+            constants.IOFields.VOL_CORRECTION_FACTOR_MEMBRANE: self.vol_correction_factor_membrane,
+            constants.IOFields.VOL_CORRECTION_FACTOR_RBC: self.vol_correction_factor_rbc,
             constants.IOFields.KERNEL_SHARPNESS: self.config.recon.kernel_sharpness_hr,
             constants.IOFields.N_SKIP_START: self.config.recon.n_skip_start,
             constants.IOFields.N_DIS_REMOVED: len(
@@ -871,8 +906,6 @@ class Subject(object):
 
     def generate_figures(self):
         """Export image figures."""
-        #Issues with index_start, index_skip, index_end; all equal 0
-        #everything fine up to this point as far as I can tell
         index_start, index_skip = plot.get_plot_indices(self.mask)
         proton_reg = img_utils.normalize(
             np.abs(self.image_proton),

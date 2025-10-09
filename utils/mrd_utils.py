@@ -76,6 +76,49 @@ def get_sample_time(dataset: ismrmrd.hdf5.Dataset) -> float:
     acq_header = dataset.read_acquisition(0).getHead()
     return acq_header.sample_time_us * 1e-6
 
+def get_sample_time_gas_exchange(dataset: ismrmrd.hdf5.Dataset) -> float:
+    """
+    Get the sample (dwell) time from the MRD dataset.
+
+    Reads from the first non-bonus spectrum acquisition.
+
+    Args:
+        dataset (ismrmrd.hdf5.Dataset): MRD data object
+    Returns:
+        float: dwell time in seconds
+    """
+    n_acq = dataset.number_of_acquisitions()
+    for i in range(n_acq):
+        acq = dataset.read_acquisition(i)
+        head = acq.getHead()
+
+        if head.measurement_uid != 1:
+            return head.sample_time_us * 1e-6
+
+    raise RuntimeError("No valid acquisitions found to determine sample time.")
+
+def get_sample_time_bonus_spectra(dataset: ismrmrd.hdf5.Dataset) -> float:
+    """
+    Get the sample (dwell) time for bonus spectra from the MRD dataset.
+
+    Uses the first acquisition identified as a bonus spectrum.
+
+    Args:
+        dataset (ismrmrd.hdf5.Dataset): MRD data object
+
+    Returns:
+        float: dwell time in seconds
+    """
+    n_acq = dataset.number_of_acquisitions()
+    for i in range(n_acq):
+        acq = dataset.read_acquisition(i)
+        head = acq.getHead()
+
+        if head.measurement_uid: 
+            return head.sample_time_us * 1e-6
+
+    raise RuntimeError("No bonus spectra acquisitions found to determine sample time.")
+
 
 def get_dyn_fids(dataset: ismrmrd.hdf5.Dataset, n_skip_end: int = 20) -> np.ndarray:
     """Get the dissolved phase FIDS used for dyn. spectroscopy from mrd object.
@@ -324,42 +367,42 @@ def get_gx_data(dataset: ismrmrd.hdf5.Dataset, multi_echo: bool) -> Dict[str, An
     """
     # get the raw FIDs, contrast labels, and bonus spectra labels
     raw_fids = []
+    raw_traj = []
+    bonus_spectra_fids = []
+
+
     contrast_labels = []
-    bonus_spectra_labels = []
+    bs_contrast_labels = []
+
     set_labels = []
     set_included = True
     n_projections = dataset.number_of_acquisitions()
     for i in range(0, int(n_projections)):
         acquisition_header = dataset.read_acquisition(i).getHead()
-        raw_fids.append(dataset.read_acquisition(i).data[0].flatten())
-        contrast_labels.append(acquisition_header.idx.contrast)
-        bonus_spectra_labels.append(acquisition_header.measurement_uid)
-        try:
-            set_labels.append(acquisition_header.idx.set)
-        except:
-            logging.warning("Unable to find set paramater from mrd object.")
-            set_included = False
 
-    raw_fids = np.asarray(raw_fids)
-    contrast_labels = np.asarray(contrast_labels)
-    bonus_spectra_labels = np.asarray(bonus_spectra_labels)
-    set_labels = np.asarray(set_labels)
+        bonus_spectra_flag = acquisition_header.measurement_uid;
 
-    # remove bonus spectra
-    raw_fids_truncated = raw_fids[
-        bonus_spectra_labels == constants.BonusSpectraLabels.NOT_BONUS, :
-    ]
-    contrast_labels_truncated = contrast_labels[
-        bonus_spectra_labels == constants.BonusSpectraLabels.NOT_BONUS
-    ]
-    set_labels_truncated = set_labels[
-        bonus_spectra_labels == constants.BonusSpectraLabels.NOT_BONUS
-    ]
+        if bonus_spectra_flag:
+            bonus_spectra_fids.append(dataset.read_acquisition(i).data[0].flatten())
+            bs_contrast_labels.append(acquisition_header.idx.contrast)
 
-    # get the trajectories
-    raw_traj = np.empty((raw_fids_truncated.shape[0], raw_fids_truncated.shape[1], 3))
-    for i in range(0, raw_fids_truncated.shape[0]):
-        raw_traj[i, :, :] = dataset.read_acquisition(i).traj
+        else:
+
+            raw_fids.append(dataset.read_acquisition(i).data[0].flatten())
+            contrast_labels.append(acquisition_header.idx.contrast)
+            raw_traj.append(dataset.read_acquisition(i).traj)
+            try:
+                set_labels.append(acquisition_header.idx.set)
+            except:
+                set_included = False
+
+    bonus_spectra_fids = np.asarray(bonus_spectra_fids)
+    bs_contrast_labels = np.asarray(bs_contrast_labels)
+
+    raw_fids_truncated = np.asarray(raw_fids)
+    contrast_labels_truncated = np.asarray(contrast_labels)
+    set_labels_truncated = np.asarray(set_labels)
+    raw_traj = np.asarray(raw_traj)
 
     if(set_included):
         unique_set_labels = np.unique(set_labels_truncated)
