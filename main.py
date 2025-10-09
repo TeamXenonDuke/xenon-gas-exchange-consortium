@@ -76,8 +76,9 @@ def gx_mapping_readin(config: base_config.Config):
     subject.read_mat_file()
     if FLAGS.force_segmentation:
         subject.segmentation()
-    subject.gas_binning()
+    subject.gas_binning_frac_vent()
     subject.dixon_decomposition()
+    subject.dixon_decomposition_frac_vent()
     subject.hb_correction()
     subject.vol_correction()    
     subject.dissolved_analysis()
