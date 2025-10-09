@@ -446,7 +446,7 @@ def read_dis_mrd(path: str, multi_echo: bool) -> Dict[str, Any]:
         constants.IOFields.SEX: np.nan,
         constants.IOFields.HEIGHT: np.nan,
         constants.IOFields.BANDWIDTH: np.nan,
-        constants.IOFields.SAMPLE_TIME: mrd_utils.get_sample_time(dataset),
+        constants.IOFields.SAMPLE_TIME: mrd_utils.get_sample_time_gas_exchange(dataset),
         constants.IOFields.FA_DIS: mrd_utils.get_flipangle_dissolved(header),
         constants.IOFields.FA_GAS: mrd_utils.get_flipangle_gas(header),
         constants.IOFields.FIDS: data_dict[constants.IOFields.FIDS],

@@ -51,6 +51,7 @@ def gx_mapping_reconstruction(config: base_config.Config):
     subject.dixon_decomposition()
     subject.dixon_decomposition_frac_vent()
     subject.hb_correction()
+    subject.vol_correction()
     subject.dissolved_analysis()
     subject.dissolved_binning()
     subject.get_statistics() #includes frac vent statistics
@@ -78,6 +79,7 @@ def gx_mapping_readin(config: base_config.Config):
     subject.gas_binning()
     subject.dixon_decomposition()
     subject.hb_correction()
+    subject.vol_correction()    
     subject.dissolved_analysis()
     subject.dissolved_binning()
     subject.get_statistics()
