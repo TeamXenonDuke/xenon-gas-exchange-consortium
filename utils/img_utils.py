@@ -253,32 +253,23 @@ def normalize(
             raise ValueError("mask_including_trachea is empty.")
         voxel_side_cm = 0.3125         # cm
         voxel_vol_ml  = voxel_side_cm ** 3  # cm^3 == mL
-
         DEAD_SPACE_ML = 10.0
         tcv_gas_vol_ml = bag_volume * 1000.0 - DEAD_SPACE_ML
         if tcv_gas_vol_ml <= 0:
             raise ValueError("Computed TCV gas volume ≤ 0 mL; check bag_volume / dead-space.")
-
         mag = np.abs(image).astype(np.float64)
         big = mask_including_trachea.astype(bool)
         signal_total = float(mag[big].sum())
         if signal_total <= 0:
             raise ValueError("Total signal in mask_including_trachea is zero; cannot compute FV.")
-
         sig_to_vol = tcv_gas_vol_ml / signal_total     # mL per signal unit
         frac_vent  = (mag * sig_to_vol) / voxel_vol_ml # (mL per voxel) / (mL per voxel) = unitless FV
-        print(f"Signal to volume ratio: {sig_to_vol} mL per signal unit")
-        print("frac vent stats: min, max, mean, std - ", np.min(frac_vent), np.max(frac_vent), np.mean(frac_vent[mask_including_trachea == 1]), np.std(frac_vent[mask_including_trachea == 1]))
-        print(f"Estimated TCV gas volume: {np.sum(frac_vent[mask_including_trachea == 1])} mL")
-
         try:
             os.makedirs("tmp", exist_ok=True)
             nb.Nifti1Image(frac_vent, affine=np.eye(4)).to_filename("tmp/frac_vent_output.nii")
         except Exception:
             pass
-
         return frac_vent
-
     else:
         raise ValueError("Invalid normalization method")
 
