@@ -59,6 +59,7 @@ class Subject(object):
         image_rbc2gas_binned (np.array): binned image_rbc2gas
         mask (np.array): thoracic cavity mask
         mask_vent (np.ndarray): thoracic cavity mask without ventilation defects
+        mask_vent_frac_vent (np.ndarray): frac vent thoracic cavity mask without ventilation defects
         membrane_hb_correction_factor (float): membrane hb correction scaling factor
         rbc_hb_correction_factor (float): rbc hb correction scaling factor
         rbc_m_ratio (float): RBC to M ratio
@@ -97,6 +98,8 @@ class Subject(object):
         self.rbc_hb_correction_factor = "NA"
         self.mask = np.array([0.0])
         self.mask_vent = np.array([0.0])
+        self.mask_vent_frac_vent = np.array([0.0])
+        self.mask_including_trachea = np.array([0.0])
         self.rbc_m_ratio = 0.0
         self.dict_stats = {}
         self.dict_info = {}
@@ -183,6 +186,8 @@ class Subject(object):
         self.image_biasfield = mdict["image_biasfield"]
         self.mask = mdict["mask"].astype(bool)
         self.mask_vent = mdict["mask_vent"].astype(bool)
+        self.mask_vent_frac_vent = mdict["mask_vent_frac_vent"].astype(bool)
+        self.mask_including_trachea = mdict["mask_including_trachea"].astype(bool)
         self.traj_dissolved = mdict["traj_dissolved"]
         self.traj_gas = mdict["traj_gas"]
         if self.config.rbc_m_ratio > 0:
@@ -433,6 +438,9 @@ class Subject(object):
 
     def segmentation(self):
         """Segment the thoracic cavity."""
+        self.mask_including_trachea = np.squeeze(
+                    np.array(nib.load(self.config.trachea_plus_lung_mask_filepath).get_fdata())
+                ).astype(bool)
         if self.config.segmentation_key == constants.SegmentationKey.CNN_VENT.value:
             logging.info("Performing neural network segmenation.")
             self.mask = segmentation.predict(self.image_gas_highreso)
@@ -536,7 +544,21 @@ class Subject(object):
             mask=self.mask,
             thresholds=self.reference_data['threshold_vent'],
         )
-        self.mask_vent = np.logical_and(self.image_gas_binned > 1, self.mask)
+        self.mask_vent = np.logical_and(self.image_gas_binned > 1, self.mask) # ventilation mask excludes defects
+        io_utils.export_nii(np.abs(self.image_gas_binned), "tmp/image_gas_binned.nii")
+
+    def gas_binning_frac_vent(self):
+        self.image_gas_binned_frac_vent = binning.linear_bin(
+            image=img_utils.normalize(image=self.image_gas_cor, 
+                                        mask=self.mask, 
+                                        method=constants.NormalizationMethods.FRAC_VENT,
+                                        mask_including_trachea=self.mask_including_trachea,
+                                        bag_volume=self.config.bag_volume),
+            mask=self.mask,
+            thresholds=self.reference_data['threshold_fractional_ventilation'],
+        )
+        self.mask_vent_frac_vent = np.logical_and(self.image_gas_binned_frac_vent > 1, self.mask) # ventilation mask excludes defects
+        io_utils.export_nii(np.abs(self.image_gas_binned_frac_vent), "tmp/image_gas_binned_frac_vent.nii")
 
     def dixon_decomposition(self):
         """Perform Dixon decomposition on the dissolved-phase images."""
@@ -544,6 +566,15 @@ class Subject(object):
             image_gas=self.image_gas_highsnr,
             image_dissolved=self.image_dissolved,
             mask=self.mask_vent,
+            rbc_m_ratio=self.rbc_m_ratio,
+        )
+
+    def dixon_decomposition_frac_vent(self):
+        """Perform Dixon decomposition on the dissolved-phase images."""
+        self.image_rbc_frac_vent, self.image_membrane_frac_vent = img_utils.dixon_decomposition(
+            image_gas=self.image_gas_highsnr,
+            image_dissolved=self.image_dissolved,
+            mask=self.mask_vent_frac_vent,
             rbc_m_ratio=self.rbc_m_ratio,
         )
 
@@ -614,10 +645,20 @@ class Subject(object):
             image2=np.abs(self.image_gas_highsnr),
             mask=self.mask_vent,
         )
+        self.image_rbc2gas_frac_vent = img_utils.divide_images(
+            image1=self.image_rbc_frac_vent,
+            image2=np.abs(self.image_gas_highsnr),
+            mask=self.mask_vent_frac_vent,
+        )
         self.image_membrane2gas = img_utils.divide_images(
             image1=self.image_membrane,
             image2=np.abs(self.image_gas_highsnr),
             mask=self.mask_vent,
+        )
+        self.image_membrane2gas_frac_vent = img_utils.divide_images(
+            image1=self.image_membrane_frac_vent,
+            image2=np.abs(self.image_gas_highsnr),
+            mask=self.mask_vent_frac_vent,
         )
         # scale by flip angle difference
         flip_angle_scale_factor = signal_utils.calculate_flipangle_correction(
@@ -650,9 +691,19 @@ class Subject(object):
             mask=self.mask_vent,
             thresholds=self.reference_data["threshold_rbc"],
         )
+        self.image_rbc2gas_binned_frac_vent = binning.linear_bin(
+            image=self.image_rbc2gas_frac_vent,
+            mask=self.mask_vent_frac_vent,
+            thresholds=self.reference_data["threshold_rbc"], # does this need frac vent thresholds?
+        )
         self.image_membrane2gas_binned = binning.linear_bin(
             image=self.image_membrane2gas,
             mask=self.mask_vent,
+            thresholds=self.reference_data["threshold_membrane"],
+        )
+        self.image_membrane2gas_binned_frac_vent = binning.linear_bin(
+            image=self.image_membrane2gas_frac_vent,
+            mask=self.mask_vent_frac_vent,
             thresholds=self.reference_data["threshold_membrane"],
         )
 
@@ -676,20 +727,68 @@ class Subject(object):
             constants.StatsIOFields.VENT_DEFECT_PCT: metrics.bin_percentage(
                 self.image_gas_binned, np.array([1]), self.mask
             ),
+            constants.StatsIOFields.VENT_DEFECT_PCT_FRAC_VENT: metrics.bin_percentage(
+                self.image_gas_binned_frac_vent, np.array([1]), self.mask
+            ),
             constants.StatsIOFields.VENT_LOW_PCT: metrics.bin_percentage(
                 self.image_gas_binned, np.array([2]), self.mask
+            ),
+            constants.StatsIOFields.VENT_LOW_PCT_FRAC_VENT: metrics.bin_percentage(
+                self.image_gas_binned_frac_vent, np.array([2]), self.mask
             ),
             constants.StatsIOFields.VENT_HIGH_PCT: metrics.bin_percentage(
                 self.image_gas_binned, np.array([5, 6]), self.mask
             ),
+            constants.StatsIOFields.VENT_HIGH_PCT_FRAC_VENT: metrics.bin_percentage(
+                self.image_gas_binned_frac_vent, np.array([5, 6]), self.mask
+            ),
             constants.StatsIOFields.VENT_MEAN: metrics.mean(
-                img_utils.normalize(np.abs(self.image_gas_cor), self.mask), self.mask
+                img_utils.normalize(image=np.abs(self.image_gas_cor), 
+                                    mask=self.mask, 
+                                    method=constants.NormalizationMethods.PERCENTILE_MASKED,
+                                    mask_including_trachea=self.mask_including_trachea, 
+                                    bag_volume=self.config.bag_volume), 
+                                    self.mask
             ),
             constants.StatsIOFields.VENT_MEDIAN: metrics.median(
-                img_utils.normalize(np.abs(self.image_gas_cor), self.mask), self.mask
+                img_utils.normalize(image=np.abs(self.image_gas_cor), 
+                                    mask=self.mask,
+                                    method=constants.NormalizationMethods.PERCENTILE_MASKED,
+                                    mask_including_trachea=self.mask_including_trachea, 
+                                    bag_volume=self.config.bag_volume), 
+                                    self.mask
             ),
             constants.StatsIOFields.VENT_STDDEV: metrics.std(
-                img_utils.normalize(np.abs(self.image_gas_cor), self.mask), self.mask
+                img_utils.normalize(image=np.abs(self.image_gas_cor), 
+                                    mask=self.mask, 
+                                    method=constants.NormalizationMethods.PERCENTILE_MASKED,
+                                    mask_including_trachea=self.mask_including_trachea, 
+                                    bag_volume=self.config.bag_volume), 
+                                    self.mask
+            ),
+            constants.StatsIOFields.VENT_MEAN_FRAC_VENT: metrics.mean(
+                img_utils.normalize(image=np.abs(self.image_gas_cor), 
+                                    mask=self.mask, 
+                                    method=constants.NormalizationMethods.FRAC_VENT,
+                                    mask_including_trachea=self.mask_including_trachea, 
+                                    bag_volume=self.config.bag_volume), 
+                                    self.mask
+            ),
+            constants.StatsIOFields.VENT_MEDIAN_FRAC_VENT: metrics.median(
+                img_utils.normalize(image=np.abs(self.image_gas_cor), 
+                                    mask=self.mask,
+                                    method=constants.NormalizationMethods.FRAC_VENT,
+                                    mask_including_trachea=self.mask_including_trachea, 
+                                    bag_volume=self.config.bag_volume), 
+                                    self.mask
+            ),
+            constants.StatsIOFields.VENT_STDDEV_FRAC_VENT: metrics.std(
+                img_utils.normalize(image=np.abs(self.image_gas_cor), 
+                                    mask=self.mask, 
+                                    method=constants.NormalizationMethods.FRAC_VENT,
+                                    mask_including_trachea=self.mask_including_trachea, 
+                                    bag_volume=self.config.bag_volume), 
+                                    self.mask
             ),
             constants.StatsIOFields.RBC_SNR: metrics.snr(self.image_rbc, self.mask)[0],
             constants.StatsIOFields.RBC_DEFECT_PCT: metrics.bin_percentage(
@@ -704,11 +803,20 @@ class Subject(object):
             constants.StatsIOFields.RBC_MEAN: metrics.mean(
                 self.image_rbc2gas, self.mask_vent
             ),
+            constants.StatsIOFields.RBC_MEAN_FRAC_VENT: metrics.mean(
+                self.image_rbc2gas_frac_vent, self.mask_vent_frac_vent
+            ),
             constants.StatsIOFields.RBC_MEDIAN: metrics.median(
                 self.image_rbc2gas, self.mask_vent
             ),
+            constants.StatsIOFields.RBC_MEDIAN_FRAC_VENT: metrics.median(
+                self.image_rbc2gas_frac_vent, self.mask_vent_frac_vent
+            ),
             constants.StatsIOFields.RBC_STDDEV: metrics.std(
                 self.image_rbc2gas, self.mask_vent
+            ),
+            constants.StatsIOFields.RBC_STDDEV_FRAC_VENT: metrics.std(
+                self.image_rbc2gas_frac_vent, self.mask_vent_frac_vent
             ),
             constants.StatsIOFields.MEMBRANE_SNR: metrics.snr(
                 self.image_membrane, self.mask
@@ -731,13 +839,32 @@ class Subject(object):
             constants.StatsIOFields.MEMBRANE_STDDEV: metrics.std(
                 self.image_membrane2gas, self.mask_vent
             ),
+            constants.StatsIOFields.MEMBRANE_MEAN_FRAC_VENT: metrics.mean(
+                self.image_membrane2gas_frac_vent, self.mask_vent_frac_vent
+            ),
+            constants.StatsIOFields.MEMBRANE_MEDIAN_FRAC_VENT: metrics.median(
+                self.image_membrane2gas_frac_vent, self.mask_vent_frac_vent
+            ),
+            constants.StatsIOFields.MEMBRANE_STDDEV_FRAC_VENT: metrics.std(
+                self.image_membrane2gas_frac_vent, self.mask_vent_frac_vent
+            ),
             constants.StatsIOFields.ALVEOLAR_VOLUME: metrics.alveolar_volume(
                 self.image_gas_binned, self.mask, self.dict_dis[constants.IOFields.FOV]
+            ),
+            constants.StatsIOFields.ALVEOLAR_VOLUME_FRAC_VENT: metrics.alveolar_volume(
+                self.image_gas_binned_frac_vent, self.mask, self.dict_dis[constants.IOFields.FOV]
             ),
             constants.StatsIOFields.KCO_EST: metrics.kco(
                 self.image_membrane2gas,
                 self.image_rbc2gas,
                 self.mask_vent,
+                self.reference_data['reference_fit_membrane'][1],
+                self.reference_data['reference_fit_rbc'][1],
+            ),
+            constants.StatsIOFields.KCO_EST_FRAC_VENT: metrics.kco(
+                self.image_membrane2gas_frac_vent,
+                self.image_rbc2gas_frac_vent,
+                self.mask_vent_frac_vent,
                 self.reference_data['reference_fit_membrane'][1],
                 self.reference_data['reference_fit_rbc'][1],
             ),
@@ -751,8 +878,22 @@ class Subject(object):
                 self.reference_data['reference_fit_membrane'][1],
                 self.reference_data['reference_fit_rbc'][1],
             ),
+            constants.StatsIOFields.DLCO_ES_FRAC_VENT: metrics.dlco(
+                self.image_gas_binned_frac_vent,
+                self.image_membrane2gas_frac_vent,
+                self.image_rbc2gas_frac_vent,
+                self.mask,
+                self.mask_vent_frac_vent,
+                self.dict_dis[constants.IOFields.FOV],
+                self.reference_data['reference_fit_membrane'][1],
+                self.reference_data['reference_fit_rbc'][1],
+            ),
             constants.StatsIOFields.RDP_BA: round(metrics.rdp_ba(
                 self.image_rbc2gas_binned,
+                self.mask,
+            ), 1),
+            constants.StatsIOFields.RDP_BA_FRAC_VENT: round(metrics.rdp_ba(
+                self.image_rbc2gas_binned_frac_vent,
                 self.mask,
             ), 1),
         }
@@ -938,6 +1079,14 @@ class Subject(object):
         )
         plot.plot_montage_color(
             image=plot.map_and_overlay_to_rgb(
+                self.image_gas_binned_frac_vent, proton_reg, constants.CMAP.VENT_BIN2COLOR
+            ),
+            path="tmp/montage_gas_binned_frac_vent.png",
+            index_start=index_start,
+            index_skip=index_skip,
+        )
+        plot.plot_montage_color(
+            image=plot.map_and_overlay_to_rgb(
                 self.image_rbc2gas_binned, proton_reg, constants.CMAP.RBC_BIN2COLOR
             ),
             path="tmp/montage_rbc_binned.png",
@@ -976,8 +1125,13 @@ class Subject(object):
             index_start=index_start,
             index_skip=index_skip,
         )
+        # histogram plotting for 99th percentile normalization histogram
         plot.plot_histogram(
-            data=img_utils.normalize(self.image_gas_cor, self.mask)[
+            data=img_utils.normalize(image=self.image_gas_cor, 
+                                    mask=self.mask,
+                                    mask_including_trachea=self.mask_including_trachea,
+                                    method=constants.NormalizationMethods.PERCENTILE_MASKED,
+                                    bag_volume=self.config.bag_volume)[
                 np.array(self.mask, dtype=bool)
             ].flatten(),
             path="tmp/hist_vent.png",
@@ -986,6 +1140,27 @@ class Subject(object):
             ylim=constants.VENTHISTOGRAMFields.YLIM,
             num_bins=constants.VENTHISTOGRAMFields.NUMBINS,
             refer_fit=self.reference_data['reference_fit_vent'],
+            xticks=constants.VENTHISTOGRAMFields.XTICKS,
+            yticks=constants.VENTHISTOGRAMFields.YTICKS,
+            xticklabels=constants.VENTHISTOGRAMFields.XTICKLABELS,
+            yticklabels=constants.VENTHISTOGRAMFields.YTICKLABELS,
+            title=constants.VENTHISTOGRAMFields.TITLE,
+        )
+        #histogram plotting for fractional ventilation histogram
+        plot.plot_histogram(
+            data=img_utils.normalize(image=self.image_gas_cor, 
+                                    mask=self.mask,
+                                    mask_including_trachea=self.mask_including_trachea,
+                                    method=constants.NormalizationMethods.FRAC_VENT,
+                                    bag_volume=self.config.bag_volume)[
+                np.array(self.mask, dtype=bool)
+            ].flatten(),
+            path="tmp/hist_fractional_ventilation_vent.png",
+            color=constants.VENTHISTOGRAMFields.COLOR,
+            xlim=constants.VENTHISTOGRAMFields.XLIM,
+            ylim=constants.VENTHISTOGRAMFields.YLIM,
+            num_bins=constants.VENTHISTOGRAMFields.NUMBINS,
+            refer_fit=self.reference_data["reference_fractional_ventilation_fit_vent"],
             xticks=constants.VENTHISTOGRAMFields.XTICKS,
             yticks=constants.VENTHISTOGRAMFields.YTICKS,
             xticklabels=constants.VENTHISTOGRAMFields.XTICKLABELS,
@@ -1008,11 +1183,46 @@ class Subject(object):
             yticklabels=constants.RBCHISTOGRAMFields.YTICKLABELS,
             title=constants.RBCHISTOGRAMFields.TITLE,
         )
+        # fractional ventilation rbc histogram
+        plot.plot_histogram(
+            data=np.abs(self.image_rbc2gas_frac_vent)[
+                np.array(self.mask_vent_frac_vent, dtype=bool)
+            ].flatten(),
+            path="tmp/hist_rbc_frac_vent.png",
+            color=constants.RBCHISTOGRAMFields.COLOR,
+            xlim=constants.RBCHISTOGRAMFields.XLIM,
+            ylim=constants.RBCHISTOGRAMFields.YLIM,
+            num_bins=constants.RBCHISTOGRAMFields.NUMBINS,
+            refer_fit=self.reference_data['reference_fit_rbc'],
+            xticks=constants.RBCHISTOGRAMFields.XTICKS,
+            yticks=constants.RBCHISTOGRAMFields.YTICKS,
+            xticklabels=constants.RBCHISTOGRAMFields.XTICKLABELS,
+            yticklabels=constants.RBCHISTOGRAMFields.YTICKLABELS,
+            title=constants.RBCHISTOGRAMFields.TITLE,
+        )
+        # membrane histogram
         plot.plot_histogram(
             data=np.abs(self.image_membrane2gas)[
                 np.array(self.mask_vent, dtype=bool)
             ].flatten(),
             path="tmp/hist_membrane.png",
+            color=constants.MEMBRANEHISTOGRAMFields.COLOR,
+            xlim=constants.MEMBRANEHISTOGRAMFields.XLIM,
+            ylim=constants.MEMBRANEHISTOGRAMFields.YLIM,
+            num_bins=constants.MEMBRANEHISTOGRAMFields.NUMBINS,
+            refer_fit=self.reference_data['reference_fit_membrane'],
+            xticks=constants.MEMBRANEHISTOGRAMFields.XTICKS,
+            yticks=constants.MEMBRANEHISTOGRAMFields.YTICKS,
+            xticklabels=constants.MEMBRANEHISTOGRAMFields.XTICKLABELS,
+            yticklabels=constants.MEMBRANEHISTOGRAMFields.YTICKLABELS,
+            title=constants.MEMBRANEHISTOGRAMFields.TITLE,
+        )
+        # fractional ventilation membrane histogram
+        plot.plot_histogram(
+            data=np.abs(self.image_membrane2gas_frac_vent)[
+                np.array(self.mask_vent_frac_vent, dtype=bool)
+            ].flatten(),
+            path="tmp/hist_membrane_frac_vent.png",
             color=constants.MEMBRANEHISTOGRAMFields.COLOR,
             xlim=constants.MEMBRANEHISTOGRAMFields.XLIM,
             ylim=constants.MEMBRANEHISTOGRAMFields.YLIM,
@@ -1030,7 +1240,7 @@ class Subject(object):
         # generate individual PDFs
         pdf_list = [
             os.path.join("tmp", pdf)
-            for pdf in ["intro.pdf", "clinical.pdf", "grayscale.pdf", "qa"]
+            for pdf in ["intro.pdf", "clinical.pdf", "grayscale.pdf", "qa", "frac_vent.pdf"]
         ]
         report.intro(self.dict_info, path=pdf_list[0])
         report.clinical(
@@ -1044,6 +1254,10 @@ class Subject(object):
         report.qa(
             {**self.dict_stats, **self.reference_data['reference_stats']},
             path=pdf_list[3],
+        )
+        report.frac_vent(
+            {**self.dict_stats, **self.reference_data['reference_stats']},
+            path=pdf_list[4],
         )
 
         # combine PDFs into one

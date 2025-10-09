@@ -16,6 +16,7 @@ import skimage
 from scipy import ndimage
 
 import pdb
+import nibabel as nb
 
 from utils import constants, io_utils
 
@@ -211,8 +212,10 @@ def interp(img: np.ndarray, factor: int = 1):
 def normalize(
     image: np.ndarray,
     mask: np.ndarray = np.array([0.0]),
-    method: str = constants.NormalizationMethods.PERCENTILE_MASKED,
+    method: str = constants.NormalizationMethods.PERCENTILE_MASKED, #default to 99th percentile normalization
     percentile: float = 99.0,
+    mask_including_trachea: np.ndarray = np.array([0.0]),
+    bag_volume: float = None
 ) -> np.ndarray:
     """Normalize the image to be between [0, 1.0].
 
@@ -239,6 +242,34 @@ def normalize(
         image[np.isnan(image)] = 0
         image[np.isinf(image)] = 0
         return image / np.mean(image[mask])
+    elif method == constants.NormalizationMethods.FRAC_VENT:
+        if bag_volume is None or bag_volume <= 0:
+            raise ValueError("FRAC_VENT requires a positive numeric bag_volume in liters.")
+        if mask_including_trachea is None:
+            raise ValueError("FRAC_VENT requires mask_including_trachea (lungs + trachea).")
+        if mask_including_trachea.shape != image.shape:
+            raise ValueError("mask_including_trachea must have the same shape as image.")
+        if np.count_nonzero(mask_including_trachea) == 0:
+            raise ValueError("mask_including_trachea is empty.")
+        voxel_side_cm = 0.3125         # cm
+        voxel_vol_ml  = voxel_side_cm ** 3  # cm^3 == mL
+        DEAD_SPACE_ML = 10.0
+        tcv_gas_vol_ml = bag_volume * 1000.0 - DEAD_SPACE_ML
+        if tcv_gas_vol_ml <= 0:
+            raise ValueError("Computed TCV gas volume ≤ 0 mL; check bag_volume / dead-space.")
+        mag = np.abs(image).astype(np.float64)
+        big = mask_including_trachea.astype(bool)
+        signal_total = float(mag[big].sum())
+        if signal_total <= 0:
+            raise ValueError("Total signal in mask_including_trachea is zero; cannot compute FV.")
+        sig_to_vol = tcv_gas_vol_ml / signal_total     # mL per signal unit
+        frac_vent  = (mag * sig_to_vol) / voxel_vol_ml # (mL per voxel) / (mL per voxel) = unitless FV
+        try:
+            os.makedirs("tmp", exist_ok=True)
+            nb.Nifti1Image(frac_vent, affine=np.eye(4)).to_filename("tmp/frac_vent_output.nii")
+        except Exception:
+            pass
+        return frac_vent
     else:
         raise ValueError("Invalid normalization method")
 
