@@ -82,7 +82,7 @@ expected = pd.DataFrame([{
 }])
 
 @pytest.fixture(scope="session")
-def output(config, folder, csv):
+def output(config, csv):
     """ Setup function
 
     Ran once when the test file is called.
@@ -93,24 +93,17 @@ def output(config, folder, csv):
     The expected csv will be loaded in as 'expected' if we are not testing the default subject (009-028B).
 
     config (str): Relative path to config file. False if not specified in terminal.
-    folder (str): Relative path to subject folder. False if not specified in terminal.
     csv (str): Relative path to expected csv. False if not specified in terminal.
     """
     config_path = config
     if not config:
         config_path = os.path.join("testing", "config", "009-028B.py")
-
-    actual_csv_path = folder
-    if not folder:
-        actual_csv_path = os.path.join("testing", "subjects", "009-028B", "gx", "009-028B_stats.csv")
+        actual_csv_path = os.path.join("testing","subjects","009-028B","gx","009-028B_stats.csv")
     else:
-        actual_csv_path = os.path.join(folder, "gx", os.path.splitext(os.path.basename(config_path))[0] + "_stats.csv")
-
-    if not folder:
-        program = subprocess.run(["python", "main.py", "--config", config_path])
-    else:
-        program = subprocess.run(["python", "main.py", "--config", config_path, "--folder", folder])
-
+    	actual_csv_path = os.path.join(os.getcwd(),"testing","subjects",os.path.splitext(os.path.basename(config_path))[0],"gx",os.path.splitext(os.path.basename(config_path))[0] + "_stats.csv")
+    
+    program = subprocess.run(["python","main.py","--config",config_path])
+	
     if program.returncode != 0:
         pytest.exit("Program failed to run for subject: " + os.path.splitext(os.path.basename(config_path))[0], returncode=1)
 
