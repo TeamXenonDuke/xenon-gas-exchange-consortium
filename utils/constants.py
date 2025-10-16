@@ -105,6 +105,7 @@ class SegmentationKey(enum.Enum):
     MANUAL_PROTON = "manual_proton"
     SKIP = "skip"
     THRESHOLD_VENT = "threshold_vent"
+    THRESHOLD_FRACTIONAL_VENTILATION = "threshold_fractional_ventilation"
 
 
 class RegistrationKey(enum.Enum):
@@ -261,6 +262,7 @@ class StatsIOFields(object):
     RBC_SNR = "rbc_snr"
     MEMBRANE_SNR = "membrane_snr"
     VENT_SNR = "vent_snr"
+    VENT_SNR_FRAC_VENT = "vent_snr_frac_vent"
     RBC_HIGH_PCT = "rbc_high_pct"
     RBC_LOW_PCT = "rbc_low_pct"
     RBC_DEFECT_PCT = "rbc_defect_pct"
@@ -270,27 +272,42 @@ class StatsIOFields(object):
     VENT_HIGH_PCT = "vent_high_pct"
     VENT_LOW_PCT = "vent_low_pct"
     VENT_DEFECT_PCT = "vent_defect_pct"
+    VENT_HIGH_PCT_FRAC_VENT = "vent_high_pct_frac_vent"
+    VENT_LOW_PCT_FRAC_VENT = "vent_low_pct_frac_vent"
+    VENT_DEFECT_PCT_FRAC_VENT = "vent_defect_pct_frac_vent"
     RBC_MEAN = "rbc_mean"
     MEMBRANE_MEAN = "membrane_mean"
     VENT_MEAN = "vent_mean"
+    VENT_MEAN_FRAC_VENT = "vent_mean_frac_vent"
     RBC_MEDIAN = "rbc_median"
     MEMBRANE_MEDIAN = "membrane_median"
     VENT_MEDIAN = "vent_median"
+    VENT_MEDIAN_FRAC_VENT = "vent_median_frac_vent"
     RBC_STDDEV = "rbc_stddev"
     MEMBRANE_STDDEV = "membrane_stddev"
     VENT_STDDEV = "vent_stddev"
+    VENT_STDDEV_FRAC_VENT = "vent_stddev_frac_vent"
     DLCO_EST = "dlco_est"
     KCO_EST = "kco_est"
     RDP_BA = "rdp_ba"
     ALVEOLAR_VOLUME = "alveolar_volume"
-
+    RBC_MEAN_FRAC_VENT = "rbc_mean_frac_vent"
+    RBC_MEDIAN_FRAC_VENT = "rbc_median_frac_vent"
+    RBC_STDDEV_FRAC_VENT = "rbc_stddev_frac_vent"
+    MEMBRANE_MEAN_FRAC_VENT = "membrane_mean_frac_vent"
+    MEMBRANE_MEDIAN_FRAC_VENT   = "membrane_median_frac_vent"
+    MEMBRANE_STDDEV_FRAC_VENT = "membrane_stddev_frac_vent"
+    ALVEOLAR_VOLUME_FRAC_VENT = "alveolar_volume_frac_vent"
+    KCO_EST_FRAC_VENT = "kco_est_frac_vent"
+    DLCO_ES_FRAC_VENT = "dlco_est_frac_vent"
+    RDP_BA_FRAC_VENT    = "rdp_ba_frac_vent"
 
 class VENTHISTOGRAMFields(object):
     """Ventilation histogram fields."""
 
     COLOR = (0.4196, 0.6824, 0.8392)
     XLIM = 1.0
-    YLIM = 0.07
+    YLIM = 0.25
     NUMBINS = 50
     XTICKS = np.linspace(0, XLIM, 4)
     YTICKS = np.linspace(0, YLIM, 5)
@@ -350,6 +367,7 @@ class NormalizationMethods(object):
     PERCENTILE_MASKED = "percentile_masked"
     PERCENTILE = "percentile"
     MEAN = "mean"
+    FRAC_VENT = "frac_vent"
 
 
 class CMAP(object):
@@ -438,9 +456,11 @@ class ReferenceDistribution(object):
     REFERENCE_218_PPM = {
     "title": "REFERENCE_218_PPM",
     "threshold_vent": [0.3891, 0.5753, 0.7203, 0.8440, 0.9539],
+    "threshold_fractional_ventilation": [0.126229, 0.198441, 0.271045, 0.343936, 0.417054],
     "threshold_rbc": [0.001393, 0.002891, 0.004772, 0.006991, 0.009518],
     "threshold_membrane": [0.004881, 0.006522, 0.008603, 0.011216, 0.014466, 0.018471, 0.023370],
     "reference_fit_vent": (0.04074, 0.7085, 0.1408),
+    "reference_fractional_ventilation_fit_vent": (0.0654281965334782, 0.27119297933193004, 0.07271780094487755),
     "reference_fit_rbc": (0.06106, 0.004942, 0.002060),
     "reference_fit_membrane": (0.0700, 0.008871, 0.002420),
     "reference_stats": {
@@ -474,9 +494,11 @@ class ReferenceDistribution(object):
     REFERENCE_208_PPM = {
         "title": "REFERENCE_208_PPM",
         "threshold_vent": [0.3891, 0.5753, 0.7203, 0.8440, 0.9539],
+        "threshold_fractional_ventilation": [0.126229, 0.198441, 0.271045, 0.343936, 0.417054],
         "threshold_rbc": [0.001351, 0.002804, 0.004629, 0.006781, 0.009232],
         "threshold_membrane": [0.005320, 0.007108, 0.009377, 0.012224, 0.015766, 0.020132, 0.025471],
         "reference_fit_vent": (0.04074, 0.7085, 0.1408),
+        "reference_fractional_ventilation_fit_vent": (0.0654281965334782, 0.27119297933193004, 0.07271780094487755),
         "reference_fit_rbc": (0.06106, 0.004794, 0.001998),
         "reference_fit_membrane": (0.0700, 0.009668, 0.002638),
         "reference_stats": {
@@ -510,9 +532,11 @@ class ReferenceDistribution(object):
     REFERENCE_MANUAL = {
         "title": "MANUAL",
         "threshold_vent": [0.3891, 0.5753, 0.7203, 0.8440, 0.9539],
+        "threshold_fractional_ventilation": [0.126229, 0.198441, 0.271045, 0.343936, 0.417054],
         "threshold_rbc": [0.001393, 0.002891, 0.004772, 0.006991, 0.009518],
         "threshold_membrane": [0.004881, 0.006522, 0.008603, 0.011216, 0.014466, 0.018471, 0.023370],
         "reference_fit_vent": (0.04074, 0.7085, 0.1408),
+        "reference_fractional_ventilation_fit_vent": (0.0654281965334782, 0.27119297933193004, 0.07271780094487755),
         "reference_fit_rbc": (0.06106, 0.004942, 0.002060),
         "reference_fit_membrane": (0.0700, 0.008871, 0.002420),
         "reference_stats": {
