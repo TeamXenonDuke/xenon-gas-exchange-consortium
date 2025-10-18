@@ -74,12 +74,16 @@ h2 {
 .space {
   height: 35px;
 }
+/* Overlay container */
 .top-right {
-  position: relative;
-  top: -180px;
-  right: 30px;
+  position: relative;                 /* keep relative if you prefer */
+  transform: translate(-30px, -180px);
+  display: flex;                       /* two explicit columns */
+  width: 230px;                        /* ensure space for 2 cols */
+  max-width: 100%;
   color: #353131;
 }
+
 .predict-values {
   position: relative;
   bottom: 20px;
