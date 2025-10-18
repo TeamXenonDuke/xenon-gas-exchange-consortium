@@ -327,6 +327,7 @@ class Subject(object):
 
         elif self.reference_data_key == constants.ReferenceDataKey.MANUAL_REFERENCE.value:
             self.reference_data = constants.ReferenceDistribution.REFERENCE_MANUAL
+
             
 
     def reconstruction_ute(self):
@@ -977,53 +978,57 @@ class Subject(object):
             index_skip=index_skip,
         )
         plot.plot_histogram(
-            data=img_utils.normalize(self.image_gas_cor, self.mask)[
-                np.array(self.mask, dtype=bool)
-            ].flatten(),
+            data=img_utils.normalize(self.image_gas_cor, self.mask)[np.array(self.mask, dtype=bool)].flatten(),
             path="tmp/hist_vent.png",
             color=constants.VENTHISTOGRAMFields.COLOR,
             xlim=constants.VENTHISTOGRAMFields.XLIM,
             ylim=constants.VENTHISTOGRAMFields.YLIM,
             num_bins=constants.VENTHISTOGRAMFields.NUMBINS,
-            refer_fit=self.reference_data['reference_fit_vent'],
+            refer_fit=self.reference_data["healthy_histogram_vent_dir"],  # Gaussian tuple or profile path
             xticks=constants.VENTHISTOGRAMFields.XTICKS,
             yticks=constants.VENTHISTOGRAMFields.YTICKS,
             xticklabels=constants.VENTHISTOGRAMFields.XTICKLABELS,
             yticklabels=constants.VENTHISTOGRAMFields.YTICKLABELS,
             title=constants.VENTHISTOGRAMFields.TITLE,
+            thresholds=self.reference_data["threshold_vent"],             # list of 5 (raw units)
+            band_colors=constants.CMAP.VENT_BIN2COLOR,                    # per-segment bar colors (bin 0 ignored)
+            outline="data",
         )
         plot.plot_histogram(
-            data=np.abs(self.image_rbc2gas)[
-                np.array(self.mask_vent, dtype=bool)
-            ].flatten(),
+            data=np.abs(self.image_rbc2gas)[np.array(self.mask_vent, dtype=bool)].flatten(),
             path="tmp/hist_rbc.png",
             color=constants.RBCHISTOGRAMFields.COLOR,
             xlim=constants.RBCHISTOGRAMFields.XLIM,
             ylim=constants.RBCHISTOGRAMFields.YLIM,
             num_bins=constants.RBCHISTOGRAMFields.NUMBINS,
-            refer_fit=self.reference_data['reference_fit_rbc'],
+            refer_fit=self.reference_data["healthy_histogram_rbc_dir"],   # Gaussian tuple or profile path
             xticks=constants.RBCHISTOGRAMFields.XTICKS,
             yticks=constants.RBCHISTOGRAMFields.YTICKS,
             xticklabels=constants.RBCHISTOGRAMFields.XTICKLABELS,
             yticklabels=constants.RBCHISTOGRAMFields.YTICKLABELS,
             title=constants.RBCHISTOGRAMFields.TITLE,
+            thresholds=self.reference_data["threshold_rbc"],              # list of 5 (raw units)
+            band_colors=constants.CMAP.RBC_BIN2COLOR,
+            outline="data",
         )
         plot.plot_histogram(
-            data=np.abs(self.image_membrane2gas)[
-                np.array(self.mask_vent, dtype=bool)
-            ].flatten(),
+            data=np.abs(self.image_membrane2gas)[np.array(self.mask_vent, dtype=bool)].flatten(),
             path="tmp/hist_membrane.png",
             color=constants.MEMBRANEHISTOGRAMFields.COLOR,
             xlim=constants.MEMBRANEHISTOGRAMFields.XLIM,
             ylim=constants.MEMBRANEHISTOGRAMFields.YLIM,
             num_bins=constants.MEMBRANEHISTOGRAMFields.NUMBINS,
-            refer_fit=self.reference_data['reference_fit_membrane'],
+            refer_fit=self.reference_data["healthy_histogram_membrane_dir"],  # Gaussian tuple or profile path
             xticks=constants.MEMBRANEHISTOGRAMFields.XTICKS,
             yticks=constants.MEMBRANEHISTOGRAMFields.YTICKS,
             xticklabels=constants.MEMBRANEHISTOGRAMFields.XTICKLABELS,
             yticklabels=constants.MEMBRANEHISTOGRAMFields.YTICKLABELS,
             title=constants.MEMBRANEHISTOGRAMFields.TITLE,
+            thresholds=self.reference_data["threshold_membrane"],             # list of 7 (raw units)
+            band_colors=constants.CMAP.MEMBRANE_BIN2COLOR,
+            outline="data",
         )
+
 
     def generate_pdf(self):
         """Generate HTML and PDF files."""
