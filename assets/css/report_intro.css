@@ -1,21 +1,13 @@
 body {
   background-color: white;
-  font-family: "Roboto", sans-serif;
-  font-weight: bold;
+  font-family: Arial;
   color: black;
-}
-.branch-warning {
-  width: 200px;
-  font-size: 15pt;
-  position: absolute;
-  right: 20px;
-  top: 20px;
-  color: red;
+  font-weight: normal;
 }
 .title-container {
-  width: 1340px;
+  width: 1133px;
   color: blue;
-  font-size: 28pt;
+  font-size: 20pt;
   border: 10px;
 }
 
@@ -24,20 +16,20 @@ body {
 }
 
 .table-container {
-  width: 600px;
+  width: 400px;
   position: fixed;
   top: 40px;
-  right: 700px;
+  left: 100px;
   margin-right: 6px;
   font-size: 12pt;
   float: left;
 }
 
 .table-container2 {
-  width: 600px;
+  width: 400px;
   position: fixed;
   top: 40px;
-  right: 0px;
+  right: 100px;
   margin-right: 6px;
   font-size: 12pt;
   float: left;
@@ -53,7 +45,7 @@ body {
 
 p.train {
   margin: 0;
-  font-size: 2.5vw;
+  font-size: 12px;
   background: rgb(250, 219, 216);
 }
 
@@ -77,7 +69,7 @@ h5 {
 td,
 th {
   border: 1px solid #353131;
-  text-align: left center;
+  text-align: left;
   padding: 8px;
   padding-top: 7px;
   padding-bottom: 7px;
