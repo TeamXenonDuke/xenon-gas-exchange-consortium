@@ -473,6 +473,7 @@ def read_dis_mrd(path: str, multi_echo: bool) -> Dict[str, Any]:
         constants.IOFields.TE90: mrd_utils.get_TE90(header),
         constants.IOFields.TR: mrd_utils.get_TR_dissolved(header),
         constants.IOFields.TRAJ: data_dict[constants.IOFields.TRAJ],
+        constants.IOFields.PREP_PULSES: mrd_utils.get_prep_pulses(header),
     }
 
 

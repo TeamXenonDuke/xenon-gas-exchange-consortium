@@ -252,10 +252,16 @@ class Subject(object):
                 self.traj_scaling_factor = (
                     0.903  # cincinnati requires a unique scaling factor
                 )
-        
-        # Calculate the number of frames to skip at the beginning by dissolved flip angle
-        if np.isnan(self.config.recon.n_skip_start):
-            self.config.recon.n_skip_start = recon_utils.skip_from_flipangle(self.dict_dis[constants.IOFields.FA_DIS])
+        """Calculate the number of frames to skip at the beginning of scan:
+          if the prep_pulse = 'true', there is no skip frames n_skip_start=0; else calculated by dissolved flip angle""" 
+        if (self.dict_dis[constants.IOFields.PREP_PULSES] == constants.PrepPulses.PREP_PULSES.value):
+            self.config.recon.n_skip_start = 0
+            logging.info(f"dict_dis is: {self.dict_dis}")
+            logging.info(f"get prep_pulses: value={self.dict_dis[constants.IOFields.PREP_PULSES]}")
+        else:
+            # Calculate the number of frames to skip at the beginning by dissolved flip angle
+            if np.isnan(self.config.recon.n_skip_start):
+                self.config.recon.n_skip_start = recon_utils.skip_from_flipangle(self.dict_dis[constants.IOFields.FA_DIS])
 
         # truncate gas and dissolved data and trajectories
         self.data_dissolved, self.traj_dissolved = pp.truncate_data_and_traj(
