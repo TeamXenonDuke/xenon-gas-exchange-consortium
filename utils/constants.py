@@ -88,7 +88,6 @@ class IOFields(object):
 class PrepPulses(enum.Enum):
     """Preparation pulse flags."""
     
-    NONE ="false"
     PREP_PULSES = "true"
 
 class CNNPaths(object):
