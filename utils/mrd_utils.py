@@ -250,6 +250,9 @@ def get_prep_pulses(
     var_names = [
         up.name for up in header.userParameters.userParameterString
     ]
+    # Check if PREP_PULSES exists
+    if constants.IOFields.PREP_PULSES not in var_names:
+        return "prep_pulses does not exist in the MRD file."
 
     prep_pulses = str(
         header.userParameters.userParameterString[
