@@ -1,4 +1,5 @@
 """Signal processing util functions."""
+
 import sys
 from typing import Tuple
 import math
@@ -457,7 +458,9 @@ def get_hb_correction(hb: float) -> Tuple[float, float]:
     return rbc_hb_correction_factor, membrane_hb_correction_factor
 
 
-def get_vol_correction(vol: float, expected_lung_volume: float) -> Tuple[float, float, float]:
+def get_vol_correction(
+    vol: float, expected_lung_volume: float
+) -> Tuple[float, float, float]:
     """Get scaling factors for volume correction.
     Args:
         vol (float): volume of lung mask in L
@@ -468,9 +471,40 @@ def get_vol_correction(vol: float, expected_lung_volume: float) -> Tuple[float, 
     """
     V2 = expected_lung_volume
 
-    vol_correction_factor_rbc = (vol *( 1 + constants.VolCorrection.ALPHA_RBC) + V2 * (1 - constants.VolCorrection.ALPHA_RBC))/(vol * (1 - constants.VolCorrection.ALPHA_RBC) + V2 * (1 + constants.VolCorrection.ALPHA_RBC))
+    vol_correction_factor_rbc = (
+        vol * (1 + constants.VolCorrection.ALPHA_RBC)
+        + V2 * (1 - constants.VolCorrection.ALPHA_RBC)
+    ) / (
+        vol * (1 - constants.VolCorrection.ALPHA_RBC)
+        + V2 * (1 + constants.VolCorrection.ALPHA_RBC)
+    )
     print("VCF_RBC = " + str(vol_correction_factor_rbc))
-    vol_correction_factor_membrane = (vol *( 1 + constants.VolCorrection.ALPHA_MEM) + V2 * (1 - constants.VolCorrection.ALPHA_MEM))/(vol * (1 - constants.VolCorrection.ALPHA_MEM) + V2 * (1 + constants.VolCorrection.ALPHA_MEM))
+    vol_correction_factor_membrane = (
+        vol * (1 + constants.VolCorrection.ALPHA_MEM)
+        + V2 * (1 - constants.VolCorrection.ALPHA_MEM)
+    ) / (
+        vol * (1 - constants.VolCorrection.ALPHA_MEM)
+        + V2 * (1 + constants.VolCorrection.ALPHA_MEM)
+    )
     print("VCF_mem = " + str(vol_correction_factor_membrane))
 
     return vol_correction_factor_rbc, vol_correction_factor_membrane, V2
+
+
+def calculate_decay_factor(data: np.ndarray, t2star, dwell_time: float) -> np.ndarray:
+    """Calculate decay factor.
+
+    Rounds to 3 decimal places.
+    Args:
+        data (np.ndarray): data to be corrected of shape (n_proj, n_points)
+        t2star (float): T2* in seconds
+        dwell_time (float): dwell time in seconds
+    """
+    k0 = np.abs(data[:, 0])
+    k = np.zeros(data.shape, dtype=complex)
+    relaxation = np.zeros((data.shape[1],))
+    for i in range(data.shape[1]):
+        relaxation[i] = np.exp(-dwell_time * i / t2star)
+    for i in range(data.shape[0]):
+        k[i, :] = k0[i] * relaxation
+    return k

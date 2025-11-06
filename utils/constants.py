@@ -8,7 +8,8 @@ FOVINFLATIONSCALE3D = 1000.0
 GRYOMAGNETIC_RATIO = 11.777  # MHz/T
 T2STAR_GAS = 1.8e-2  # seconds
 T2STAR_RBC_3T = 1.044575 * 1e-3  # seconds
-T2STAR_MEMBRANE_3T = 0.988588  * 1e-3  # seconds
+T2STAR_MEMBRANE_3T = 0.988588 * 1e-3  # seconds
+T2STAR_DISSOLVED_3T = 1.5 * 1e-3  # seconds
 
 
 KCO_ALPHA = 11.2  # membrane
@@ -25,7 +26,7 @@ class IOFields(object):
     SEX = "sex"
     HEIGHT = "height"
     BANDWIDTH = "bandwidth"
-    USER_LUNG_VOLUME_VALUE ="user_lung_volume_value"
+    USER_LUNG_VOLUME_VALUE = "user_lung_volume_value"
     BIASFIELD_KEY = "biasfield_key"
     BONUS_SPECTRA_LABELS = "bonus_spectra_labels"
     CONTRAST_LABELS = "contrast_labels"
@@ -80,7 +81,7 @@ class IOFields(object):
     TRAJ = "traj"
     SYSTEM_VENDOR = "system_vendor"
     VOL_CORRECTION_KEY = "vol_correction_key"
-    VOL_CORRECTION_FACTOR_MEMBRANE  = "vol_correction_factor_membrane"
+    VOL_CORRECTION_FACTOR_MEMBRANE = "vol_correction_factor_membrane"
     VOL_CORRECTION_FACTOR_RBC = "vol_correction_factor_rbc"
     CORRECTED_LUNG_VOLUME = "corrected_lung_volume"
 
@@ -254,13 +255,25 @@ class StatsIOFields(object):
     """Statistic IO Fields."""
 
     INFLATION = "inflation"
-    INFLATION_PCT='inflation_percentage'
-    INFLATION_AVG='inflation_avg'
-    INFLATION_DISPLAY='inflation_display'
+    INFLATION_PCT = "inflation_percentage"
+    INFLATION_AVG = "inflation_avg"
+    INFLATION_DISPLAY = "inflation_display"
+    KEY_RADIUS = "key_radius"
+    N_POINTS = "n_points"
     RBC_M_RATIO = "rbc_m_ratio"
+    SNR_DISSOLVED = "snr_dissolved"
     RBC_SNR = "rbc_snr"
+    SNR_RBC_HIGH = "snr_rbc_high"
+    SNR_RBC_LOW = "snr_rbc_low"
     MEMBRANE_SNR = "membrane_snr"
     VENT_SNR = "vent_snr"
+    PCT_OSC_DEFECT = "osc_defect"
+    PCT_OSC_DEFECTLOW = "osc_defectlow"
+    PCT_OSC_HIGH = "osc_high"
+    PCT_OSC_LOW = "osc_low"
+    PCT_OSC_MEAN = "osc_mean"
+    PCT_OSC_NEGATIVE = "osc_negative"
+    PCT_OSC_NORMAL = "osc_normal"
     RBC_HIGH_PCT = "rbc_high_pct"
     RBC_LOW_PCT = "rbc_low_pct"
     RBC_DEFECT_PCT = "rbc_defect_pct"
@@ -355,6 +368,19 @@ class NormalizationMethods(object):
 class CMAP(object):
     """Maps of binned values to color values."""
 
+    RBC_OSC_BIN2COLOR = {
+        -1: [0.33, 0.33, 0.33],
+        0: [0, 0, 0],
+        1: [1, 0, 0],
+        2: [1, 0.7143, 0],
+        3: [0.4, 0.7, 0.4],
+        4: [0, 1, 0],
+        5: [184.0 / 255.0, 226.0 / 255.0, 145.0 / 255.0],
+        6: [243.0 / 255.0, 205.0 / 255.0, 213.0 / 255.0],
+        7: [225.0 / 255.0, 129.0 / 255.0, 162.0 / 255.0],
+        8: [197.0 / 255.0, 27.0 / 255.0, 125.0 / 255.0],
+    }
+
     RBC_BIN2COLOR = {
         0: [0, 0, 0],
         1: [1, 0, 0],
@@ -402,11 +428,12 @@ class HbCorrection(object):
 
 class VolCorrection(object):
     """Coefficients for volume correction scaling factor equations
-    
+
     Reference DOI: 10.1183/13993003.00289-2020
     """
+
     ALPHA_RBC = -0.15963  # slope of trend in rbc equation
-    ALPHA_MEM = -0.38665   # slope of trend in membrane equation
+    ALPHA_MEM = -0.38665  # slope of trend in membrane equation
 
 
 class ContrastLabels(object):
@@ -433,49 +460,65 @@ class PipelineVersion(object):
 class ReferenceDistribution(object):
     """Reference distributions for binning based on RF excitation.
 
-    Reference: Sup's reference distribution paper when published """
+    Reference: Sup's reference distribution paper when published"""
 
     REFERENCE_218_PPM = {
-    "title": "REFERENCE_218_PPM",
-    "threshold_vent": [0.3891, 0.5753, 0.7203, 0.8440, 0.9539],
-    "threshold_rbc": [0.001393, 0.002891, 0.004772, 0.006991, 0.009518],
-    "threshold_membrane": [0.004881, 0.006522, 0.008603, 0.011216, 0.014466, 0.018471, 0.023370],
-    "reference_fit_vent": (0.04074, 0.7085, 0.1408),
-    "reference_fit_rbc": (0.06106, 0.004942, 0.002060),
-    "reference_fit_membrane": (0.0700, 0.008871, 0.002420),
-    "reference_stats": {
-        "vent_defect_avg": "2",
-        "vent_defect_std": "",
-        "vent_low_avg": "14",
-        "vent_low_std": "",
-        "vent_high_avg": "16",
-        "vent_high_std": "",
-        "membrane_defect_avg": "2",
-        "membrane_defect_std": "0",
-        "membrane_low_avg": "14",
-        "membrane_low_std": "0",
-        "membrane_high_avg": "2",
-        "membrane_high_std": "0",
-        "rbc_defect_avg": "2",
-        "rbc_defect_std": "",
-        "rbc_low_avg": "14",
-        "rbc_low_std": "",
-        "rbc_high_avg": "16",
-        "rbc_high_std": "",
-        "rbc_m_ratio_avg": "0.55",
-        "rbc_m_ratio_std": "0.12",
-        "inflation_avg": "3.4",
-        "inflation_std": "0.33",
-        "inflation_percentage":"0.0",
-        "inflation_display":"0.0",
-        }
+        "title": "REFERENCE_218_PPM",
+        "threshold_vent": [0.3891, 0.5753, 0.7203, 0.8440, 0.9539],
+        "threshold_rbc": [0.001393, 0.002891, 0.004772, 0.006991, 0.009518],
+        "threshold_membrane": [
+            0.004881,
+            0.006522,
+            0.008603,
+            0.011216,
+            0.014466,
+            0.018471,
+            0.023370,
+        ],
+        "reference_fit_vent": (0.04074, 0.7085, 0.1408),
+        "reference_fit_rbc": (0.06106, 0.004942, 0.002060),
+        "reference_fit_membrane": (0.0700, 0.008871, 0.002420),
+        "reference_stats": {
+            "vent_defect_avg": "2",
+            "vent_defect_std": "",
+            "vent_low_avg": "14",
+            "vent_low_std": "",
+            "vent_high_avg": "16",
+            "vent_high_std": "",
+            "membrane_defect_avg": "2",
+            "membrane_defect_std": "0",
+            "membrane_low_avg": "14",
+            "membrane_low_std": "0",
+            "membrane_high_avg": "2",
+            "membrane_high_std": "0",
+            "rbc_defect_avg": "2",
+            "rbc_defect_std": "",
+            "rbc_low_avg": "14",
+            "rbc_low_std": "",
+            "rbc_high_avg": "16",
+            "rbc_high_std": "",
+            "rbc_m_ratio_avg": "0.55",
+            "rbc_m_ratio_std": "0.12",
+            "inflation_avg": "3.4",
+            "inflation_std": "0.33",
+            "inflation_percentage": "0.0",
+            "inflation_display": "0.0",
+        },
     }
 
     REFERENCE_208_PPM = {
         "title": "REFERENCE_208_PPM",
         "threshold_vent": [0.3891, 0.5753, 0.7203, 0.8440, 0.9539],
         "threshold_rbc": [0.001351, 0.002804, 0.004629, 0.006781, 0.009232],
-        "threshold_membrane": [0.005320, 0.007108, 0.009377, 0.012224, 0.015766, 0.020132, 0.025471],
+        "threshold_membrane": [
+            0.005320,
+            0.007108,
+            0.009377,
+            0.012224,
+            0.015766,
+            0.020132,
+            0.025471,
+        ],
         "reference_fit_vent": (0.04074, 0.7085, 0.1408),
         "reference_fit_rbc": (0.06106, 0.004794, 0.001998),
         "reference_fit_membrane": (0.0700, 0.009668, 0.002638),
@@ -502,16 +545,24 @@ class ReferenceDistribution(object):
             "rbc_m_ratio_std": "0.11",
             "inflation_avg": "3.4",
             "inflation_std": "0.33",
-            "inflation_percentage":"0.0",
-            "inflation_display":"0.0",
-            }
-        }
-    
+            "inflation_percentage": "0.0",
+            "inflation_display": "0.0",
+        },
+    }
+
     REFERENCE_MANUAL = {
         "title": "MANUAL",
         "threshold_vent": [0.3891, 0.5753, 0.7203, 0.8440, 0.9539],
         "threshold_rbc": [0.001393, 0.002891, 0.004772, 0.006991, 0.009518],
-        "threshold_membrane": [0.004881, 0.006522, 0.008603, 0.011216, 0.014466, 0.018471, 0.023370],
+        "threshold_membrane": [
+            0.004881,
+            0.006522,
+            0.008603,
+            0.011216,
+            0.014466,
+            0.018471,
+            0.023370,
+        ],
         "reference_fit_vent": (0.04074, 0.7085, 0.1408),
         "reference_fit_rbc": (0.06106, 0.004942, 0.002060),
         "reference_fit_membrane": (0.0700, 0.008871, 0.002420),
@@ -538,8 +589,7 @@ class ReferenceDistribution(object):
             "rbc_m_ratio_std": "0.12",
             "inflation_avg": "3.4",
             "inflation_std": "0.33",
-            "inflation_percentage":"0.0",
-            "inflation_display":"0.0",
-            }
-        }
-
+            "inflation_percentage": "0.0",
+            "inflation_display": "0.0",
+        },
+    }

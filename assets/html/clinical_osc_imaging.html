@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta
+      name="description"
+      content="Oscillation Imaging Report with 129Xe MRI-technical report"
+    />
+    <meta name="author" content="Junlan Lu" />
+    <link href="../assets/css/report_reset_osc_imaging.css" rel="stylesheet" />
+    <link href="../assets/css/report_style_osc_imaging.css" rel="stylesheet" />
+    <title>Oscillation Imaging Report</title>
+  </head>
+  <body>
+    <div class="title-container">
+      <h1 id="big-title">Summary of {subject_id}</h1>
+      <h5 id="date-title">scan: {scan_date}; processed: {process_date}</h5>
+    </div>
+    <div class="hist-container">
+      <div class="hist-tile" align="right">
+        <img src="../tmp/png/data_rbc_k0_proc.png" style="width: 100%" />
+        <div class="top-right">
+          <h2>H/L Binning w/ detrended RBC k0</h2>
+        </div>
+      </div>
+      <div class="hist-tile" align="right">
+        <img src="../tmp/png/data_rbc_k0.png" style="width: 100%" />
+        <div class="top-right">
+          <h2>H/L binning w/ RBC k0</h2>
+        </div>
+      </div>
+      <div class="hist-tile" align="right">
+        <img src="../tmp/png/hist_rbc_osc.png" style="width: 100%" />
+        <div class="top-right">
+          <h2>RBC Osc. histogram</h2>
+        </div>
+      </div>
+    </div>
+    <div class="map-container">
+      <div class="map-tile">
+        <img
+          style="border: 10px solid black"
+          src="../tmp/png/montage_ven.png"
+          width="680"
+          height="170px"
+        />
+        <img
+          style="border: 10px solid black"
+          src="../tmp/png/montage_rbc.png"
+          width="680"
+          height="170px"
+        />
+        <img
+          style="border: 10px solid black"
+          src="../tmp/png/montage_rbc_rgb.png"
+          width="680"
+          height="170px"
+        />
+      </div>
+      <div class="colorbar-tile">
+        <img src=../assets/img/colorbin_short.png height=150px>
+        <div class="space"></div>
+        <img src=../assets/img/colorbin_long.png height=200px>
+        <div class="space"></div>
+        <img src=../assets/img/colorbin_long.png height=150px>
+      </div>
+    </div>
+    <div class="table-container">
+      <table>
+        <tr class="title">
+          <th>Subject</th>
+          <th>{subject_id}</th>
+          <th>Ref</th>
+        </tr>
+        <tr class="basic">
+          <td>RBC SNR</td>
+          <td>{snr_rbc}</td>
+          <td>X &#177;Y</td>
+        </tr>
+        <tr class="basic">
+          <td>RBC:M.</td>
+          <td>{rbc_m_ratio}</td>
+          <td>X &#177;Y</td>
+        </tr>
+        <tr class="basic">
+          <td>Defect</td>
+          <td>{osc_defect} %</td>
+          <td>X &#177;Y</td>
+        </tr>
+        <tr class="basic">
+          <td>Low</td>
+          <td>{osc_low} %</td>
+          <td>X &#177;Y</td>
+        </tr>
+        <tr class="basic">
+          <td>Defect + Low</td>
+          <td>{osc_defectlow} %</td>
+          <td>X &#177;Y</td>
+        </tr>
+        <tr class="basic">
+          <td>High</td>
+          <td>{osc_high}%</td>
+          <td>X &#177;Y</td>
+        </tr>
+        <tr class="basic">
+          <td>Mean Oscillation %</td>
+          <td>{osc_mean}%</td>
+          <td>X &#177;Y</td>
+        </tr>
+        <tr class="basic">
+          <td>Inflation</td>
+          <td>{inflation}L</td>
+          <td>X &#177;Y</td>
+        </tr>
+        <tr class="basic">
+          <td>Pct. Negative</td>
+          <td>{osc_negative} %</td>
+          <td>X &#177;Y</td>
+        </tr>
+        <tr class="basic">
+          <td>Key Radius</td>
+          <td>{key_radius}/{n_points}</td>
+          <td>X &#177;Y</td>
+        </tr>
+      </table>
+    </div>
+  </body>
+</html>

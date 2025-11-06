@@ -1,8 +1,10 @@
 """Metrics for evaluating images."""
+
 import heapq
 import math
 import sys
 from datetime import datetime
+from typing import Optional
 
 import cv2
 from scipy import ndimage
@@ -16,6 +18,7 @@ from utils import constants
 import pandas as pd
 import logging
 import numpy as np
+
 
 def _get_dilation_kernel(x: int) -> int:
     """Get dilation kernel for binary dilation in 1-dimension."""
@@ -91,6 +94,26 @@ def inflation_volume(mask: np.ndarray, fov: float) -> float:
     ) / constants.FOVINFLATIONSCALE3D
 
 
+def mean_oscillation_percentage(image: np.ndarray, mask: np.ndarray) -> float:
+    """Get the mean oscillation percentage of the image.
+
+    Args:
+        image: np.ndarray. The oscillation image.
+        mask: np.ndarray. mask of the region of interest.
+    """
+    return np.mean(image[mask])
+
+
+def negative_osc_percentage(image: np.ndarray, mask: np.ndarray) -> float:
+    """Get the percentage voxels of image inside mask that are negative.
+
+    Args:
+        image: np.ndarray. The oscillation image.
+        mask: np.ndarray. mask of the region of interest.
+    """
+    return 100 * np.sum(image[mask] < 0) / np.sum(mask)
+
+
 def GLI_volume(age: float, sex: str, height: float, volume_type: str = "frc") -> float:
     """
     Calculate the GLI-predicted lung volume for a given age, sex, and height.
@@ -106,22 +129,26 @@ def GLI_volume(age: float, sex: str, height: float, volume_type: str = "frc") ->
     """
     if pd.isna(age) or pd.isna(sex) or pd.isna(height):
         return np.nan
-    lookup_df = pd.read_pickle('./assets/lut/GLI.pkl')
+    lookup_df = pd.read_pickle("./assets/lut/GLI.pkl")
 
     # Ensure sex is upper case, and volume_type is lower case
     sex = sex.upper()
     volume_type = volume_type.lower()
 
     if volume_type == "frc":
-        column_name = 'frc_predicted'
+        column_name = "frc_predicted"
     elif volume_type == "fvc":
-        column_name = 'fvc_predicted'
+        column_name = "fvc_predicted"
     else:
         raise ValueError("volume_type must be either 'frc' or 'fvc'")
 
     # Helper to get predicted value at specific age and height
     def get_predicted(a, h):
-        row = lookup_df[(lookup_df['age'] == a) & (lookup_df['height'] == h) & (lookup_df['sex'] == sex)]
+        row = lookup_df[
+            (lookup_df["age"] == a)
+            & (lookup_df["height"] == h)
+            & (lookup_df["sex"] == sex)
+        ]
         if not row.empty:
             return row[column_name].values[0]
         else:
@@ -169,10 +196,10 @@ def GLI_volume(age: float, sex: str, height: float, volume_type: str = "frc") ->
             wh0 = 1 - wh1
 
             predicted_value = (
-                val00 * wa0 * wh0 +
-                val01 * wa0 * wh1 +
-                val10 * wa1 * wh0 +
-                val11 * wa1 * wh1
+                val00 * wa0 * wh0
+                + val01 * wa0 * wh1
+                + val10 * wa1 * wh0
+                + val11 * wa1 * wh1
             )
             return predicted_value
 
@@ -180,14 +207,15 @@ def GLI_volume(age: float, sex: str, height: float, volume_type: str = "frc") ->
     logging.warning("\n" + "#" * 40)
     logging.warning("Age or height is outside the GLI estimated range")
     logging.warning("#" * 40 + "\n")
-    
+
     return np.nan
+
 
 def get_bag_volume(fvc_volume: float) -> float:
     """
     Given FVC volume, calculate the bag volume as 20% of FVC,
     rounded to the nearest 0.25 increment.
-    
+
     Args:
         fvc_volume (float): The FVC volume in liters.
 
@@ -199,13 +227,16 @@ def get_bag_volume(fvc_volume: float) -> float:
     bag_volume_rounded = round(bag_volume * 4) / 4.0
     return bag_volume_rounded
 
+
 def process_date() -> str:
     """Return the current date in YYYY-MM-DD format."""
     now = datetime.now()
     return now.strftime("%Y-%m-%d")
 
 
-def bin_percentage(image: np.ndarray, bins: np.ndarray, mask: np.ndarray) -> float:
+def bin_percentage(
+    image: np.ndarray, bins: np.ndarray, mask: Optional[np.ndarray] = None
+) -> float:
     """Get the percentage of voxels in the given bins.
 
     Args:
@@ -217,7 +248,10 @@ def bin_percentage(image: np.ndarray, bins: np.ndarray, mask: np.ndarray) -> flo
     Returns:
         Percentage of voxels in the given bins.
     """
-    return 100 * np.sum(np.isin(image, bins)) / np.sum(mask > 0)
+    if mask is None:
+        return 100 * np.sum(np.isin(image, bins)) / np.sum(image > 0)
+    else:
+        return 100 * np.sum(np.isin(image, bins)) / np.sum(mask > 0)
 
 
 def mean(image: np.ndarray, mask: np.ndarray) -> float:
@@ -346,7 +380,7 @@ def rdp_ba(
     """
     Compute the RBC defect bias from apical (top) to basilar (bottom) regions across both lungs.
 
-    This metric (ΔRDP_BA) is designed to quantify how RBC defects are distributed spatially 
+    This metric (ΔRDP_BA) is designed to quantify how RBC defects are distributed spatially
     from the top to the bottom of the lungs using binarized RBC images (bin 1 or 2 indicates RBC defect).
     It focuses only on the middle 40%-80% of valid axial slices to avoid extreme slices with noisy segmentation.
 
@@ -361,12 +395,12 @@ def rdp_ba(
     """
     data_images = image_rbc_binned
 
-    # number of split 
+    # number of split
     ns = 3
 
-    total_mean=[]
+    total_mean = []
     valid_slices = []  # Store indices where mask is non-zero
-    lung_area = []        # store lung‐mask area for each valid slice
+    lung_area = []  # store lung‐mask area for each valid slice
 
     for ij in range(mask.shape[2]):
         mask_current = ndimage.rotate(mask[:, :, ij], 0)
@@ -390,80 +424,91 @@ def rdp_ba(
         mask_current = ndimage.rotate(mask[:, :, ij], 0)
 
         mask_current = mask_current.astype(np.uint8)
-        
-        output=cv2.connectedComponentsWithStats(mask_current,4)
+
+        output = cv2.connectedComponentsWithStats(mask_current, 4)
 
         num_labels = output[0]
         labels_im = output[1]
-        stats=output[2]
-        centroid=output[3]
+        stats = output[2]
+        centroid = output[3]
 
-        if(num_labels<=2):
+        if num_labels <= 2:
             continue
 
-        area=stats[:,4]
+        area = stats[:, 4]
         # Delete the background label.
-        area=area[1:]
+        area = area[1:]
 
         # Choose the label with largest and second largest except background
-        index_label=np.array(heapq.nlargest(2, range(len(area)), key=area.__getitem__))+1
+        index_label = (
+            np.array(heapq.nlargest(2, range(len(area)), key=area.__getitem__)) + 1
+        )
 
         # Find which is left or right
         index_1 = index_label[0]
         index_2 = index_label[1]
-        if (centroid[index_1,0]<centroid[index_2,0]):
-            left_label=index_1
-            right_label=index_2
+        if centroid[index_1, 0] < centroid[index_2, 0]:
+            left_label = index_1
+            right_label = index_2
         else:
-            left_label=index_2
-            right_label=index_1
+            left_label = index_2
+            right_label = index_1
 
-        top_left= stats[left_label,1]
-        height_left = stats[left_label,3]
+        top_left = stats[left_label, 1]
+        height_left = stats[left_label, 3]
 
-        top_right= stats[right_label,1]
-        height_right = stats[right_label,3]
+        top_right = stats[right_label, 1]
+        height_right = stats[right_label, 3]
 
-        [m,n] = mask_current.shape
+        [m, n] = mask_current.shape
         # Initialize sum_all and num_all correctly
         sum_all = np.zeros(ns * 2)
         num_all = np.zeros(ns * 2)
 
         # Create ns equally spaced intervals for splitting
-        split_indices_left = np.linspace(top_left, top_left + height_left, ns+1, dtype=int)
-        split_indices_right = np.linspace(top_right, top_right + height_right, ns+1, dtype=int)
+        split_indices_left = np.linspace(
+            top_left, top_left + height_left, ns + 1, dtype=int
+        )
+        split_indices_right = np.linspace(
+            top_right, top_right + height_right, ns + 1, dtype=int
+        )
 
         for i in range(m):
             for j in range(n):
                 if labels_im[i, j] == left_label:
                     for nlf in range(ns):
-                        lower_l_left, upper_l_left = split_indices_left[nlf], split_indices_left[nlf+1]
+                        lower_l_left, upper_l_left = (
+                            split_indices_left[nlf],
+                            split_indices_left[nlf + 1],
+                        )
                         if lower_l_left <= i < upper_l_left:
-                            if data_images[i, j, ij] in [1,2]:
+                            if data_images[i, j, ij] in [1, 2]:
                                 num_all[nlf] += data_images[i, j, ij]
                             sum_all[nlf] += data_images[i, j, ij]
 
                 elif labels_im[i, j] == right_label:
                     for nlf in range(ns):
-                        lower_l_right, upper_l_right = split_indices_right[nlf], split_indices_right[nlf+1]
+                        lower_l_right, upper_l_right = (
+                            split_indices_right[nlf],
+                            split_indices_right[nlf + 1],
+                        )
                         if lower_l_right <= i < upper_l_right:
-                            if data_images[i, j, ij] in [1,2]:
+                            if data_images[i, j, ij] in [1, 2]:
                                 num_all[nlf + ns] += data_images[i, j, ij]
                             sum_all[nlf + ns] += data_images[i, j, ij]
 
-        mean=[]
+        mean = []
         for nlf in range(ns * 2):
-            if(sum_all[nlf]!=0):
-                mean.append(num_all[nlf]/sum_all[nlf])
+            if sum_all[nlf] != 0:
+                mean.append(num_all[nlf] / sum_all[nlf])
             else:
                 mean.append(np.nan)
 
         total_mean.append(mean)
-    total_mean=np.array(total_mean)
-    total_mean=np.nanmean(total_mean,axis=0)
+    total_mean = np.array(total_mean)
+    total_mean = np.nanmean(total_mean, axis=0)
 
-    bottom = total_mean[2]+total_mean[5]
-    top = total_mean[0]+total_mean[1]+total_mean[3]+total_mean[4]
-    b_t = (bottom - top/2) / 2 * 100
+    bottom = total_mean[2] + total_mean[5]
+    top = total_mean[0] + total_mean[1] + total_mean[3] + total_mean[4]
+    b_t = (bottom - top / 2) / 2 * 100
     return b_t
-    

@@ -1,4 +1,5 @@
 """Make reports."""
+
 import os
 import sys
 from typing import Any, Dict
@@ -24,12 +25,11 @@ PDF_OPTIONS = {
 }
 
 
-
 def get_git_branch() -> str:
     """Get the current git branch.
 
     Returns:
-        str: current git branch and short commit hash, 
+        str: current git branch and short commit hash,
              if not in git repo, return "unknown"
     """
     try:
@@ -39,7 +39,6 @@ def get_git_branch() -> str:
         return f"{branch}@{commit_hash_short}"
     except Exception:
         return "unknown"
-
 
 
 def format_dict(dict_stats: Dict[str, Any]) -> Dict[str, Any]:
@@ -98,6 +97,32 @@ def format_dict(dict_stats: Dict[str, Any]) -> Dict[str, Any]:
             dict_stats[key] = np.round(dict_stats[key], 2)
 
     return dict_stats
+
+
+def clinical_osc_imaging(stats_dict: dict[str, Any], path: str):
+    """Make clinical report.
+
+    First converts dictionary to html format. Then saves to path.
+    Args:
+        stats_dict (Dict[str, Any]): dictionary of statistics
+        path (str): path to save report
+    """
+    stats_dict = format_dict(stats_dict)
+    current_path = os.path.dirname(__file__)
+    path_clinical = os.path.abspath(
+        os.path.join(
+            current_path, os.pardir, "assets", "html", "clinical_osc_imaging.html"
+        )
+    )
+    path_html = os.path.join("tmp", "clinical_osc_imaging.html")
+    # write report to html
+    with open(path_clinical, "r") as f:
+        file = f.read()
+        rendered = file.format(**stats_dict)
+    with open(path_html, "w") as o:
+        o.write(rendered)
+    # write clinical report to pdf
+    pdfkit.from_file(path_html, path, options=PDF_OPTIONS)
 
 
 def clinical(dict_stats: Dict[str, Any], path: str):
