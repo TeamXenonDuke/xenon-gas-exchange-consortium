@@ -76,14 +76,20 @@ h2 {
 }
 /* Overlay container */
 .top-right {
-  position: relative;                 /* keep relative if you prefer */
-  transform: translate(-30px, -180px);
-  display: flex;                       /* two explicit columns */
-  width: 230px;                        /* ensure space for 2 cols */
+  position: relative;
+  transform: translate(-20px, -180px);
+  display: flex;
+  justify-content: flex-start;  /* push items to the left */
+  align-items: flex-start;      /* align to top */
+  width: 230px;
   max-width: 100%;
   color: #353131;
+  text-align: left;
 }
 
+.top-right p:first-child {
+  margin-right: 8px;         /* ← space between SNR and Mean±SD */
+}
 .predict-values {
   position: relative;
   bottom: 20px;
