@@ -225,7 +225,27 @@ def plot_montage_grey(
     """
     
     # divide by the maximum value
-    image = image / np.max(image)
+     # --- Mask-based brightness/contrast scaling ---
+    image = image.copy()  # make a local copy so original data isn’t modified
+
+    if mask is not None and mask.shape == image.shape and np.any(mask):
+        # Compute clipping threshold from pixels inside the mask
+        clip_val = float(np.percentile(image[mask > 0], 99.0))
+
+        if clip_val <= 0:
+            # If the mask has invalid values, just do normal global normalization
+            maxv = np.max(image)
+            if maxv > 0:
+                image = image / maxv
+        else:
+            # Clip intensities to the 99th percentile and rescale
+            image = np.clip(image, 0.0, clip_val)
+            image = image / clip_val  
+    else:
+        # No valid mask → simple normalization for display
+        maxv = np.max(image)
+        if maxv > 0:
+            image = image / maxv
     # stack the image to make it 4D (x, y, z, 3)
     image = np.stack((image, image, image), axis=-1)
     # plot the montage
