@@ -915,6 +915,7 @@ class Subject(object):
             path="tmp/montage_vent.png",
             index_start=index_start,
             index_skip=index_skip,
+            mask=self.mask_reg,
         )
         plot.plot_montage_grey(
             image=np.abs(self.image_membrane),
