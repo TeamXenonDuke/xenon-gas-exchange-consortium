@@ -8,7 +8,7 @@
     />
     <meta name="author" content="Junlan Lu" />
     <link
-      href="https://fonts.googleapis.com/css?family=Roboto&display=swap"
+      href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700;900&display=swap"
       rel="stylesheet"
     />
     <link href="../assets/css/report_reset.css" rel="stylesheet" />
@@ -21,13 +21,10 @@
       <h5 id="date-title">scan: {scan_date}; processed: {process_date}</h5>
     </div>
     <div class="hist-container">
-      <div class="hist-tile" align="right">
+      <div class="hist-tile" align="left">
         <img src="../tmp/hist_vent.png" style="width: 100%" />
-        <div class="top-right">
-          <p>SNR:<br>{vent_snr}</p>
-          <p>
-          Mean &plusmn; SD:<br>
-          {vent_mean} &plusmn; {vent_stddev}
+        <div class="top-left">
+          <p>SNR:{vent_snr} Mean&plusmn;SD:{vent_mean}&plusmn;{vent_stddev}
           </p>
         </div>
       </div>
