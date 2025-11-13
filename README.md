@@ -367,14 +367,13 @@ sudo apt-get -y install zlib1g-dev
 
 Mac Users:
 
-Check if you have git, cmake, g++ using `which git`, `which cmake`, `which g++`
+Check if you have git and cmake using `which git` and `which cmake`
 
-If you do not have any of these, execute the following commands:
+If you do not have either of these, execute the following commands:
 
 ```bash
 brew install git
 brew install cmake
-brew install g++
 ```
 
 ##### Compile ANTs

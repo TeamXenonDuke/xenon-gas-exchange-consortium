@@ -180,7 +180,6 @@ if !([[ "$1" == "build-only" ]] || [[ "$1" == "install-only" ]]); then
     elif [[ "$OSTYPE" == "darwin"* ]]; then
         error_catch brew install git
         error_catch brew install cmake
-        error_catch brew install g++
         #brew install ccache
     else 
         echo -e "${RED}Error: Incorrect OS. ${NC}Please use WSL, Linux, or MacOS."
