@@ -1,18 +1,110 @@
 """Plotting functions for the project."""
 
 import sys
-from typing import Dict, List, Optional, Tuple
+from typing import Optional, List, Tuple, Union, Dict
 
 import skimage
 from matplotlib.ticker import ScalarFormatter
+from pathlib import Path
 
-sys.path.append("..")
 import cv2
 import matplotlib.pyplot as plt
 import numpy as np
 
 from utils import io_utils
 
+def _to_rgb(c):
+    """
+    _to_rgb(c)
+    Convert an RGB-like triplet to float RGB in [0,1].
+    - Accepts [r,g,b] in 0–1 or 0–255.
+    - Returns tuple(float, float, float).
+    """
+
+    c = np.array(c, dtype=float)
+    if c.max() > 1.0:
+        c = c / 255.0
+    return tuple(c.tolist())
+
+def _colors_for_bins(centers: np.ndarray,
+                     thresholds: Optional[List[float]],
+                     xlim: float,
+                     cmap_dict: Optional[Dict[int, List[float]]],
+                     default_color: Tuple[float,float,float]) -> List[Tuple[float,float,float]]:
+
+    """
+    _colors_for_bins(centers, thresholds, xlim, cmap_dict, default_color)
+    Assign a color per histogram bin based on which threshold segment its center falls in.
+    - Segments: [0, t1), [t1, t2), …, [tN, xlim].
+    - Uses `cmap_dict` keys 1..N (key 0 is ignored/background).
+    - If colors < segments, last color is reused.
+    - Returns list of RGB tuples (len == centers.size).
+    """
+
+    if thresholds is None or cmap_dict is None:
+        return [default_color] * centers.size
+    t = np.sort(np.asarray(thresholds, dtype=float))
+    t = t[(t >= 0) & (t <= xlim)]
+    bounds = np.r_[0.0, t, xlim]
+    seg_idx = np.searchsorted(bounds, centers, side='right') - 1
+    keys = sorted([k for k in cmap_dict.keys() if k != 0])  # skip bin 0 (background)
+    if not keys:
+        return [default_color] * centers.size
+    cmap_list = [_to_rgb(cmap_dict[k]) for k in keys]
+    colors = [cmap_list[min(i, len(cmap_list)-1)] for i in seg_idx]
+    return colors
+
+def _load_profile(profile_path: Union[str, Path]):
+    """
+    Load a compact histogram profile.
+    Supports:
+      - .mat: expects variables 'edges' (B+1,), 'probs' (B,), optional 'xlim'
+      - .npz: expects arrays 'edges' and 'probs' (and optional 'xlim');
+              OR a single array 'arr' of shape (2,B) = [centers; probs]
+      - .npy: expects array of shape (2,B) = [centers; probs]
+    Returns (x, y) where x are bin centers (not edges) and y are probabilities.
+    """
+    p = Path(profile_path)
+    suf = p.suffix.lower()
+    if suf == ".mat":
+        try:
+            import scipy.io as sio
+        except ImportError as e:
+            raise ImportError("scipy is required to read .mat files (pip install scipy)") from e
+        z = sio.loadmat(p)
+        if "edges" in z and "probs" in z:
+            edges = np.asarray(z["edges"]).ravel()
+            probs = np.asarray(z["probs"]).ravel()
+            x = 0.5 * (edges[:-1] + edges[1:])
+            y = probs
+            return x, y
+        raise ValueError(".mat profile must contain 'edges' and 'probs'")
+    elif suf == ".npz":
+        z = np.load(p)
+        if "edges" in z and "probs" in z:
+            edges = np.asarray(z["edges"]).ravel()
+            probs = np.asarray(z["probs"]).ravel()
+            x = 0.5 * (edges[:-1] + edges[1:])
+            y = probs
+            return x, y
+        elif "arr" in z:
+            arr = np.asarray(z["arr"])
+            if arr.ndim == 2 and arr.shape[0] == 2:
+                return arr[0], arr[1]
+        else:
+            # try first array in the npz
+            key = list(z.keys())[0]
+            arr = np.asarray(z[key])
+            if arr.ndim == 2 and arr.shape[0] == 2:
+                return arr[0], arr[1]
+        raise ValueError(".npz profile must have ('edges','probs') or a 2xB array")
+    elif suf == ".npy":
+        arr = np.load(p)
+        if arr.ndim == 2 and arr.shape[0] == 2:
+            return arr[0], arr[1]
+        raise ValueError(".npy profile must be 2xB = [centers; probs]")
+    else:
+        raise ValueError(f"Unsupported profile type: {suf}")
 
 def _merge_rgb_and_gray(gray_slice: np.ndarray, rgb_slice: np.ndarray) -> np.ndarray:
     """Combine the gray scale image with the RGB binning via HSV.
@@ -327,49 +419,98 @@ def plot_histogram(
     xlim: float,
     ylim: float,
     num_bins: int,
-    refer_fit: Tuple[float, float, float],
+    refer_fit: Union[Tuple[float, float, float], str, None] = None,  # healthy ref (optional)
     xticks: Optional[List[float]] = None,
     yticks: Optional[List[float]] = None,
     xticklabels: Optional[List[str]] = None,
     yticklabels: Optional[List[str]] = None,
     xlabel: Optional[str] = None,
     title: Optional[str] = None,
+    thresholds: Optional[List[float]] = None,
+    thresh_style: dict = None,
+    band_colors: Optional[Dict[int, List[float]]] = None,  # per-segment bar colors
+    outline: str = "data",                                  # "data" or "none"
+    outline_style: Optional[dict] = None,                   # solid outline style
+    healthy_style: Optional[dict] = None,                   # dashed healthy-ref style
 ):
-    """Plot histogram of arbitrary data.
+    """
+    Plot a publication-style histogram with:
+    - Bars colored by threshold segments (via `band_colors` CMAP; bin 0 ignored).
+    - Optional solid outline of THIS data’s histogram.
+    - Optional dashed “healthy” overlay from a Gaussian (A, μ, σ) or a saved profile (.mat/.npz/.npy).
 
     Args:
-        data (np.ndarray): data to plot histogram of.
-        path (str): path to save the image.
-        color (Tuple[float, float, float]): color of the histogram.
-        xlim (float): x limit of the histogram.
-        ylim (float): y limit of the histogram.
-        num_bins (int): number of bins in the histogram.
-        refer_fit (Tuple[float, float, float]): fit parameters of the healthy reference.
-        xticks (Optional[List[float]], optional): x ticks. Defaults to None.
-        yticks (Optional[List[float]], optional): y ticks. Defaults to None.
-        xticklabels (Optional[List[str]], optional): x tick labels. Defaults to None.
-        yticklabels (Optional[List[str]], optional): y tick labels. Defaults to None.
-        xlabel (Optional[str], optional): x label. Defaults to None.
+      data (ndarray): 1D values; clipped to [0, xlim].
+      path (str): Output image path.
+      color (tuple): Base RGB (used for outline/fallback).
+      xlim, ylim (float): Axis limits (x in data units; y in probability).
+      num_bins (int): Number of bins in [0, xlim].
+      refer_fit ((A, μ, σ) | str | None): Gaussian tuple or profile filepath; None = no overlay.
+      xticks/yticks (list[float] | None), xticklabels/yticklabels (list[str] | None): Tick spec.
+      xlabel/title (str | None): Labels.
+      thresholds (list[float] | None): Segment cut points (same units as data/xlim).
+      thresh_style (dict | None): Style for vertical threshold lines.
+      band_colors (dict[int, list[float]] | None): Segment colors; keys 1..N (0 is background).
+      outline ("data" | "none"): Solid outline of data histogram (default "data").
+      outline_style/healthy_style (dict | None): Style overrides.
+
+    Notes:
+    - Bars are probability-normalized (sum ≈ 1).
+    - For RBC/Mem, keep data in raw units; show ×100 only in tick labels if desired.
     """
-    # make a thick frame
+
     plt.rc("axes", linewidth=4)
     fig, ax = plt.subplots(figsize=(9, 6))
-    # the histogram of the data
-    # limit the range of data
-    data = data.flatten()
-    data[data < 0] = 0
-    data[data > xlim] = xlim
-    data = np.append(data, xlim)
-    weights = np.ones_like(data) / float(len(data))
-    # plot histogram
-    _, bins, _ = ax.hist(
-        data, num_bins, color=color, weights=weights, edgecolor="black"
-    )
-    # define and plot healthy reference line
-    normal = refer_fit[0] * np.exp(-(((bins - refer_fit[1]) / refer_fit[2]) ** 2))
-    ax.plot(bins, normal, "--", color="k", linewidth=4)
-    plt.xlim((0, xlim))
-    plt.ylim((0, ylim))
+
+    # ----- data prep -----
+    d = np.asarray(data, dtype=float).ravel()
+    d = np.clip(d, 0.0, xlim)
+    d = np.append(d, xlim)  # ensure last bin has ≥1 sample
+
+    # ----- explicit histogram -----
+    counts, edges = np.histogram(d, bins=num_bins, range=(0.0, xlim))
+    probs   = counts.astype(float) / float(d.size)
+    centers = 0.5 * (edges[:-1] + edges[1:])
+    widths  = np.diff(edges)
+
+    # colored bars
+    bar_colors = _colors_for_bins(centers, thresholds, xlim, band_colors, default_color=_to_rgb(color))
+    ax.bar(centers, probs, width=widths, align="center",
+           color=bar_colors, edgecolor="black", linewidth=1.0, zorder=2)
+
+    # solid outline of THIS histogram
+    if outline and outline.lower() == "data":
+        st = {"linestyle": "-", "linewidth": 3.0, "color": _to_rgb(color)}
+        if outline_style:
+            st.update(outline_style)
+        ax.step(edges, np.r_[probs, 0.0], where="post", zorder=6, **st)
+
+    # dashed healthy reference overlay (optional)
+    if refer_fit is not None:
+        ref_st = {"linestyle": "--", "linewidth": 3.0, "color": "k"}
+        if healthy_style:
+            ref_st.update(healthy_style)
+        if isinstance(refer_fit, (str, Path)):
+            x_ref, y_ref = _load_profile(refer_fit)
+            ax.plot(x_ref, y_ref, zorder=6, **ref_st)
+        else:
+            A, mu, sigma = refer_fit
+            x_ref = edges  # line up visually with our bins
+            y_ref = A * np.exp(-(((x_ref - mu) / sigma) ** 2))
+            ax.plot(x_ref, y_ref, zorder=6, **ref_st)
+
+    # dashed threshold lines
+    if thresholds is not None:
+        style = {"color": "k", "linestyle": "--", "linewidth": 2}
+        if thresh_style:
+            style.update(thresh_style)
+        for t in thresholds:
+            if 0 <= t <= xlim:
+                ax.axvline(t, **style, zorder=7)
+
+    # axes styling
+    ax.set_xlim(0, xlim)
+    ax.set_ylim(0, ylim)
     plt.locator_params(axis="x", nbins=4)
     try:
         plt.xticks(xticks, xticklabels, fontsize=35)
@@ -381,36 +522,10 @@ def plot_histogram(
         ax.set_xlabel(xlabel, fontsize=30)
     if title is not None:
         ax.set_title(title, fontsize=30)
-    # Tweak spacing to prevent clipping of ylabel
+
     fig.tight_layout()
-    plt.savefig(path)
+    plt.savefig(path, dpi=300)
     plt.close()
-
-
-def plot_data_rbc_k0(
-    t: np.ndarray,
-    data: np.ndarray,
-    path: str,
-    high: np.ndarray = np.array([]),
-    low: np.ndarray = np.array([]),
-):
-    """Plot RBC k0 and binned indices."""
-    fig, ax = plt.subplots(figsize=(9, 6))
-    # plot healthy reference line
-    ax.plot(t, data, "-", color="k", linewidth=5)
-    ax.plot(t[high], data[high], ".", color="C2", markersize=10)
-    ax.plot(t[low], data[low], ".", color="C1", markersize=10)
-    ax.plot(t, np.zeros((len(t), 1)), ".", color="k", linewidth=2)
-    ax.set_ylabel("Intensity (au)", fontsize=35)
-    # set plot parameters
-    plt.rc("axes", linewidth=4)
-    plt.xticks([], [])
-    plt.yticks(fontsize=40)
-    # set ticks
-    fig.tight_layout()
-    plt.savefig(path)
-    plt.close()
-
 
 def plot_histogram_with_thresholds(
     data: np.ndarray, thresholds: List[float], path: str
