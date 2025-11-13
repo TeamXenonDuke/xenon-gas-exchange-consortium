@@ -321,6 +321,7 @@ def read_dis_twix(path: str, config: Optional[ml_collections.ConfigDict] = None)
         constants.IOFields.BANDWIDTH: twix_utils.get_bandwidth(
             twix_obj, data_dict, filename
         ),
+        constants.IOFields.PREP_PULSES: "false",
     }
 
 
