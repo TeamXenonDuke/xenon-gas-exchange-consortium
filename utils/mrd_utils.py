@@ -237,6 +237,30 @@ def get_flipangle_gas(header: ismrmrd.xsd.ismrmrdschema.ismrmrd.ismrmrdHeader) -
     """
     return header.sequenceParameters.flipAngle_deg[0]
 
+def get_prep_pulses(
+    header: ismrmrd.xsd.ismrmrdschema.ismrmrd.ismrmrdHeader,
+) -> str:
+    """Get the prep pulse.
+
+    Args:
+        header (ismrmrd.xsd.ismrmrdschema.ismrmrd.ismrmrdHeader): MRD header
+    Returns:
+        prep_pulse (string)
+    """
+    var_names = [
+        up.name for up in header.userParameters.userParameterString
+    ]
+    # Check if PREP_PULSES exists
+    if constants.IOFields.PREP_PULSES not in var_names:
+        return "prep_pulses does not exist in the MRD file."
+
+    prep_pulses = str(
+        header.userParameters.userParameterString[
+            var_names.index(constants.IOFields.PREP_PULSES)
+        ]
+        .value
+    )
+    return prep_pulses
 
 def get_FOV(header: ismrmrd.xsd.ismrmrdschema.ismrmrd.ismrmrdHeader) -> float:
     """Get the FOV in cm.

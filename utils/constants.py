@@ -83,7 +83,12 @@ class IOFields(object):
     VOL_CORRECTION_FACTOR_MEMBRANE  = "vol_correction_factor_membrane"
     VOL_CORRECTION_FACTOR_RBC = "vol_correction_factor_rbc"
     CORRECTED_LUNG_VOLUME = "corrected_lung_volume"
+    PREP_PULSES = "prep_pulses"
 
+class PrepPulses(enum.Enum):
+    """Preparation pulse flags."""
+    
+    PREP_PULSES = "true"
 
 class CNNPaths(object):
     """Paths to saved model files."""
