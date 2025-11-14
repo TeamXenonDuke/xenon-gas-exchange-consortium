@@ -103,7 +103,7 @@ class Recon(object):
         self.n_skip_start = np.nan
         self.n_skip_end = 0
         self.remove_contamination = False
-        self.remove_noisy_projections = True
+        self.remove_noisy_projections = False
         self.traj_type = constants.TrajType.HALTONSPIRAL
 
 
