@@ -38,8 +38,13 @@ def gx_mapping_reconstruction(config: base_config.Config):
     subject.preprocess()
     subject.reconstruction_gas()
     subject.reconstruction_dissolved()
-    if config.recon.recon_proton:
-        subject.reconstruction_ute()
+    if config.recon.recon_proton :
+        if getattr(subject, "dict_ute", None):
+            subject.reconstruction_ute()
+        elif config.dicom_proton_dir:
+            subject.read_dicom_files()
+        else:
+            subject.image_proton = np.zeros_like(subject.image_gas_highreso)
     elif config.dicom_proton_dir:
         subject.read_dicom_files()
     else:

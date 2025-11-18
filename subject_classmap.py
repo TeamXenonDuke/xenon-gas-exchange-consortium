@@ -128,9 +128,12 @@ class Subject(object):
         except ValueError:
             logging.info("No dynamic spectroscopy twix file found")
         if self.config.recon.recon_proton:
-            self.dict_ute = io_utils.read_ute_twix(
-                io_utils.get_ute_twix_files(str(self.config.data_dir))
-            )
+            try:
+                self.dict_ute = io_utils.read_ute_twix(
+                    io_utils.get_ute_twix_files(str(self.config.data_dir))
+                )
+            except ValueError:
+                logging.info("No proton twix file found")
 
     def read_mrd_files(self):
         """Read in mrd files to dictionary.
@@ -149,9 +152,12 @@ class Subject(object):
         except ValueError:
             logging.info("No dynamic spectroscopy MRD file found")
         if self.config.recon.recon_proton:
-            self.dict_ute = io_utils.read_ute_mrd(
-                io_utils.get_ute_mrd_files(str(self.config.data_dir))
-            )
+            try:
+                self.dict_ute = io_utils.read_ute_mrd(
+                    io_utils.get_ute_mrd_files(str(self.config.data_dir))
+                )
+            except ValueError:
+                logging.info("No proton MRD file found")            
 
     def read_dicom_files(self):
         """Read in DICOM files for proton image."""
@@ -291,24 +297,26 @@ class Subject(object):
 
         # prepare proton data and trajectories
         if self.config.recon.recon_proton:
-            # get or generate trajectories
-            if constants.IOFields.TRAJ not in self.dict_ute.keys():
-                self.traj_ute = pp.prepare_traj(self.dict_ute)
+            if getattr(self, "dict_ute", None):
+                # get or generate trajectories
+                if constants.IOFields.TRAJ not in self.dict_ute.keys():
+                    self.traj_ute = pp.prepare_traj(self.dict_ute)
+                else:
+                    self.traj_ute = self.dict_ute[constants.IOFields.TRAJ]
+
+                # get proton data
+                self.data_ute = self.dict_ute[constants.IOFields.FIDS]
+
+                # remove noisy FIDs
+                if self.config.recon.remove_noisy_projections:
+                    self.data_ute, self.traj_ute = pp.remove_noisy_projections(
+                        self.data_ute, self.traj_ute
+                    )
+
+                # rescale trajectories
+                self.traj_ute *= self.traj_scaling_factor
             else:
-                self.traj_ute = self.dict_ute[constants.IOFields.TRAJ]
-
-            # get proton data
-            self.data_ute = self.dict_ute[constants.IOFields.FIDS]
-
-            # remove noisy FIDs
-            if self.config.recon.remove_noisy_projections:
-                self.data_ute, self.traj_ute = pp.remove_noisy_projections(
-                    self.data_ute, self.traj_ute
-                )
-
-            # rescale trajectories
-            self.traj_ute *= self.traj_scaling_factor
-
+                logging.info("No dict_ute")    
         
         # Choose appropriate reference distribution
         self.reference_data_key = self.config.reference_data_key
