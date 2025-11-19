@@ -84,8 +84,15 @@ body {
   width: 20px;
 }
 .space {
-  height: 25px;
-  width: 20px;
+  height: 35px;
+}
+.top-left {
+  position: relative;
+  top: -180px;
+  left: 48px;
+  color: #353131;
+  margin-right: 8px; 
+  font-weight: 900;
 }
 .predict-values {
   position: relative;
@@ -133,4 +140,12 @@ tr.rbc {
 }
 tr.basic {
   background-color: #e0e0e0;
+}
+tr.title {
+  color: white;
+  background-color: #606060;
+}
+th, td {
+  overflow: hidden;
+  text-overflow: ellipsis;
 }

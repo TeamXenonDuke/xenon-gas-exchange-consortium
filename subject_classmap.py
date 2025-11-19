@@ -128,9 +128,12 @@ class Subject(object):
         except ValueError:
             logging.info("No dynamic spectroscopy twix file found")
         if self.config.recon.recon_proton:
-            self.dict_ute = io_utils.read_ute_twix(
-                io_utils.get_ute_twix_files(str(self.config.data_dir))
-            )
+            try:
+                self.dict_ute = io_utils.read_ute_twix(
+                    io_utils.get_ute_twix_files(str(self.config.data_dir))
+                )
+            except ValueError:
+                logging.info("No proton twix file found")
 
     def read_mrd_files(self):
         """Read in mrd files to dictionary.
@@ -149,9 +152,12 @@ class Subject(object):
         except ValueError:
             logging.info("No dynamic spectroscopy MRD file found")
         if self.config.recon.recon_proton:
-            self.dict_ute = io_utils.read_ute_mrd(
-                io_utils.get_ute_mrd_files(str(self.config.data_dir))
-            )
+            try:
+                self.dict_ute = io_utils.read_ute_mrd(
+                    io_utils.get_ute_mrd_files(str(self.config.data_dir))
+                )
+            except ValueError:
+                logging.info("No proton MRD file found")            
 
     def read_dicom_files(self):
         """Read in DICOM files for proton image."""
@@ -252,10 +258,15 @@ class Subject(object):
                 self.traj_scaling_factor = (
                     0.903  # cincinnati requires a unique scaling factor
                 )
-        
-        # Calculate the number of frames to skip at the beginning by dissolved flip angle
-        if np.isnan(self.config.recon.n_skip_start):
-            self.config.recon.n_skip_start = recon_utils.skip_from_flipangle(self.dict_dis[constants.IOFields.FA_DIS])
+        """Calculate the number of frames to skip at the beginning of scan:
+          if the prep_pulse = 'true', there is no skip frames n_skip_start=0; else calculated by dissolved flip angle""" 
+        if (self.dict_dis[constants.IOFields.PREP_PULSES] == constants.PrepPulses.PREP_PULSES.value):
+            self.config.recon.n_skip_start = 0
+            logging.info(f"get prep_pulses: value={self.dict_dis[constants.IOFields.PREP_PULSES]}")
+        else:
+            # Calculate the number of frames to skip at the beginning by dissolved flip angle
+            if np.isnan(self.config.recon.n_skip_start):
+                self.config.recon.n_skip_start = recon_utils.skip_from_flipangle(self.dict_dis[constants.IOFields.FA_DIS])
 
         # truncate gas and dissolved data and trajectories
         self.data_dissolved, self.traj_dissolved = pp.truncate_data_and_traj(
@@ -286,24 +297,26 @@ class Subject(object):
 
         # prepare proton data and trajectories
         if self.config.recon.recon_proton:
-            # get or generate trajectories
-            if constants.IOFields.TRAJ not in self.dict_ute.keys():
-                self.traj_ute = pp.prepare_traj(self.dict_ute)
+            if getattr(self, "dict_ute", None):
+                # get or generate trajectories
+                if constants.IOFields.TRAJ not in self.dict_ute.keys():
+                    self.traj_ute = pp.prepare_traj(self.dict_ute)
+                else:
+                    self.traj_ute = self.dict_ute[constants.IOFields.TRAJ]
+
+                # get proton data
+                self.data_ute = self.dict_ute[constants.IOFields.FIDS]
+
+                # remove noisy FIDs
+                if self.config.recon.remove_noisy_projections:
+                    self.data_ute, self.traj_ute = pp.remove_noisy_projections(
+                        self.data_ute, self.traj_ute
+                    )
+
+                # rescale trajectories
+                self.traj_ute *= self.traj_scaling_factor
             else:
-                self.traj_ute = self.dict_ute[constants.IOFields.TRAJ]
-
-            # get proton data
-            self.data_ute = self.dict_ute[constants.IOFields.FIDS]
-
-            # remove noisy FIDs
-            if self.config.recon.remove_noisy_projections:
-                self.data_ute, self.traj_ute = pp.remove_noisy_projections(
-                    self.data_ute, self.traj_ute
-                )
-
-            # rescale trajectories
-            self.traj_ute *= self.traj_scaling_factor
-
+                logging.info("No dict_ute")    
         
         # Choose appropriate reference distribution
         self.reference_data_key = self.config.reference_data_key
@@ -327,6 +340,7 @@ class Subject(object):
 
         elif self.reference_data_key == constants.ReferenceDataKey.MANUAL_REFERENCE.value:
             self.reference_data = constants.ReferenceDistribution.REFERENCE_MANUAL
+
             
 
     def reconstruction_ute(self):
@@ -977,53 +991,57 @@ class Subject(object):
             index_skip=index_skip,
         )
         plot.plot_histogram(
-            data=img_utils.normalize(self.image_gas_cor, self.mask)[
-                np.array(self.mask, dtype=bool)
-            ].flatten(),
+            data=img_utils.normalize(self.image_gas_cor, self.mask)[np.array(self.mask, dtype=bool)].flatten(),
             path="tmp/hist_vent.png",
             color=constants.VENTHISTOGRAMFields.COLOR,
             xlim=constants.VENTHISTOGRAMFields.XLIM,
             ylim=constants.VENTHISTOGRAMFields.YLIM,
             num_bins=constants.VENTHISTOGRAMFields.NUMBINS,
-            refer_fit=self.reference_data['reference_fit_vent'],
+            refer_fit=self.reference_data["healthy_histogram_vent_dir"],  # Gaussian tuple or profile path
             xticks=constants.VENTHISTOGRAMFields.XTICKS,
             yticks=constants.VENTHISTOGRAMFields.YTICKS,
             xticklabels=constants.VENTHISTOGRAMFields.XTICKLABELS,
             yticklabels=constants.VENTHISTOGRAMFields.YTICKLABELS,
             title=constants.VENTHISTOGRAMFields.TITLE,
+            thresholds=self.reference_data["threshold_vent"],             # list of 5 (raw units)
+            band_colors=constants.CMAP.VENT_BIN2COLOR,                    # per-segment bar colors (bin 0 ignored)
+            outline="data",
         )
         plot.plot_histogram(
-            data=np.abs(self.image_rbc2gas)[
-                np.array(self.mask_vent, dtype=bool)
-            ].flatten(),
+            data=np.abs(self.image_rbc2gas)[np.array(self.mask_vent, dtype=bool)].flatten(),
             path="tmp/hist_rbc.png",
             color=constants.RBCHISTOGRAMFields.COLOR,
             xlim=constants.RBCHISTOGRAMFields.XLIM,
             ylim=constants.RBCHISTOGRAMFields.YLIM,
             num_bins=constants.RBCHISTOGRAMFields.NUMBINS,
-            refer_fit=self.reference_data['reference_fit_rbc'],
+            refer_fit=self.reference_data["healthy_histogram_rbc_dir"],   # Gaussian tuple or profile path
             xticks=constants.RBCHISTOGRAMFields.XTICKS,
             yticks=constants.RBCHISTOGRAMFields.YTICKS,
             xticklabels=constants.RBCHISTOGRAMFields.XTICKLABELS,
             yticklabels=constants.RBCHISTOGRAMFields.YTICKLABELS,
             title=constants.RBCHISTOGRAMFields.TITLE,
+            thresholds=self.reference_data["threshold_rbc"],              # list of 5 (raw units)
+            band_colors=constants.CMAP.RBC_BIN2COLOR,
+            outline="data",
         )
         plot.plot_histogram(
-            data=np.abs(self.image_membrane2gas)[
-                np.array(self.mask_vent, dtype=bool)
-            ].flatten(),
+            data=np.abs(self.image_membrane2gas)[np.array(self.mask_vent, dtype=bool)].flatten(),
             path="tmp/hist_membrane.png",
             color=constants.MEMBRANEHISTOGRAMFields.COLOR,
             xlim=constants.MEMBRANEHISTOGRAMFields.XLIM,
             ylim=constants.MEMBRANEHISTOGRAMFields.YLIM,
             num_bins=constants.MEMBRANEHISTOGRAMFields.NUMBINS,
-            refer_fit=self.reference_data['reference_fit_membrane'],
+            refer_fit=self.reference_data["healthy_histogram_membrane_dir"],  # Gaussian tuple or profile path
             xticks=constants.MEMBRANEHISTOGRAMFields.XTICKS,
             yticks=constants.MEMBRANEHISTOGRAMFields.YTICKS,
             xticklabels=constants.MEMBRANEHISTOGRAMFields.XTICKLABELS,
             yticklabels=constants.MEMBRANEHISTOGRAMFields.YTICKLABELS,
             title=constants.MEMBRANEHISTOGRAMFields.TITLE,
+            thresholds=self.reference_data["threshold_membrane"],             # list of 7 (raw units)
+            band_colors=constants.CMAP.MEMBRANE_BIN2COLOR,
+            outline="data",
         )
+
 
     def generate_pdf(self):
         """Generate HTML and PDF files."""

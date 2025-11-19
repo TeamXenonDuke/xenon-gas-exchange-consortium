@@ -83,7 +83,12 @@ class IOFields(object):
     VOL_CORRECTION_FACTOR_MEMBRANE  = "vol_correction_factor_membrane"
     VOL_CORRECTION_FACTOR_RBC = "vol_correction_factor_rbc"
     CORRECTED_LUNG_VOLUME = "corrected_lung_volume"
+    PREP_PULSES = "prep_pulses"
 
+class PrepPulses(enum.Enum):
+    """Preparation pulse flags."""
+    
+    PREP_PULSES = "true"
 
 class CNNPaths(object):
     """Paths to saved model files."""
@@ -437,6 +442,9 @@ class ReferenceDistribution(object):
 
     REFERENCE_218_PPM = {
     "title": "REFERENCE_218_PPM",
+    "healthy_histogram_vent_dir" : "assets/histogram_profiles/218_ppm/vent_hist_profile.npy",
+    "healthy_histogram_rbc_dir" : "assets/histogram_profiles/218_ppm/rbc_hist_profile.npy",
+    "healthy_histogram_membrane_dir" : "assets/histogram_profiles/218_ppm/mem_hist_profile.npy",
     "threshold_vent": [0.3891, 0.5753, 0.7203, 0.8440, 0.9539],
     "threshold_rbc": [0.001393, 0.002891, 0.004772, 0.006991, 0.009518],
     "threshold_membrane": [0.004881, 0.006522, 0.008603, 0.011216, 0.014466, 0.018471, 0.023370],
@@ -473,6 +481,9 @@ class ReferenceDistribution(object):
 
     REFERENCE_208_PPM = {
         "title": "REFERENCE_208_PPM",
+        "healthy_histogram_vent_dir" : "assets/histogram_profiles/208_ppm/vent_hist_profile.npy",
+        "healthy_histogram_rbc_dir" : "assets/histogram_profiles/208_ppm/rbc_hist_profile.npy",
+        "healthy_histogram_membrane_dir" : "assets/histogram_profiles/208_ppm/mem_hist_profile.npy",
         "threshold_vent": [0.3891, 0.5753, 0.7203, 0.8440, 0.9539],
         "threshold_rbc": [0.001351, 0.002804, 0.004629, 0.006781, 0.009232],
         "threshold_membrane": [0.005320, 0.007108, 0.009377, 0.012224, 0.015766, 0.020132, 0.025471],
@@ -509,6 +520,9 @@ class ReferenceDistribution(object):
     
     REFERENCE_MANUAL = {
         "title": "MANUAL",
+        "healthy_histogram_vent_dir" : "assets/histogram_profiles/218_ppm/vent_hist_profile.npy",
+        "healthy_histogram_rbc_dir" : "assets/histogram_profiles/218_ppm/rbc_hist_profile.npy",
+        "healthy_histogram_membrane_dir" : "assets/histogram_profiles/218_ppm/mem_hist_profile.npy",
         "threshold_vent": [0.3891, 0.5753, 0.7203, 0.8440, 0.9539],
         "threshold_rbc": [0.001393, 0.002891, 0.004772, 0.006991, 0.009518],
         "threshold_membrane": [0.004881, 0.006522, 0.008603, 0.011216, 0.014466, 0.018471, 0.023370],

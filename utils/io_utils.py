@@ -321,6 +321,7 @@ def read_dis_twix(path: str, config: Optional[ml_collections.ConfigDict] = None)
         constants.IOFields.BANDWIDTH: twix_utils.get_bandwidth(
             twix_obj, data_dict, filename
         ),
+        constants.IOFields.PREP_PULSES: "false",
     }
 
 
@@ -473,6 +474,7 @@ def read_dis_mrd(path: str, multi_echo: bool) -> Dict[str, Any]:
         constants.IOFields.TE90: mrd_utils.get_TE90(header),
         constants.IOFields.TR: mrd_utils.get_TR_dissolved(header),
         constants.IOFields.TRAJ: data_dict[constants.IOFields.TRAJ],
+        constants.IOFields.PREP_PULSES: mrd_utils.get_prep_pulses(header),
     }
 
 

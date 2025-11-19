@@ -77,7 +77,7 @@ def flip_and_rotate_image(
     """
     
     # Siemens vendor code block
-    if system_vendor == constants.SystemVendor.SIEMENS.value:
+    if system_vendor.lower() == constants.SystemVendor.SIEMENS.value.lower():
         if orientation == constants.Orientation.CORONAL:
             image = np.rot90(np.rot90(image, 3, axes=(1, 2)), 1, axes=(0, 2))
             image = np.rot90(image, 1, axes=(0, 1))
@@ -96,7 +96,7 @@ def flip_and_rotate_image(
             raise ValueError("Orientation not currently supported: {}.".format(orientation))
     
     # Philips vendor code block
-    elif system_vendor == constants.SystemVendor.PHILIPS.value:
+    elif system_vendor.lower() == constants.SystemVendor.PHILIPS.value.lower():
         if orientation == constants.Orientation.CORONAL:
             image = np.rot90(np.rot90(image, 3, axes=(1, 2)), 1, axes=(0, 2))
             image = np.flip(image, axis=2)
@@ -107,7 +107,7 @@ def flip_and_rotate_image(
             raise ValueError("Orientation not currently supported: {}.".format(orientation))
     
     # GE vendor code block 
-    elif system_vendor == constants.SystemVendor.GE.value:
+    elif system_vendor.lower() == constants.SystemVendor.GE.value.lower():
         if orientation == constants.Orientation.CORONAL:
             def complex_rot_axial_iowa(x):
                 from scipy.ndimage import rotate
