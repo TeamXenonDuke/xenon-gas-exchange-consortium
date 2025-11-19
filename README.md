@@ -152,19 +152,23 @@ pip list
 
 and verify that the packages in the virtual environment agree with that in the `requirements.txt` file.
 
+Additionally, execute the following command in your virtual conda environment:
+
+```
+conda install -c conda-forge weasyprint
+```
+
 ##### Install Packages in your Native Computer:
 
 For Linux and WSL:
 
 ```
-sudo apt install wkhtmltopdf
 sudo apt install poppler-utils
 ```
 
 For Mac:
 
 ```
-brew install wkhtmltopdf
 brew install poppler
 ```
 
