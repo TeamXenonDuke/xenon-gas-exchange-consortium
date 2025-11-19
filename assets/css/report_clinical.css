@@ -16,7 +16,7 @@ body {
 }
 #date-title {
   width: 400px;
-  font-size: 14pt;
+  font-size: 12pt;
   margin: 15px 30px;
   text-align: right;
   float: right;
@@ -44,19 +44,6 @@ body {
   border: 0px;
   float: left;
 }
-.top-right {
-  position: absolute;
-  top: 16px;
-  right: 20px;
-  color: #353131;
-  font-size: 9pt;
-  line-height: 1;
-  text-align: right;
-}
-.top-right p {
-  margin: 0;
-  padding: 0;
-}
 .map-container {
   width: 625px;
   height: 480px;
@@ -65,6 +52,7 @@ body {
   margin: 0px;
   float: left;
   background: black;
+  margin-right: -1px;
 }
 .map-tile {
   display: inline-block;
@@ -86,13 +74,19 @@ body {
 .space {
   height: 35px;
 }
-.top-left {
-  position: relative;
-  top: -180px;
-  left: 48px;
+.hist-label {
+  position: absolute;
+  top: 18px;
+  left: 40px;
   color: #353131;
-  margin-right: 8px; 
+  margin: 0;
   font-weight: 900;
+  font-size: 9pt;
+  line-height: 1.1;
+}
+.hist-label p {
+  margin: 0;
+  padding: 0;
 }
 .predict-values {
   position: relative;
@@ -108,6 +102,7 @@ body {
   height: 480px;
   font-size: 12pt;
   float: left;
+  background-color: #353131;
 }
 table {
   table-layout: auto;
@@ -118,7 +113,7 @@ table {
 }
 td,
 th {
-  border: 2px solid #353131;
+  border: 2.04px solid #353131;
   font-weight: normal;
   text-align: left;
   padding: 4px;

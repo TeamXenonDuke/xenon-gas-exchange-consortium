@@ -9,6 +9,7 @@ body {
   color: blue;
   font-size: 20pt;
   border: 10px;
+  margin-left: 10px;
 }
 
 .process_date_text {
@@ -18,29 +19,19 @@ body {
 .table-container {
   width: 400px;
   position: fixed;
-  top: 40px;
+  top: 30px;
   left: 100px;
   margin-right: 6px;
-  font-size: 12pt;
   float: left;
 }
 
 .table-container2 {
   width: 400px;
   position: fixed;
-  top: 40px;
+  top: 30px;
   right: 100px;
   margin-right: 6px;
-  font-size: 12pt;
   float: left;
-}
-
-.top-right {
-  position: fixed;
-  top: -302px;
-  right: -65px;
-  font-size: 18px;
-  color: blue;
 }
 
 p.train {
@@ -73,6 +64,7 @@ th {
   padding: 8px;
   padding-top: 7px;
   padding-bottom: 7px;
+  font-size: 8pt;
 }
 
 .white {
