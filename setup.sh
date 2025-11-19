@@ -119,6 +119,7 @@ if !([[ "$1" == "build-only" ]] || [[ "$1" == "install-only" ]]); then
 
     # Install packages in requirements.txt to the VE
     pip install -r setup/requirements.txt
+    conda install -c conda-forge weasyprint
 
     # Prompt for user: confirm that all packages are installed
     pip list
@@ -139,11 +140,8 @@ if !([[ "$1" == "build-only" ]] || [[ "$1" == "install-only" ]]); then
 
     # Install remaining packages to native computer
     if [[ "$OSTYPE" == "linux-gnu"* ]]; then
-        error_catch sudo apt install wkhtmltopdf
         error_catch sudo apt install poppler-utils
     elif [[ "$OSTYPE" == "darwin"* ]]; then
-        error_catch curl -L https://github.com/wkhtmltopdf/packaging/releases/download/0.12.6-2/wkhtmltox-0.12.6-2.macos-cocoa.pkg -O
-        error_catch sudo installer -pkg wkhtmltox-0.12.6-2.macos-cocoa.pkg -target ~
         error_catch brew install poppler
     else 
         echo -e "${RED}Error: Incorrect OS. ${NC}Please use WSL, Linux, or MacOS."
