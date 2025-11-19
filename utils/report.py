@@ -4,25 +4,13 @@ import sys
 from typing import Any, Dict
 
 import numpy as np
-import pdfkit
+from weasyprint import HTML
+from pathlib import Path
 import PyPDF2
 from git.repo import Repo
 
 sys.path.append("..")
 from utils import constants
-
-PDF_OPTIONS = {
-    "page-width": 300,
-    "page-height": 150,
-    "margin-top": 1,
-    "margin-right": 0.1,
-    "margin-bottom": 0.1,
-    "margin-left": 0.1,
-    "dpi": 300,
-    "encoding": "UTF-8",
-    "enable-local-file-access": None,
-}
-
 
 
 def get_git_branch() -> str:
@@ -39,7 +27,6 @@ def get_git_branch() -> str:
         return f"{branch}@{commit_hash_short}"
     except Exception:
         return "unknown"
-
 
 
 def format_dict(dict_stats: Dict[str, Any]) -> Dict[str, Any]:
@@ -118,10 +105,23 @@ def clinical(dict_stats: Dict[str, Any], path: str):
     with open(path_clinical, "r") as f:
         file = f.read()
         rendered = file.format(**dict_stats)
+        rendered = rendered.replace("../assets/", "assets/").replace("../tmp/", "tmp/")
     with open(path_html, "w") as o:
         o.write(rendered)
-    # write clinical report to pdf
-    pdfkit.from_file(path_html, path, options=PDF_OPTIONS)
+    # write html report to pdf
+    # Define project root explicitly
+    project_root = Path(__file__).resolve().parents[1]
+    # Read the rendered HTML as text
+    with open(path_html, "r", encoding="utf-8") as f:
+        html_content = f.read()
+    # Render PDF from HTML string, ensuring correct base for relative URLs
+    HTML(
+        string=html_content,
+        base_url=str(project_root)
+    ).write_pdf(
+        target=path,
+        dpi=96,
+    )
 
 
 def grayscale(dict_stats: Dict[str, Any], path: str):
@@ -142,10 +142,23 @@ def grayscale(dict_stats: Dict[str, Any], path: str):
     with open(path_clinical, "r") as f:
         file = f.read()
         rendered = file.format(**dict_stats)
+        rendered = rendered.replace("../assets/", "assets/").replace("../tmp/", "tmp/")
     with open(path_html, "w") as o:
         o.write(rendered)
-    # write clinical report to pdf
-    pdfkit.from_file(path_html, path, options=PDF_OPTIONS)
+    # write html report to pdf
+    # Define project root explicitly
+    project_root = Path(__file__).resolve().parents[1]
+    # Read the rendered HTML as text
+    with open(path_html, "r", encoding="utf-8") as f:
+        html_content = f.read()
+    # Render PDF from HTML string, ensuring correct base for relative URLs
+    HTML(
+        string=html_content,
+        base_url=str(project_root)
+    ).write_pdf(
+        target=path,
+        dpi=96,
+    )
 
 
 def intro(dict_info: Dict[str, Any], path: str):
@@ -166,10 +179,23 @@ def intro(dict_info: Dict[str, Any], path: str):
     with open(path_clinical, "r") as f:
         file = f.read()
         rendered = file.format(**dict_info)
+        rendered = rendered.replace("../assets/", "assets/").replace("../tmp/", "tmp/")
     with open(path_html, "w") as o:
         o.write(rendered)
-    # write clinical report to pdf
-    pdfkit.from_file(path_html, path, options=PDF_OPTIONS)
+    # write html to pdf
+    # Define project root explicitly
+    project_root = Path(__file__).resolve().parents[1]
+    # Read the rendered HTML as text
+    with open(path_html, "r", encoding="utf-8") as f:
+        html_content = f.read()
+    # Render PDF from HTML string, ensuring correct base for relative URLs
+    HTML(
+        string=html_content,
+        base_url=str(project_root)
+    ).write_pdf(
+        target=path,
+        dpi=96,
+    )
 
 
 def qa(dict_stats: Dict[str, Any], path: str):
@@ -190,10 +216,23 @@ def qa(dict_stats: Dict[str, Any], path: str):
     with open(path_clinical, "r") as f:
         file = f.read()
         rendered = file.format(**dict_stats)
+        rendered = rendered.replace("../assets/", "assets/").replace("../tmp/", "tmp/")
     with open(path_html, "w") as o:
         o.write(rendered)
-    # write clinical report to pdf
-    pdfkit.from_file(path_html, path, options=PDF_OPTIONS)
+    # write html report to pdf 
+    # Define project root explicitly
+    project_root = Path(__file__).resolve().parents[1]
+    # Read the rendered HTML as text
+    with open(path_html, "r", encoding="utf-8") as f:
+        html_content = f.read()
+    # Render PDF from HTML string, ensuring correct base for relative URLs
+    HTML(
+        string=html_content,
+        base_url=str(project_root)
+    ).write_pdf(
+        target=path,
+        dpi=96,
+    )
 
 
 def combine_pdfs(pdf_list: list, path: str):
