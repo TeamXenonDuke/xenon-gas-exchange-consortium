@@ -955,6 +955,13 @@ class Subject(object):
             index_skip=index_skip,
             mask=self.mask,
         )
+        plot.plot_montage_grey_mask(
+            image=np.abs(self.image_gas_cor),
+            mask=self.mask,
+            path="tmp/montage_vent_cor.png",
+            index_start=index_start,
+            index_skip=index_skip,
+        )
         plot.plot_montage_grey(
             image=np.abs(self.image_membrane),
             path="tmp/montage_membrane.png",
@@ -1075,7 +1082,7 @@ class Subject(object):
         # generate individual PDFs
         pdf_list = [
             os.path.join("tmp", pdf)
-            for pdf in ["intro.pdf", "clinical.pdf", "grayscale.pdf", "qa"]
+            for pdf in ["intro.pdf", "clinical.pdf", "grayscale.pdf", "grayscale_cor.pdf", "qa"]
         ]
         report.intro(self.dict_info, path=pdf_list[0])
         report.clinical(
@@ -1086,9 +1093,13 @@ class Subject(object):
             {**self.dict_stats, **self.reference_data['reference_stats']},
             path=pdf_list[2],
         )
-        report.qa(
+        report.grayscale_cor(
             {**self.dict_stats, **self.reference_data['reference_stats']},
             path=pdf_list[3],
+        )
+        report.qa(
+            {**self.dict_stats, **self.reference_data['reference_stats']},
+            path=pdf_list[4],
         )
 
         # combine PDFs into one
