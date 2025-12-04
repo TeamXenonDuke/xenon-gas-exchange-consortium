@@ -62,9 +62,10 @@ th {
   border: 1px solid #353131;
   text-align: left;
   padding: 8px;
-  padding-top: 7px;
-  padding-bottom: 7px;
-  font-size: 8pt;
+  padding-top: 5px;
+  padding-bottom: 5px;
+  font-size: 10pt;
+  white-space: normal;
 }
 
 .white {
