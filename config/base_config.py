@@ -76,7 +76,6 @@ class Recon(object):
         recon_proton: bool, whether to reconstruct proton images
         remove_contamination: bool, whether to remove gas contamination
         remove_noisy_projections: bool, whether to remove noisy projections
-        scan_type: str, the scan type
         kernel_sharpness_lr: float, the kernel sharpness for low resolution, higher
             SNR images
         kernel_sharpness_hr: float, the kernel sharpness for high resolution, lower

@@ -945,6 +945,7 @@ class Subject(object):
         proton_reg = img_utils.normalize(
             np.abs(self.image_proton),
             self.mask,
+            bag_volume=self.config.bag_volume,
             method=constants.NormalizationMethods.PERCENTILE,
         )
         plot.plot_montage_grey(
@@ -1118,6 +1119,7 @@ class Subject(object):
         proton_reg = img_utils.normalize(
             np.abs(self.image_proton),
             self.mask,
+            bag_volume=self.config.bag_volume,
             method=constants.NormalizationMethods.PERCENTILE,
         )
         io_utils.export_nii(
