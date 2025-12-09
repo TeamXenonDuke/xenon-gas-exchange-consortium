@@ -2,6 +2,7 @@
 
 import os
 import sys
+import nibabel as nb
 
 import cv2
 
@@ -211,8 +212,9 @@ def interp(img: np.ndarray, factor: int = 1):
 def normalize(
     image: np.ndarray,
     mask: np.ndarray = np.array([0.0]),
-    method: str = constants.NormalizationMethods.PERCENTILE_MASKED,
+    method: str = constants.NormalizationMethods.PERCENTILE_MASKED,  # default method = PERCENTILE_MASKED
     percentile: float = 99.0,
+    bag_volume: float = None # Add bag_volume as a parameter with a default value
 ) -> np.ndarray:
     """Normalize the image to be between [0, 1.0].
 
@@ -226,7 +228,9 @@ def normalize(
     Returns:
         np.ndarray: normalized image
     """
-    if method == constants.NormalizationMethods.MAX:
+    if bag_volume is None:
+        raise ValueError("You must provide a numeric value for `bag_volume`.")
+    elif method == constants.NormalizationMethods.MAX:
         return image * 1.0 / np.max(image)
     elif method == constants.NormalizationMethods.PERCENTILE:
         return image * 1.0 / np.percentile(image, percentile)
@@ -239,6 +243,26 @@ def normalize(
         image[np.isnan(image)] = 0
         image[np.isinf(image)] = 0
         return image / np.mean(image[mask])
+    elif method == constants.NormalizationMethods.FRAC_VENT:
+        bag_volume = bag_volume * 1000  # convert L to mL
+        tcv_gas_vol = bag_volume - 10 #new estimate in mL
+        voxel_side = .3125  # cm
+        voxel_vol = voxel_side**3  # cm^3 = ml
+        vent_img_mask = image.copy() 
+        print("vent_img_mask shape:", vent_img_mask.shape)
+        print("mask shape:", mask.shape)
+        vent_img_mask[mask == 0] = 0.0
+        print('image' + str(np.sum(image)))
+        print('vent image mask' + str(np.sum(vent_img_mask)))
+        signal_total = np.sum(vent_img_mask)
+        sig_vol_rat = tcv_gas_vol / signal_total
+        frac_vent = (image * sig_vol_rat) / voxel_vol
+        nifti_img = nb.Nifti1Image(frac_vent, affine=np.eye(4))
+        nifti_img.to_filename('tmp/frac_vent_output.nii')
+        frac_vent_mask = frac_vent[mask == 1]
+        flat_array = frac_vent_mask.flatten()
+        mean = np.mean(flat_array)
+        return frac_vent
     else:
         raise ValueError("Invalid normalization method")
 
