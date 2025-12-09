@@ -209,7 +209,7 @@ def make_montage(image: np.ndarray, n_slices: int = 16) -> np.ndarray:
 
 
 def plot_montage_grey(
-    image: np.ndarray, path: str, index_start: int, index_skip: int = 1
+    image: np.ndarray, path: str, index_start: int, index_skip: int = 1, mask = None,
 ):
     """Plot a montage of the image in grey scale.
 
