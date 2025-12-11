@@ -8,7 +8,6 @@ numba==0.59.1
 numpy==1.26.4
 opencv_python==4.10.0.84
 pandas==2.2.3
-pdfkit==1.0.0
 pydicom==3.0.1
 pyMapVBVD==0.6.1
 PyPDF2==3.0.1
