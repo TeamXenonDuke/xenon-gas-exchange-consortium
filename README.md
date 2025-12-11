@@ -222,7 +222,7 @@ make install 2>&1 | tee install.log
 
 Warning: This might take a while.
 
-After sucessful ANTs SuperBuild, you will have to move 'antApplyTransforms', 'antsRegistration' and 'N4BisaFieldCorrection' files to `xe-gas-exchange-refactor/bin/`. Now we are ready to process MRI scan of human lung.
+After sucessful ANTs SuperBuild, you will have to move 'antApplyTransforms', 'antsRegistration' and 'N4BisaFieldCorrection' files to `xenon-gas-exchange-consortium/bin/`. Now we are ready to process MRI scan of human lung.
 
 Note: If necesary, the details of ANTs Compilation can be seen [here](https://github.com/ANTsX/ANTs/wiki/Compiling-ANTs-on-Linux-and-Mac-OS)
 
