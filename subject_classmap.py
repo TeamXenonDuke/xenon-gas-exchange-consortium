@@ -929,18 +929,21 @@ class Subject(object):
             path="tmp/montage_vent.png",
             index_start=index_start,
             index_skip=index_skip,
+            mask=self.mask,
         )
         plot.plot_montage_grey(
             image=np.abs(self.image_membrane),
             path="tmp/montage_membrane.png",
             index_start=index_start,
             index_skip=index_skip,
+            mask=self.mask,
         )
         plot.plot_montage_grey(
             image=np.abs(self.image_rbc),
             path="tmp/montage_rbc.png",
             index_start=index_start,
             index_skip=index_skip,
+            mask=self.mask,
         )
         plot.plot_montage_color(
             image=plot.map_and_overlay_to_rgb(
