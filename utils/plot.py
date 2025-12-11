@@ -13,6 +13,8 @@ import numpy as np
 
 from utils import io_utils
 
+import logging
+
 def _to_rgb(c):
     """
     _to_rgb(c)
@@ -542,6 +544,9 @@ def plot_histogram(
         if outline_style:
             st.update(outline_style)
         ax.step(edges, np.r_[probs, 0.0], where="post", zorder=6, **st)
+
+    print("refer_fit:", refer_fit)
+    logging.info(refer_fit)
 
     # dashed healthy reference overlay (optional)
     if refer_fit is not None:
