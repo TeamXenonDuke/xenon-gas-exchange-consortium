@@ -93,7 +93,7 @@ You can verify if you have `conda` now by typing `which conda` in your terminal.
 To create a virtual environment using `conda` execute the command in the terminal:
 
 ```bash
-conda create --name XeGas python=3.8.8
+conda create --name XeGas python=3.12
 ```
 
 Here, XeGas is the the given name, but any name can be given.
