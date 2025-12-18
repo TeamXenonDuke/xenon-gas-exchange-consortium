@@ -226,8 +226,16 @@ class Subject(object):
         Also, calculates the scaling factor for the trajectory.
         """
         # remove contamination
-        if self.config.recon.remove_contamination:
-            self.dict_dis = pp.remove_contamination(self.dict_dyn, self.dict_dis)
+        if self.config.recon.gas_contamination_correction:
+            if  not (io_utils.check_real_number(self.config.phase_gas_acq_diss) and
+                io_utils.check_real_number(self.config.area_gas_acq_diss) and
+                io_utils.check_real_number(self.config.recon.optimized_conta_phase)):
+                logging.error(
+                    "Error: config.phase_gas_acq_diss, config.area_gas_acq_diss, and "
+                    "config.recon.optimized_conta_phase must all be real, finite scalars."
+                )
+            else:
+                self.dict_dis = pp.gas_contamination_correction(self.dict_dis, self.config)
 
         self.data_dissolved = self.dict_dis[constants.IOFields.FIDS_DIS]
         self.data_gas = self.dict_dis[constants.IOFields.FIDS_GAS]
