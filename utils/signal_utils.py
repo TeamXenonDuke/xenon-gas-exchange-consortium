@@ -8,6 +8,7 @@ import numpy as np
 import scipy.optimize as optimize
 import scipy.signal as signal
 import scipy.stats as stats
+from scipy.ndimage import convolve1d
 
 from utils import constants
 
@@ -138,7 +139,19 @@ def inverse_boxcox(
     """
     return np.power(boxcox_lambda * data + 1, 1 / boxcox_lambda) - scale_factor
 
+def _movmean_conta(x: np.ndarray, n: int) -> np.ndarray:
+    """Compute moving mean of x over n points.
 
+    Args:
+        x (np.ndarray): input data of shape (n,)
+        n (int): number of points to average over
+
+    Returns:
+        np.ndarray: moving mean of shape (n,)
+    """
+    #return np.convolve(x, np.ones((n,)) / n, mode="same")
+    return convolve1d(x, np.ones((n,)) / n, mode='reflect')
+    
 def remove_gasphase_contamination(
     data_dissolved: np.ndarray,
     data_gas: np.ndarray,
@@ -146,6 +159,7 @@ def remove_gasphase_contamination(
     freq_gas_acq_diss: float,
     phase_gas_acq_diss: float,
     area_gas_acq_diss: float,
+    optimized_conta_phase:float,
     fa_gas: float,
 ) -> np.ndarray:
     """Remove gas phase contamination in dissolved k-space.
@@ -183,11 +197,15 @@ def remove_gasphase_contamination(
         1j * np.pi / 180 * phase_shift2
     )
     # step 3: scale contamination estimation
-    scale_factor = area_gas_acq_diss / _movmean(np.abs(data_gas[:, 0]), 100)[-1]
+    reduced_arr = np.max(np.abs(data_gas), axis=1)
+    scale_factor = area_gas_acq_diss / _movmean_conta(np.abs(reduced_arr), 100)[-1]
     contamination_kspace3 = (
         contamination_kspace2 * scale_factor / np.cos(np.pi / 180 * fa_gas)
     )
-    # step 4: return subtracted contamination
+    # step 4: applying emperical phase optimization
+    contamination_kspace3 = np.exp(1j * np.deg2rad(optimized_conta_phase)) * contamination_kspace3.copy()  
+
+    # step 5: return subtracted contamination
     return data_dissolved - contamination_kspace3
 
 
