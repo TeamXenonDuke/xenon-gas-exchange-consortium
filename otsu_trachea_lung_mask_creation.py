@@ -67,7 +67,7 @@ def otsu_hysteresis_segment(input_path, output_path):
 
 if __name__ == "__main__":
     # Example usage
-    SUBJECT = "TY-003"
-    input_file = f"data/TY_subjects/{SUBJECT}/gas_highreso.nii"
-    output_file = f"data/TY_subjects/{SUBJECT}/{SUBJECT}_mask_trachea_lung_corrected.nii"
+    SUBJECT = "007-001"
+    input_file = f"data/12-12-25-subject-comparison/{SUBJECT}/gas.nii" #GAS IMAGE
+    output_file = f"data/12-12-25-subject-comparison/{SUBJECT}/{SUBJECT}_mask_trachea_lung_corrected.nii"
     otsu_hysteresis_segment(input_file, output_file)

@@ -27,6 +27,7 @@ from utils import (
     signal_utils,
     spect_utils,
     traj_utils,
+    trachea_mask,
 )
 
 
@@ -447,31 +448,82 @@ class Subject(object):
         )
 
     def segmentation(self):
-        """Segment the thoracic cavity."""
+        """Segment the thoracic cavity (lung mask) and build mask_include_trachea."""
         if self.config.segmentation_key == constants.SegmentationKey.CNN_VENT.value:
-            logging.info("Performing neural network segmenation.")
-            self.mask = segmentation.predict(self.image_gas_highreso)
-            self.mask_include_trachea = np.squeeze(
-                    np.array(nib.load(self.config.trachea_plus_lung_mask_filepath).get_fdata())
-                ).astype(bool)
+            logging.info("Performing neural network segmentation.")
+            self.mask = segmentation.predict(self.image_gas_highreso).astype(bool)
+
+            # Build include-trachea mask automatically (unless user provided one)
+            self.mask_include_trachea = self._get_or_make_mask_include_trachea(base_lung_mask=self.mask)
+
         elif self.config.segmentation_key == constants.SegmentationKey.SKIP.value:
-            self.mask = np.ones_like(self.image_gas_highreso)
-        elif (
-            self.config.segmentation_key == constants.SegmentationKey.MANUAL_VENT.value
-        ):
-            logging.info("Loading mask file specified by the user.")
-            try:
-                # Load small mask
-                loaded_mask = np.squeeze(np.array(nib.load(self.config.manual_seg_filepath).get_fdata())).astype(bool)
-                if np.sum(loaded_mask) == 0:
-                    raise ValueError("Loaded mask is empty (sum=0).")
-                self.mask = loaded_mask
-                self.mask_include_trachea = np.squeeze(
-                    np.array(nib.load(self.config.trachea_plus_lung_mask_filepath).get_fdata())).astype(bool)
-            except ValueError:
-                logging.error("Invalid mask nifti file.")
+            self.mask = np.ones_like(self.image_gas_highreso, dtype=bool)
+            self.mask_include_trachea = self.mask.copy()
+
+        elif self.config.segmentation_key == constants.SegmentationKey.MANUAL_VENT.value:
+            logging.info("Loading manual mask file specified by the user.")
+            loaded_mask = np.squeeze(np.array(nib.load(self.config.manual_seg_filepath).get_fdata())).astype(bool)
+            if np.sum(loaded_mask) == 0:
+                raise ValueError("Loaded manual mask is empty (sum=0).")
+            self.mask = loaded_mask
+
+            self.mask_include_trachea = self._get_or_make_mask_include_trachea(base_lung_mask=self.mask)
+
         else:
             raise ValueError("Invalid segmentation key.")
+        
+
+    def _get_or_make_mask_include_trachea(self, base_lung_mask: np.ndarray) -> np.ndarray:
+        """
+        Returns mask_include_trachea. Priority:
+        1) If user provided an existing filepath -> load it.
+        2) Else if auto enabled -> generate trachea mask from gas_highreso nifti and union with base_lung_mask.
+        3) Else -> just return base_lung_mask.
+        """
+        # 1) User override path exists
+        user_path = str(getattr(self.config, "trachea_plus_lung_mask_filepath", "") or "").strip()
+        if user_path and os.path.exists(user_path):
+            logging.info(f"Loading mask_include_trachea from: {user_path}")
+            return np.squeeze(np.array(nib.load(user_path).get_fdata())).astype(bool)
+
+        # 2) Auto-generate if enabled
+        if not getattr(self.config, "auto_make_trachea_plus_lung_mask", False):
+            logging.info("auto_make_trachea_plus_lung_mask is False; using base lung mask only.")
+            return base_lung_mask.astype(bool)
+
+        # We need a NIfTI on disk to reuse affine/header.
+        # reconstruction_gas() already exports tmp/image_gas_highreso.nii in your code.
+        gas_nii_path = "tmp/image_gas_highreso.nii"
+        if not os.path.exists(gas_nii_path):
+            # fallback: try the saved one in gx folder if you moved it, or raise
+            raise FileNotFoundError(
+                f"Expected {gas_nii_path} to exist for auto trachea mask generation."
+            )
+
+        trach_mask = trachea_mask.otsu_hysteresis_mask_from_nifti(gas_nii_path)  # uses defaults
+
+        logging.info("Auto-generating trachea mask from tmp/image_gas_highreso.nii (Otsu+hysteresis).")
+        trach_mask = trachea_mask.otsu_hysteresis_mask_from_nifti(gas_nii_path, params=params)
+
+        combined = trachea_mask.union_masks(base_lung_mask.astype(bool), trach_mask.astype(bool))
+
+        # Save it somewhere deterministic
+        out_dir = str(getattr(self.config, "trachea_plus_lung_mask_output_dir", "") or "").strip()
+        if not out_dir:
+            out_dir = "tmp"
+        out_path = os.path.join(out_dir, f"{self.config.subject_id}_mask_include_trachea.nii")
+
+        trachea_mask.save_mask_like(gas_nii_path, combined, out_path)
+        logging.info(f"Saved auto mask_include_trachea to: {out_path}")
+
+        # Also store path back into config for traceability
+        try:
+            self.config.trachea_plus_lung_mask_filepath = out_path
+        except Exception:
+            pass
+
+        return combined
+
 
     def registration(self):
         """Register moving image to target image.

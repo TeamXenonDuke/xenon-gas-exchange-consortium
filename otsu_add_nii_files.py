@@ -60,9 +60,9 @@ def combine_binary_nii_files(file1, file2, output_file):
     print(f"Combined binary NIfTI saved to {output_file}")
 
 # Example usage
-SUBJECT = "TY-003"
-file1 = f"data/TY_subjects/{SUBJECT}/{SUBJECT}_mask_trachea_lung_corrected.nii"
-file2 = f"data/TY_subjects/{SUBJECT}/mask_reg_corrected.nii"
-output_file = f"data/TY_subjects/{SUBJECT}/{SUBJECT}_mask_big_corrected.nii"
+SUBJECT = "102-001_w00"
+file1 = f"data/12-12-25-subject-comparison/{SUBJECT}/{SUBJECT}_mask_trachea_lung_corrected.nii" #file you just created
+file2 = f"data/12-12-25-subject-comparison/{SUBJECT}/mask_corrected.nii" #manual segmentation file
+output_file = f"data/12-12-25-subject-comparison/{SUBJECT}/{SUBJECT}_mask_big_corrected.nii" #combined output file
 
 combine_binary_nii_files(file1, file2, output_file)
