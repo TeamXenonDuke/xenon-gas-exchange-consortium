@@ -4,6 +4,7 @@ import numpy as np
 from skimage.filters import threshold_otsu
 from skimage.measure import label
 from skimage.morphology import remove_small_objects, binary_closing, ball
+from typing import Optional
 
 
 def _skew_standardized(x: np.ndarray) -> float:
@@ -15,9 +16,12 @@ def _skew_standardized(x: np.ndarray) -> float:
     return float(np.mean(z3))
 
 
-def otsu_hysteresis_mask_from_nifti(input_path: str, params: dict | None = None) -> np.ndarray:
+def otsu_hysteresis_mask_from_nifti(
+    input_path: str,
+    params: Optional[dict] = None
+) -> np.ndarray:
     """Return boolean mask (same shape) from a NIfTI image on disk."""
-    
+
     if params is None:
         params = {}
 

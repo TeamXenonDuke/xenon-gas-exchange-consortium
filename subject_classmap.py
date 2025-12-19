@@ -472,51 +472,71 @@ class Subject(object):
         else:
             raise ValueError("Invalid segmentation key.")
         
-
     def _get_or_make_mask_include_trachea(self, base_lung_mask: np.ndarray) -> np.ndarray:
         """
-        Returns mask_include_trachea. Priority:
-        1) If user provided an existing filepath -> load it.
-        2) Else if auto enabled -> generate trachea mask from gas_highreso nifti and union with base_lung_mask.
-        3) Else -> just return base_lung_mask.
-        """
-        # 1) User override path exists
-        user_path = str(getattr(self.config, "trachea_plus_lung_mask_filepath", "") or "").strip()
-        if user_path and os.path.exists(user_path):
-            logging.info(f"Loading mask_include_trachea from: {user_path}")
-            return np.squeeze(np.array(nib.load(user_path).get_fdata())).astype(bool)
+        Return mask_include_trachea (lung + trachea).
 
-        # 2) Auto-generate if enabled
+        Priority:
+        1) If user provided an existing filepath -> load it.
+        2) Else if auto enabled -> generate trachea mask from reconstructed gas NIfTI and union with base_lung_mask.
+        3) Else -> just return base_lung_mask.
+
+        Notes:
+        - Avoids requiring config trachea_mask_params (uses defaults inside utils.trachea_mask).
+        - Writes a deterministic output file if auto-generated.
+        """
+        base_lung_mask = np.asarray(base_lung_mask).astype(bool)
+
+        user_path = str(getattr(self.config, "trachea_plus_lung_mask_filepath", "") or "").strip()
+        if user_path:
+            try:
+                if os.path.exists(user_path):
+                    logging.info(f"Loading mask_include_trachea from: {user_path}")
+                    loaded = np.squeeze(np.array(nib.load(user_path).get_fdata())).astype(bool)
+                    if loaded.shape != base_lung_mask.shape:
+                        raise ValueError(
+                            f"mask_include_trachea shape mismatch: loaded {loaded.shape} vs base {base_lung_mask.shape}"
+                        )
+                    if loaded.sum() == 0:
+                        raise ValueError("Loaded mask_include_trachea is empty.")
+                    return loaded
+            except Exception as e:
+                logging.warning(
+                    f"Failed to load provided trachea_plus_lung_mask_filepath='{user_path}'. "
+                    f"Falling back to auto-generation if enabled. Reason: {e}"
+                )
+
         if not getattr(self.config, "auto_make_trachea_plus_lung_mask", False):
             logging.info("auto_make_trachea_plus_lung_mask is False; using base lung mask only.")
-            return base_lung_mask.astype(bool)
+            return base_lung_mask
 
-        # We need a NIfTI on disk to reuse affine/header.
-        # reconstruction_gas() already exports tmp/image_gas_highreso.nii in your code.
         gas_nii_path = "tmp/image_gas_highreso.nii"
         if not os.path.exists(gas_nii_path):
-            # fallback: try the saved one in gx folder if you moved it, or raise
             raise FileNotFoundError(
                 f"Expected {gas_nii_path} to exist for auto trachea mask generation."
             )
 
-        trach_mask = trachea_mask.otsu_hysteresis_mask_from_nifti(gas_nii_path)  # uses defaults
-
         logging.info("Auto-generating trachea mask from tmp/image_gas_highreso.nii (Otsu+hysteresis).")
-        trach_mask = trachea_mask.otsu_hysteresis_mask_from_nifti(gas_nii_path, params=params)
 
-        combined = trachea_mask.union_masks(base_lung_mask.astype(bool), trach_mask.astype(bool))
+        trach_mask = trachea_mask.otsu_hysteresis_mask_from_nifti(gas_nii_path)
+        trach_mask = np.asarray(trach_mask).astype(bool)
 
-        # Save it somewhere deterministic
+        if trach_mask.shape != base_lung_mask.shape:
+            raise ValueError(
+                f"Auto trachea mask shape mismatch: {trach_mask.shape} vs base {base_lung_mask.shape}"
+            )
+
+        combined = np.logical_or(base_lung_mask, trach_mask)
+
         out_dir = str(getattr(self.config, "trachea_plus_lung_mask_output_dir", "") or "").strip()
         if not out_dir:
             out_dir = "tmp"
-        out_path = os.path.join(out_dir, f"{self.config.subject_id}_mask_include_trachea.nii")
+        os.makedirs(out_dir, exist_ok=True)
 
+        out_path = os.path.join(out_dir, f"{self.config.subject_id}_mask_include_trachea.nii")
         trachea_mask.save_mask_like(gas_nii_path, combined, out_path)
         logging.info(f"Saved auto mask_include_trachea to: {out_path}")
 
-        # Also store path back into config for traceability
         try:
             self.config.trachea_plus_lung_mask_filepath = out_path
         except Exception:

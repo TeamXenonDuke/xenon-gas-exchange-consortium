@@ -44,11 +44,8 @@ class Config(config_dict.ConfigDict):
         self.bag_volume = "None"
         self.segmentation_key = constants.SegmentationKey.CNN_VENT.value
         self.manual_seg_filepath = ""
-
         # default 99th percentile rescaling method
         self.vent_normalization_method = constants.NormalizationMethods.PERCENTILE_MASKED
-
-        self.trachea_plus_lung_mask_filepath = "" # optional user override of big mask
         # auto-generate if filepath missing or file not found
         self.auto_make_trachea_plus_lung_mask = True
         # where to write it if auto-generated ("" -> default to tmp/)
@@ -68,6 +65,7 @@ class Config(config_dict.ConfigDict):
         self.manual_reg_filepath = ""
         self.processes = Process()
         self.recon = Recon()
+        self.trachea_plus_lung_mask_filepath = "" # optional user override of big mask
 
 
 class Recon(object):
