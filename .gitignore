@@ -177,6 +177,11 @@ assets/tests/**/**.mat
 assets/tests/**/**.pptx
 assets/tests/**/**.dat
 assets/tests/**/**.csv
+!assets/histogram_profiles/**/*.npy
+
+
+
+
 # ignore the data folder
 data/*
 !data/.gitkeep
