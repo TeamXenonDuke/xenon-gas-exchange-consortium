@@ -67,8 +67,6 @@ class Subject(object):
         traj_gas (np.array): gas-phase trajectory of shape (n_projections, n_points, 3)
         traj_scaling_factor (float): scaling factor for trajectory
         traj_ute (np.array): UTE proton trajectory of shape
-        vol_correction_factor_rbc (float): rbc volume correction factor
-        vol_correction_factor_membrane (float): membrane volume correction factor
     """
 
     def __init__(self, config: base_config.Config):
@@ -258,15 +256,17 @@ class Subject(object):
                 self.traj_scaling_factor = (
                     0.903  # cincinnati requires a unique scaling factor
                 )
-        """Calculate the number of frames to skip at the beginning of scan:
-          if the prep_pulse = 'true', there is no skip frames n_skip_start=0; else calculated by dissolved flip angle""" 
-        if (self.dict_dis[constants.IOFields.PREP_PULSES] == constants.PrepPulses.PREP_PULSES.value):
-            self.config.recon.n_skip_start = 0
-            logging.info(f"get prep_pulses: value={self.dict_dis[constants.IOFields.PREP_PULSES]}")
-        else:
-            # Calculate the number of frames to skip at the beginning by dissolved flip angle
-            if np.isnan(self.config.recon.n_skip_start):
-                self.config.recon.n_skip_start = recon_utils.skip_from_flipangle(self.dict_dis[constants.IOFields.FA_DIS])
+        self.traj_scaling_factor = 0.903;
+        self.traj_dissolved = self.dict_dis[constants.IOFields.TRAJ][1]
+        self.traj_gas = self.dict_dis[constants.IOFields.TRAJ][0]
+        #self.recon_matrix_size = self.dict_dis["matrix_size"]
+        self.recon_matrix_size = 64
+        #path = "/media/peppermint/T9/Fixed_Traj/CCHMC_Recons/ILD-HC-023-data-share-Duke/traj_before_rescaling.npy"
+        path = "/Users/hong/Pipeline/patients/projects/Cincinnati/Cinci_Manual_FIx/traj_before_rescaling.npy"
+        new_traj_bf = np.load(path)
+        self.traj_gas= new_traj_bf.copy();
+        self.traj_dissolved= new_traj_bf.copy();
+        logging.info("############# Reconstructing ****New**** scan Cin data ############" )
 
         # truncate gas and dissolved data and trajectories
         self.data_dissolved, self.traj_dissolved = pp.truncate_data_and_traj(
@@ -297,26 +297,24 @@ class Subject(object):
 
         # prepare proton data and trajectories
         if self.config.recon.recon_proton:
-            if getattr(self, "dict_ute", None):
-                # get or generate trajectories
-                if constants.IOFields.TRAJ not in self.dict_ute.keys():
-                    self.traj_ute = pp.prepare_traj(self.dict_ute)
-                else:
-                    self.traj_ute = self.dict_ute[constants.IOFields.TRAJ]
-
-                # get proton data
-                self.data_ute = self.dict_ute[constants.IOFields.FIDS]
-
-                # remove noisy FIDs
-                if self.config.recon.remove_noisy_projections:
-                    self.data_ute, self.traj_ute = pp.remove_noisy_projections(
-                        self.data_ute, self.traj_ute
-                    )
-
-                # rescale trajectories
-                self.traj_ute *= self.traj_scaling_factor
+            # get or generate trajectories
+            if constants.IOFields.TRAJ not in self.dict_ute.keys():
+                self.traj_ute = pp.prepare_traj(self.dict_ute)
             else:
-                logging.info("No dict_ute")    
+                self.traj_ute = self.dict_ute[constants.IOFields.TRAJ]
+
+            # get proton data
+            self.data_ute = self.dict_ute[constants.IOFields.FIDS]
+
+            # remove noisy FIDs
+            if self.config.recon.remove_noisy_projections:
+                self.data_ute, self.traj_ute = pp.remove_noisy_projections(
+                    self.data_ute, self.traj_ute
+                )
+
+            # rescale trajectories
+            self.traj_ute *= self.traj_scaling_factor
+
         
         # Choose appropriate reference distribution
         self.reference_data_key = self.config.reference_data_key
@@ -918,6 +916,8 @@ class Subject(object):
 
     def generate_figures(self):
         """Export image figures."""
+        #Issues with index_start, index_skip, index_end; all equal 0
+        #everything fine up to this point as far as I can tell
         index_start, index_skip = plot.get_plot_indices(self.mask)
         proton_reg = img_utils.normalize(
             np.abs(self.image_proton),
