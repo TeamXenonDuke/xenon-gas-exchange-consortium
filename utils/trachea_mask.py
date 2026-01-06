@@ -17,7 +17,7 @@ def _skew_standardized(x: np.ndarray) -> float:
 
 
 def otsu_hysteresis_mask_from_nifti(
-    input_path: str,
+    input_image: np.ndarray,
     params: Optional[dict] = None
 ) -> np.ndarray:
     """Return boolean mask (same shape) from a NIfTI image on disk."""
@@ -32,8 +32,7 @@ def otsu_hysteresis_mask_from_nifti(
     min_size = int(params.get("MIN_SIZE", 25))
     radius = int(params.get("RADIUS", 1))
 
-    nii = nib.load(input_path)
-    data = nii.get_fdata()
+    data = input_image
 
     vox = data[data > 0]
     if vox.size == 0:

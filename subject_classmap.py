@@ -30,6 +30,7 @@ from utils import (
     mask_include_trachea,
 )
 
+from utils.mask_include_trachea import get_or_make_mask_include_trachea
 
 class Subject(object):
     """Module to for processing gas exchange imaging.
@@ -467,13 +468,16 @@ class Subject(object):
                 raise ValueError("Loaded manual mask is empty (sum=0).")
             self.mask = loaded_mask
 
-            self.mask_include_trachea = self._get_or_make_mask_include_trachea(base_lung_mask=self.mask)
+            self.mask_include_trachea = mask_include_trachea.get_or_make_mask_include_trachea(
+            config=self.config,
+            base_lung_mask=self.mask,
+            image_gas_highreso=np.abs(self.image_gas_highreso),
+            gas_nii_path="tmp/image_gas_highreso.nii",
+        )
 
         else:
             raise ValueError("Invalid segmentation key.")
         
-    # subject_classmap.py
-    from utils.mask_include_trachea import get_or_make_mask_include_trachea
 
     def _get_or_make_mask_include_trachea(self, base_lung_mask: np.ndarray) -> np.ndarray:
         return get_or_make_mask_include_trachea(
