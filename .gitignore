@@ -209,3 +209,6 @@ recon/cs/**
 testing/config/*
 testing/subjects/*
 testing/expected/*
+
+make_healthy_hist_profile.py
+visualize_hist.py

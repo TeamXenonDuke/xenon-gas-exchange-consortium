@@ -45,7 +45,7 @@ class Config(config_dict.ConfigDict):
         self.segmentation_key = constants.SegmentationKey.CNN_VENT.value
         self.manual_seg_filepath = ""
         # default 99th percentile rescaling method
-        self.vent_normalization_method = constants.NormalizationMethods.PERCENTILE_MASKED
+        self.vent_normalization_method = constants.NormalizationMethods.FRAC_VENT
         # auto-generate if filepath missing or file not found
         self.auto_make_trachea_plus_lung_mask = True
         # where to write it if auto-generated ("" -> default to tmp/)

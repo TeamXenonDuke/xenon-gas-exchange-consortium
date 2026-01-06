@@ -518,7 +518,7 @@ class Subject(object):
 
         logging.info("Auto-generating trachea mask from tmp/image_gas_highreso.nii (Otsu+hysteresis).")
 
-        trach_mask = trachea_mask.otsu_hysteresis_mask_from_nifti(gas_nii_path)
+        trach_mask = trachea_mask.otsu_hysteresis_mask_from_nifti(self.image_gas_highreso)
         trach_mask = np.asarray(trach_mask).astype(bool)
 
         if trach_mask.shape != base_lung_mask.shape:
@@ -628,7 +628,7 @@ class Subject(object):
 
         if self.config.vent_normalization_method == constants.NormalizationMethods.PERCENTILE_MASKED:
             self.image_gas_binned = binning.linear_bin(
-                image=img_utils.normalize(self.image_gas_cor, self.mask_include_trachea, bag_volume=self.config.bag_volume, method=constants.NormalizationMethods.PERCENTILE_MASKED),
+                image=img_utils.normalize(self.image_gas_cor, np.array([0.0]), bag_volume=self.config.bag_volume, method=constants.NormalizationMethods.PERCENTILE_MASKED),
                 mask=self.mask,
                 thresholds=self.reference_data['threshold_vent'],
             )
