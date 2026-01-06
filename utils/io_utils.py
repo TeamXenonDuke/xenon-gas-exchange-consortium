@@ -166,6 +166,7 @@ def get_dis_mrd_files(path: str) -> str:
         return (
             glob.glob(os.path.join(path, "**dixon***.h5"))
             + glob.glob(os.path.join(path, "**dixon***.mrd"))
+            + glob.glob(os.path.join(path, "**DukeIPF_Gas_Exchange***.h5"))
         )[0]
     except:
         raise ValueError("Can't find MRD file in path.")
@@ -183,6 +184,7 @@ def get_ute_mrd_files(path: str) -> str:
         return (
             glob.glob(os.path.join(path, "**proton***.h5"))
             + glob.glob(os.path.join(path, "**proton***.mrd"))
+            + glob.glob(os.path.join(path, "**Mask_Gas_Exchange***.h5"))
         )[0]
     except:
         raise ValueError("Can't find MRD file in path.")
@@ -441,13 +443,14 @@ def read_dis_mrd(path: str, multi_echo: bool) -> Dict[str, Any]:
     except:
         raise ValueError("Invalid mrd file.")
 
-    data_dict = mrd_utils.get_gx_data(dataset, multi_echo)
+    # data_dict = mrd_utils.get_gx_data(dataset, multi_echo)
+    data_dict = mrd_utils.get_gx_data_cinci(dataset)
     return {
         constants.IOFields.AGE: np.nan,
         constants.IOFields.SEX: np.nan,
         constants.IOFields.HEIGHT: np.nan,
         constants.IOFields.BANDWIDTH: np.nan,
-        constants.IOFields.SAMPLE_TIME: mrd_utils.get_sample_time_gas_exchange(dataset),
+        constants.IOFields.SAMPLE_TIME: mrd_utils.get_sample_time(dataset),
         constants.IOFields.FA_DIS: mrd_utils.get_flipangle_dissolved(header),
         constants.IOFields.FA_GAS: mrd_utils.get_flipangle_gas(header),
         constants.IOFields.FIDS: data_dict[constants.IOFields.FIDS],

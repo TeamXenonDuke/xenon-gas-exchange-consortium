@@ -76,49 +76,6 @@ def get_sample_time(dataset: ismrmrd.hdf5.Dataset) -> float:
     acq_header = dataset.read_acquisition(0).getHead()
     return acq_header.sample_time_us * 1e-6
 
-def get_sample_time_gas_exchange(dataset: ismrmrd.hdf5.Dataset) -> float:
-    """
-    Get the sample (dwell) time from the MRD dataset.
-
-    Reads from the first non-bonus spectrum acquisition.
-
-    Args:
-        dataset (ismrmrd.hdf5.Dataset): MRD data object
-    Returns:
-        float: dwell time in seconds
-    """
-    n_acq = dataset.number_of_acquisitions()
-    for i in range(n_acq):
-        acq = dataset.read_acquisition(i)
-        head = acq.getHead()
-
-        if head.measurement_uid != 1:
-            return head.sample_time_us * 1e-6
-
-    raise RuntimeError("No valid acquisitions found to determine sample time.")
-
-def get_sample_time_bonus_spectra(dataset: ismrmrd.hdf5.Dataset) -> float:
-    """
-    Get the sample (dwell) time for bonus spectra from the MRD dataset.
-
-    Uses the first acquisition identified as a bonus spectrum.
-
-    Args:
-        dataset (ismrmrd.hdf5.Dataset): MRD data object
-
-    Returns:
-        float: dwell time in seconds
-    """
-    n_acq = dataset.number_of_acquisitions()
-    for i in range(n_acq):
-        acq = dataset.read_acquisition(i)
-        head = acq.getHead()
-
-        if head.measurement_uid: 
-            return head.sample_time_us * 1e-6
-
-    raise RuntimeError("No bonus spectra acquisitions found to determine sample time.")
-
 
 def get_dyn_fids(dataset: ismrmrd.hdf5.Dataset, n_skip_end: int = 20) -> np.ndarray:
     """Get the dissolved phase FIDS used for dyn. spectroscopy from mrd object.
@@ -152,14 +109,24 @@ def get_excitation_freq(
         header.userParameters.userParameterLong[i].name
         for i in range(len(header.userParameters.userParameterLong))
     ]
-    freq_excitation_hz = float(
-        header.userParameters.userParameterLong[
-            var_names.index(constants.IOFields.XE_DISSOLVED_OFFSET_FREQUENCY)
-        ].value
-    )
-    freq_excitation_ppm = (freq_excitation_hz) / (
+
+    try:
+        freq_excitation_hz = float(
+            header.userParameters.userParameterLong[
+                var_names.index(constants.IOFields.XE_DISSOLVED_OFFSET_FREQUENCY)
+            ].value
+        )
+        freq_excitation_ppm = (freq_excitation_hz) / (
         get_field_strength(header) * constants.GRYOMAGNETIC_RATIO
     )
+
+    except:
+        freq_excitation_ppm = float(
+            header.userParameters.userParameterDouble[0].value
+        )
+
+
+
     return freq_excitation_ppm
 
 
@@ -178,11 +145,18 @@ def get_center_freq(header: ismrmrd.xsd.ismrmrdschema.ismrmrd.ismrmrdHeader) -> 
         header.userParameters.userParameterLong[i].name
         for i in range(len(header.userParameters.userParameterLong))
     ]
-    xe_center_frequency = float(
-        header.userParameters.userParameterLong[
-            var_names.index(constants.IOFields.XE_CENTER_FREQUENCY)
-        ].value
-    )
+
+    try:
+        xe_center_frequency = float(
+            header.userParameters.userParameterLong[
+                var_names.index(constants.IOFields.XE_CENTER_FREQUENCY)
+            ].value
+        )
+    except:
+        xe_center_frequency = float(
+            header.userParameters.userParameterLong[0].value
+        )
+    
     return xe_center_frequency * 1e-6
 
 
@@ -207,7 +181,13 @@ def get_scan_date(header: ismrmrd.xsd.ismrmrdschema.ismrmrd.ismrmrdHeader) -> st
     Returns:
         str: scan date in MM-DD-YYYY format.
     """
-    xml_date = header.studyInformation.studyDate
+
+
+
+    try:
+        xml_date = header.studyInformation.studyDate
+    except:
+        xml_date =  header.measurementInformation.seriesDate
     YYYY = str(xml_date[0])
     MM = str(xml_date[1])
     DD = str(xml_date[2])
@@ -370,9 +350,13 @@ def get_TR_dissolved(header: ismrmrd.xsd.ismrmrdschema.ismrmrd.ismrmrdHeader) ->
     Returns:
         TR in seconds (float)
     """
-    tr_gas_to_dissolved = header.sequenceParameters.TR[0]
-    tr_dissolved_to_gas = header.sequenceParameters.TR[1]
-    return (tr_gas_to_dissolved + tr_dissolved_to_gas) * 1e-3
+    try:
+        tr_gas_to_dissolved = header.sequenceParameters.TR[0]
+        tr_dissolved_to_gas = header.sequenceParameters.TR[1]
+        return (tr_gas_to_dissolved + tr_dissolved_to_gas) * 1e-3
+    except:
+        tr_gas_to_dissolved = header.sequenceParameters.TR[0]
+        return (tr_gas_to_dissolved + tr_gas_to_dissolved ) * 1e-3
 
 
 def get_gx_data(dataset: ismrmrd.hdf5.Dataset, multi_echo: bool) -> Dict[str, Any]:
@@ -391,42 +375,43 @@ def get_gx_data(dataset: ismrmrd.hdf5.Dataset, multi_echo: bool) -> Dict[str, An
     """
     # get the raw FIDs, contrast labels, and bonus spectra labels
     raw_fids = []
-    raw_traj = []
-    bonus_spectra_fids = []
-
-
     contrast_labels = []
-    bs_contrast_labels = []
-
+    bonus_spectra_labels = []
     set_labels = []
     set_included = True
     n_projections = dataset.number_of_acquisitions()
     for i in range(0, int(n_projections)):
         acquisition_header = dataset.read_acquisition(i).getHead()
+        raw_fids.append(dataset.read_acquisition(i).data[0].flatten())
+        contrast_labels.append(acquisition_header.idx.contrast)
+        bonus_spectra_labels.append(acquisition_header.measurement_uid)
+        try:
+            set_labels.append(acquisition_header.idx.set)
+        except:
+            logging.info("#############################################")
+            logging.info("Unable to find set paramater from mrd object.")
+            set_included = False
+    raw_fids = np.asarray(raw_fids)
+    contrast_labels = np.asarray(contrast_labels)
+    bonus_spectra_labels = np.asarray(bonus_spectra_labels)
+    set_labels = np.asarray(set_labels)
 
-        bonus_spectra_flag = acquisition_header.measurement_uid;
+    # remove bonus spectra
+    raw_fids_truncated = raw_fids[
+        bonus_spectra_labels == constants.BonusSpectraLabels.NOT_BONUS, :
+    ]
+    contrast_labels_truncated = contrast_labels[
+        bonus_spectra_labels == constants.BonusSpectraLabels.NOT_BONUS
+    ]
+    set_labels_truncated = set_labels[
+        bonus_spectra_labels == constants.BonusSpectraLabels.NOT_BONUS
+    ]
 
-        if bonus_spectra_flag:
-            bonus_spectra_fids.append(dataset.read_acquisition(i).data[0].flatten())
-            bs_contrast_labels.append(acquisition_header.idx.contrast)
+    # get the trajectories
+    raw_traj = np.empty((raw_fids_truncated.shape[0], raw_fids_truncated.shape[1], 3))
+    for i in range(0, raw_fids_truncated.shape[0]):
+        raw_traj[i, :, :] = dataset.read_acquisition(i).traj
 
-        else:
-
-            raw_fids.append(dataset.read_acquisition(i).data[0].flatten())
-            contrast_labels.append(acquisition_header.idx.contrast)
-            raw_traj.append(dataset.read_acquisition(i).traj)
-            try:
-                set_labels.append(acquisition_header.idx.set)
-            except:
-                set_included = False
-
-    bonus_spectra_fids = np.asarray(bonus_spectra_fids)
-    bs_contrast_labels = np.asarray(bs_contrast_labels)
-
-    raw_fids_truncated = np.asarray(raw_fids)
-    contrast_labels_truncated = np.asarray(contrast_labels)
-    set_labels_truncated = np.asarray(set_labels)
-    raw_traj = np.asarray(raw_traj)
 
     if(set_included):
         unique_set_labels = np.unique(set_labels_truncated)
@@ -450,13 +435,11 @@ def get_gx_data(dataset: ismrmrd.hdf5.Dataset, multi_echo: bool) -> Dict[str, An
                 (contrast_labels_truncated == constants.ContrastLabels.DISSOLVED) & (set_labels_truncated == set_label)
             ]
 
-            if gas_fids_set.size > 0 and not np.all(gas_fids_set == 0):
-                gas_fids_all.append(np.expand_dims(gas_fids_set, axis=-1))
-                gas_trajectories_all.append(np.expand_dims(gas_traj_set, axis=-1))
-            if dis_fids_set.size > 0 and not np.all(dis_fids_set == 0):
-                dis_fids_all.append(np.expand_dims(dis_fids_set, axis=-1))
-                dis_trajectories_all.append(np.expand_dims(dis_traj_set, axis=-1))
-
+            # Append gas_fids_set, dis_fids_set, and traj_set with an additional axis to represent the set dimension
+            gas_fids_all.append(np.expand_dims(gas_fids_set, axis=-1))
+            dis_fids_all.append(np.expand_dims(dis_fids_set, axis=-1))
+            gas_trajectories_all.append(np.expand_dims(gas_traj_set, axis=-1))
+            dis_trajectories_all.append(np.expand_dims(dis_traj_set, axis=-1))
 
         gas_fids_all = np.concatenate(gas_fids_all, axis=-1)
         dis_fids_all = np.concatenate(dis_fids_all, axis=-1)
@@ -502,7 +485,54 @@ def get_gx_data(dataset: ismrmrd.hdf5.Dataset, multi_echo: bool) -> Dict[str, An
             constants.IOFields.TRAJ: all_traj,
         }
 
+def get_gx_data_cinci(dataset: ismrmrd.hdf5.Dataset) -> Dict[str, Any]:
 
+    # Reading the dataset
+    dset = dataset
+    nFids = dset.number_of_acquisitions()
+
+    # Getting Information from the Header associated with the scan
+    header = ismrmrd.xsd.CreateFromDocument(dset.read_xml_header())
+  
+
+    # Prepare the K-space and trajectories >>>>>>>>>>>>>>
+    #%% ======================= Reshaping K-space =============================
+    k_space_reshaped_all = []
+    nFrames = dset.number_of_acquisitions()
+    npts_fid = dset.read_acquisition(0).data[0].shape[0]  # 64 for cchmc
+
+    for i in range(0, nFrames):
+        k_space_reshaped = dset.read_acquisition(i).data[0].reshape(1, npts_fid)
+        k_space_reshaped_all.append(k_space_reshaped)
+
+    data_dixon = np.concatenate(k_space_reshaped_all, axis=0)
+
+    # Separating Gas and Dissolved Fids
+    data_gas = data_dixon[0::2, :]
+    nFrames_gas_all = data_gas.shape[0]
+
+    data_dis_all = data_dixon[1::2, :]
+    data_dis = data_dis_all
+
+
+
+    #%% ===================== Reshaping trajectories ===========================
+    traj_list_all = []
+    traj_all = np.empty((nFrames, npts_fid, 3))
+
+    for i in range(0, nFrames):
+        traj_all[i, :, :] = dset.read_acquisition(i).traj
+
+    # %% Separate Gas and Dissolved Trajectories - here gas and dissolved trajs are same
+    traj_gas = traj_all[0::2, :].astype(np.float64)
+    traj_dis = traj_all[1::2, :].astype(np.float64)
+
+    return {
+        constants.IOFields.FIDS: data_dixon,
+        constants.IOFields.FIDS_GAS: data_gas, 
+        constants.IOFields.FIDS_DIS: data_dis,
+        constants.IOFields.TRAJ: [traj_gas,traj_dis],
+    }
 
 def get_ute_data(dataset: ismrmrd.hdf5.Dataset) -> Dict[str, Any]:
     """Get the FID acquisition data from proton MRD file.
