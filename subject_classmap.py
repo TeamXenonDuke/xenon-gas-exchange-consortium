@@ -628,7 +628,7 @@ class Subject(object):
 
         if self.config.vent_normalization_method == constants.NormalizationMethods.PERCENTILE_MASKED:
             self.image_gas_binned = binning.linear_bin(
-                image=img_utils.normalize(self.image_gas_cor, np.array([0.0]), bag_volume=self.config.bag_volume, method=constants.NormalizationMethods.PERCENTILE_MASKED),
+                image=img_utils.normalize(self.image_gas_cor, self.mask, bag_volume=self.config.bag_volume, method=constants.NormalizationMethods.PERCENTILE_MASKED),
                 mask=self.mask,
                 thresholds=self.reference_data['threshold_vent'],
             )

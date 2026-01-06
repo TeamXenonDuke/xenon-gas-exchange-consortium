@@ -48,8 +48,8 @@ class Config(config_dict.ConfigDict):
         self.vent_normalization_method = constants.NormalizationMethods.FRAC_VENT
         # auto-generate if filepath missing or file not found
         self.auto_make_trachea_plus_lung_mask = True
-        # where to write it if auto-generated ("" -> default to tmp/)
-        self.trachea_plus_lung_mask_output_dir = ""
+        # where to write it if auto-generated
+        self.trachea_plus_lung_mask_output_dir = self.data_dir
 
         # Additional options
         self.reference_data_key = constants.ReferenceDataKey.DUKE_REFERENCE.value
