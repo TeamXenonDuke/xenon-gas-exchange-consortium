@@ -74,11 +74,13 @@ h2 {
 .space {
   height: 35px;
 }
-.top-right {
+.top-left {
   position: relative;
   top: -180px;
-  right: 30px;
+  left: 48px;
   color: #353131;
+  margin-right: 8px; 
+  font-weight: 900;
 }
 .predict-values {
   position: relative;

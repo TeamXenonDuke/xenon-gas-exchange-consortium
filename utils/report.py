@@ -24,16 +24,22 @@ PDF_OPTIONS = {
 }
 
 
+
 def get_git_branch() -> str:
     """Get the current git branch.
 
     Returns:
-        str: current git branch, if not in git repo, return "unknown"
+        str: current git branch and short commit hash, 
+             if not in git repo, return "unknown"
     """
     try:
-        return Repo("./").active_branch.name
-    except:
+        repo = Repo("./")
+        commit_hash_short = repo.head.commit.hexsha[:7]
+        branch = repo.active_branch.name
+        return f"{branch}@{commit_hash_short}"
+    except Exception:
         return "unknown"
+
 
 
 def format_dict(dict_stats: Dict[str, Any]) -> Dict[str, Any]:

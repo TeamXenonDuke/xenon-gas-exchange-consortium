@@ -21,12 +21,11 @@ class Config(base_config.Config):
     def __init__(self):
         """Initialize config parameters."""
         super().__init__()
-        self.data_dir = ""
+        self.data_dir = "/Users/mummy/Desktop/top_secret"
         self.segmentation_key = constants.SegmentationKey.CNN_VENT.value
-        #self.manual_seg_filepath = os.path.join(self.data_dir, "mask_reg_corrected.nii")
-        self.subject_id = ""
-        self.rbc_m_ratio = 0.0
-        self.multi_echo = False
+        self.manual_seg_filepath = os.path.join(self.data_dir, "mask.nii")
+        self.subject_id = "mystery_sub"
+        self.rbc_m_ratio = 0.444
         self.recon = Recon()
 
 
@@ -47,7 +46,7 @@ class Recon(base_config.Recon):
     def __init__(self):
         """Initialize the reconstruction parameters."""
         super().__init__()
-        self.scan_type = constants.ScanType.NORMALDIXON.value
+        self.scan_type = constants.ScanType.FASTDIXON.value
         self.remove_noisy_projections = True
         self.n_skip_start = config_utils.get_n_skip_start(self.scan_type)
 

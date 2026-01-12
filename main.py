@@ -15,6 +15,7 @@ _CONFIG = config_flags.DEFINE_config_file("config", None, "config file.")
 flags.DEFINE_boolean("force_recon", False, "force reconstruction for the subject")
 flags.DEFINE_boolean("force_readin", False, "force read in .mat for the subject")
 flags.DEFINE_bool("force_segmentation", False, "run segmentation again.")
+flags.DEFINE_string("folder", None, "relative path to subject data folder.")
 
 
 def gx_mapping_reconstruction(config: base_config.Config):
@@ -37,8 +38,13 @@ def gx_mapping_reconstruction(config: base_config.Config):
     subject.preprocess()
     subject.reconstruction_gas()
     subject.reconstruction_dissolved()
-    if config.recon.recon_proton:
-        subject.reconstruction_ute()
+    if config.recon.recon_proton :
+        if getattr(subject, "dict_ute", None):
+            subject.reconstruction_ute()
+        elif config.dicom_proton_dir:
+            subject.read_dicom_files()
+        else:
+            subject.image_proton = np.zeros_like(subject.image_gas_highreso)
     elif config.dicom_proton_dir:
         subject.read_dicom_files()
     else:
@@ -49,6 +55,7 @@ def gx_mapping_reconstruction(config: base_config.Config):
     subject.gas_binning()
     subject.dixon_decomposition()
     subject.hb_correction()
+    subject.vol_correction()
     subject.dissolved_analysis()
     subject.dissolved_binning()
     subject.get_statistics()
@@ -76,6 +83,7 @@ def gx_mapping_readin(config: base_config.Config):
     subject.gas_binning()
     subject.dixon_decomposition()
     subject.hb_correction()
+    subject.vol_correction()    
     subject.dissolved_analysis()
     subject.dissolved_binning()
     subject.get_statistics()
@@ -96,6 +104,8 @@ def main(argv):
     Either run the reconstruction or read in the .mat file.
     """
     config = _CONFIG.value
+    if FLAGS.folder:
+        config.data_dir = FLAGS.folder
     if FLAGS.force_recon:
         logging.info("Gas exchange imaging mapping with reconstruction.")
         gx_mapping_reconstruction(config)

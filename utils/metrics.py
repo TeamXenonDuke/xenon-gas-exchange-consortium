@@ -1,14 +1,21 @@
 """Metrics for evaluating images."""
+import heapq
 import math
 import sys
 from datetime import datetime
 
+import cv2
+from scipy import ndimage
+
 sys.path.append("..")
 import numpy as np
-from scipy.ndimage.morphology import binary_dilation
+from scipy.ndimage import binary_dilation
 
 from utils import constants
 
+import pandas as pd
+import logging
+import numpy as np
 
 def _get_dilation_kernel(x: int) -> int:
     """Get dilation kernel for binary dilation in 1-dimension."""
@@ -83,6 +90,114 @@ def inflation_volume(mask: np.ndarray, fov: float) -> float:
         np.sum(mask) * fov**3 / np.shape(mask)[0] ** 3
     ) / constants.FOVINFLATIONSCALE3D
 
+
+def GLI_volume(age: float, sex: str, height: float, volume_type: str = "frc") -> float:
+    """
+    Calculate the GLI-predicted lung volume for a given age, sex, and height.
+
+    Args:
+        age: float, subject age in years.
+        sex: str, subject sex ("M" or "F").
+        height: float, subject height in cm.
+        volume_type: str, either "frc" (functional residual capacity) or "fvc" (forced vital capacity).
+
+    Returns:
+        Predicted lung volume (float) based on GLI lookup table. Returns np.nan if input is missing or match not found.
+    """
+    if pd.isna(age) or pd.isna(sex) or pd.isna(height):
+        return np.nan
+    lookup_df = pd.read_pickle('./assets/lut/GLI.pkl')
+
+    # Ensure sex is upper case, and volume_type is lower case
+    sex = sex.upper()
+    volume_type = volume_type.lower()
+
+    if volume_type == "frc":
+        column_name = 'frc_predicted'
+    elif volume_type == "fvc":
+        column_name = 'fvc_predicted'
+    else:
+        raise ValueError("volume_type must be either 'frc' or 'fvc'")
+
+    # Helper to get predicted value at specific age and height
+    def get_predicted(a, h):
+        row = lookup_df[(lookup_df['age'] == a) & (lookup_df['height'] == h) & (lookup_df['sex'] == sex)]
+        if not row.empty:
+            return row[column_name].values[0]
+        else:
+            return None
+
+    age_int = int(age) == age
+    height_int = int(height) == height
+
+    if age_int and height_int:
+        predicted_value = get_predicted(int(age), int(height))
+        return predicted_value if predicted_value is not None else 0.0
+
+    elif age_int or height_int:
+        if age_int:
+            h0 = int(np.floor(height))
+            h1 = h0 + 1
+            val0 = get_predicted(int(age), h0)
+            val1 = get_predicted(int(age), h1)
+            if val0 is not None and val1 is not None:
+                predicted_value = val0 + (height - h0) * (val1 - val0)
+                return predicted_value
+        else:
+            a0 = int(np.floor(age))
+            a1 = a0 + 1
+            val0 = get_predicted(a0, int(height))
+            val1 = get_predicted(a1, int(height))
+            if val0 is not None and val1 is not None:
+                predicted_value = val0 + (age - a0) * (val1 - val0)
+                return predicted_value
+
+    else:
+        a0 = int(np.floor(age))
+        a1 = a0 + 1
+        h0 = int(np.floor(height))
+        h1 = h0 + 1
+        val00 = get_predicted(a0, h0)
+        val01 = get_predicted(a0, h1)
+        val10 = get_predicted(a1, h0)
+        val11 = get_predicted(a1, h1)
+
+        if None not in [val00, val01, val10, val11]:
+            wa1 = age - a0
+            wa0 = 1 - wa1
+            wh1 = height - h0
+            wh0 = 1 - wh1
+
+            predicted_value = (
+                val00 * wa0 * wh0 +
+                val01 * wa0 * wh1 +
+                val10 * wa1 * wh0 +
+                val11 * wa1 * wh1
+            )
+            return predicted_value
+
+    # Display warning message when the value is outside the GLI range
+    logging.warning("\n" + "#" * 40)
+    logging.warning("Age or height is outside the GLI estimated range")
+    logging.warning("#" * 40 + "\n")
+    
+    return np.nan
+
+def get_bag_volume(fvc_volume: float) -> float:
+    """
+    Given FVC volume, calculate the bag volume as 20% of FVC,
+    rounded to the nearest 0.25 increment.
+    
+    Args:
+        fvc_volume (float): The FVC volume in liters.
+
+    Returns:
+        float: Bag volume rounded to the nearest 0.25 increment.
+    """
+    bag_volume = 0.2 * fvc_volume
+    # Round to the nearest 0.25
+    bag_volume_rounded = round(bag_volume * 4) / 4.0
+    return bag_volume_rounded
 
 def process_date() -> str:
     """Return the current date in YYYY-MM-DD format."""
@@ -222,3 +337,133 @@ def kco(
     return 1 / (
         1 / (constants.KCO_ALPHA * membrane_rel) + 1 / (constants.KCO_BETA * rbc_rel)
     )
+
+
+def rdp_ba(
+    image_rbc_binned: np.ndarray,
+    mask: np.ndarray,
+) -> float:
+    """
+    Compute the RBC defect bias from apical (top) to basilar (bottom) regions across both lungs.
+
+    This metric (ΔRDP_BA) is designed to quantify how RBC defects are distributed spatially 
+    from the top to the bottom of the lungs using binarized RBC images (bin 1 or 2 indicates RBC defect).
+    It focuses only on the middle 40%-80% of valid axial slices to avoid extreme slices with noisy segmentation.
+
+    Args:
+        image_rbc_binned (np.ndarray): 3D array (height x width x slices) where voxel values are binned RBC signal.
+                                       Bin 1 and 2 represent RBC defects.
+        mask (np.ndarray): 3D binary mask (same shape as image_rbc_binned) defining the lung region of interest.
+
+    Returns:
+        float: ΔRDP_BA value — a scalar representing the RBC defect bias towards the basilar region.
+               Positive values indicate higher RBC defect in the lower lung; negative indicates upper bias.
+    """
+    data_images = image_rbc_binned
+
+    # number of split 
+    ns = 3
+
+    total_mean=[]
+    valid_slices = []  # Store indices where mask is non-zero
+    lung_area = []        # store lung‐mask area for each valid slice
+
+    for ij in range(mask.shape[2]):
+        mask_current = ndimage.rotate(mask[:, :, ij], 0)
+        a = np.sum(mask_current)
+        if a > 0:
+            valid_slices.append(ij)
+            lung_area.append(a)
+
+    if valid_slices:
+        lung_area = np.array(lung_area)
+        cumsum = np.cumsum(lung_area)
+        total = cumsum[-1]
+        lower_idx = np.searchsorted(cumsum, 0.25 * total)
+        upper_idx = np.searchsorted(cumsum, 0.85 * total)
+        selected_slices = valid_slices[lower_idx:upper_idx]
+    else:
+        selected_slices = []
+
+    for ij in selected_slices:
+        bar2gas_current = ndimage.rotate(image_rbc_binned[:, :, ij], 0)
+        mask_current = ndimage.rotate(mask[:, :, ij], 0)
+
+        mask_current = mask_current.astype(np.uint8)
+        
+        output=cv2.connectedComponentsWithStats(mask_current,4)
+
+        num_labels = output[0]
+        labels_im = output[1]
+        stats=output[2]
+        centroid=output[3]
+
+        if(num_labels<=2):
+            continue
+
+        area=stats[:,4]
+        # Delete the background label.
+        area=area[1:]
+
+        # Choose the label with largest and second largest except background
+        index_label=np.array(heapq.nlargest(2, range(len(area)), key=area.__getitem__))+1
+
+        # Find which is left or right
+        index_1 = index_label[0]
+        index_2 = index_label[1]
+        if (centroid[index_1,0]<centroid[index_2,0]):
+            left_label=index_1
+            right_label=index_2
+        else:
+            left_label=index_2
+            right_label=index_1
+
+        top_left= stats[left_label,1]
+        height_left = stats[left_label,3]
+
+        top_right= stats[right_label,1]
+        height_right = stats[right_label,3]
+
+        [m,n] = mask_current.shape
+        # Initialize sum_all and num_all correctly
+        sum_all = np.zeros(ns * 2)
+        num_all = np.zeros(ns * 2)
+
+        # Create ns equally spaced intervals for splitting
+        split_indices_left = np.linspace(top_left, top_left + height_left, ns+1, dtype=int)
+        split_indices_right = np.linspace(top_right, top_right + height_right, ns+1, dtype=int)
+
+        for i in range(m):
+            for j in range(n):
+                if labels_im[i, j] == left_label:
+                    for nlf in range(ns):
+                        lower_l_left, upper_l_left = split_indices_left[nlf], split_indices_left[nlf+1]
+                        if lower_l_left <= i < upper_l_left:
+                            if data_images[i, j, ij] in [1,2]:
+                                num_all[nlf] += data_images[i, j, ij]
+                            sum_all[nlf] += data_images[i, j, ij]
+
+                elif labels_im[i, j] == right_label:
+                    for nlf in range(ns):
+                        lower_l_right, upper_l_right = split_indices_right[nlf], split_indices_right[nlf+1]
+                        if lower_l_right <= i < upper_l_right:
+                            if data_images[i, j, ij] in [1,2]:
+                                num_all[nlf + ns] += data_images[i, j, ij]
+                            sum_all[nlf + ns] += data_images[i, j, ij]
+
+        mean=[]
+        for nlf in range(ns * 2):
+            if(sum_all[nlf]!=0):
+                mean.append(num_all[nlf]/sum_all[nlf])
+            else:
+                mean.append(np.nan)
+
+        total_mean.append(mean)
+    total_mean=np.array(total_mean)
+    total_mean=np.nanmean(total_mean,axis=0)
+
+    bottom = total_mean[2]+total_mean[5]
+    top = total_mean[0]+total_mean[1]+total_mean[3]+total_mean[4]
+    b_t = (bottom - top/2) / 2 * 100
+    return b_t
+    

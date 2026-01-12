@@ -116,21 +116,26 @@ def correct_biasfield_n4itk(image: np.ndarray, mask: np.ndarray) -> Tuple[np.nda
 
     # Linear Correction
     cmd = (
-        f'"{pathN4}" -d 3 -i "{pathInput}" -s 1 -w "{pathMask}" '
-        f'-c [25,0] -b [112,1] -t [0.75,0.01,100] '
-        f'-o ["{pathOutput}","{pathBiasField}"]'
+        f"bash -c \"'{pathN4}' -d 3 -i '{pathInput}' -s 1 -w '{pathMask}' "
+        f"-c [25,0] -b [112,1] -t [0.75,0.01,100] "
+        f"-o ['{pathOutput}','{pathBiasField}']\""
     )
+
+    print('cmd = ')
+    print(cmd)
     os.system(cmd)
     bias_field = nib.load(pathBiasField).get_fdata()
     stack_bias_field.append(bias_field)
     all_bias_field *= bias_field
+    
 
     # Binomial Correction
     cmd = (
-        f'"{pathN4}" -d 3 -i "{pathOutput}" -s 1 -w "{pathMask}" '
-        f'-c [25,0] -b [112,2] -t [0.75,0.01,100] '
-        f'-o ["{pathOutput}","{pathBiasField}"]'
+        f"bash -c \"'{pathN4}' -d 3 -i '{pathOutput}' -s 1 -w '{pathMask}' "
+        f"-c [25,0] -b [112,2] -t [0.75,0.01,100] "
+        f"-o ['{pathOutput}','{pathBiasField}']\""
     )
+
     os.system(cmd)
     bias_field = nib.load(pathBiasField).get_fdata()
     stack_bias_field.append(bias_field)
@@ -138,10 +143,11 @@ def correct_biasfield_n4itk(image: np.ndarray, mask: np.ndarray) -> Tuple[np.nda
 
     # Trinomial Correction
     cmd = (
-        f'"{pathN4}" -d 3 -i "{pathOutput}" -s 1 -w "{pathMask}" '
-        f'-c [25,0] -b [112,3] -t [0.75,0.01,100] '
-        f'-o ["{pathOutput}","{pathBiasField}"]'
+        f"bash -c \"'{pathN4}' -d 3 -i '{pathOutput}' -s 1 -w '{pathMask}' "
+        f"-c [25,0] -b [112,3] -t [0.75,0.01,100] "
+        f"-o ['{pathOutput}','{pathBiasField}']\""
     )
+
     os.system(cmd)
     bias_field = nib.load(pathBiasField).get_fdata()
     stack_bias_field.append(bias_field)
@@ -150,9 +156,9 @@ def correct_biasfield_n4itk(image: np.ndarray, mask: np.ndarray) -> Tuple[np.nda
 
     # AP Correction
     cmd = (
-        f'"{pathN4}" -d 3 -i "{pathOutput}" -s 1 -w "{pathMask}" '
+        f"bash -c \"'{pathN4}' -d 3 -i '{pathOutput}' -s 1 -w '{pathMask}' "
         f'-c [25,0] -b [1x1x14,3] -t [0.5,0.01,100] '
-        f'-o ["{pathOutput}","{pathBiasField}"]'
+        f"-o ['{pathOutput}','{pathBiasField}']\""
     )
     os.system(cmd)
     bias_field = nib.load(pathBiasField).get_fdata()
@@ -162,9 +168,9 @@ def correct_biasfield_n4itk(image: np.ndarray, mask: np.ndarray) -> Tuple[np.nda
 
     # RL Correction
     cmd = (
-        f'"{pathN4}" -d 3 -i "{pathOutput}" -s 1 -w "{pathMask}" '
+        f"bash -c \"'{pathN4}' -d 3 -i '{pathOutput}' -s 1 -w '{pathMask}' "
         f'-c [25,0] -b [1x14x1,3] -t [0.5,0.01,100] '
-        f'-o ["{pathOutput}","{pathBiasField}"]'
+        f"-o ['{pathOutput}','{pathBiasField}']\""
     )
     os.system(cmd)
     bias_field = nib.load(pathBiasField).get_fdata()
@@ -174,9 +180,9 @@ def correct_biasfield_n4itk(image: np.ndarray, mask: np.ndarray) -> Tuple[np.nda
 
     # HF Correction
     cmd = (
-        f'"{pathN4}" -d 3 -i "{pathOutput}" -s 1 -w "{pathMask}" '
+        f"bash -c \"'{pathN4}' -d 3 -i '{pathOutput}' -s 1 -w '{pathMask}' "
         f'-c [25,0] -b [14x1x1,3] -t [0.5,0.01,100] '
-        f'-o ["{pathOutput}","{pathBiasField}"]'
+        f"-o ['{pathOutput}','{pathBiasField}']\""
     )
     os.system(cmd)
     bias_field = nib.load(pathBiasField).get_fdata()
@@ -186,9 +192,9 @@ def correct_biasfield_n4itk(image: np.ndarray, mask: np.ndarray) -> Tuple[np.nda
 
     # Complete Correction
     cmd = (
-        f'"{pathN4}" -d 3 -i "{pathOutput}" -s 2 -w "{pathMask}" '
+        f"bash -c \"'{pathN4}' -d 3 -i '{pathOutput}' -s 1 -w '{pathMask}' "
         f'-c [50,0] -b [4x4x4,3] -t [0.25,0.01,100] '
-        f'-o ["{pathOutput}","{pathBiasField}"]'
+        f"-o ['{pathOutput}','{pathBiasField}']\""
     )
     os.system(cmd)
     bias_field = nib.load(pathBiasField).get_fdata()
