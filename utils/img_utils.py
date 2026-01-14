@@ -62,6 +62,19 @@ def rotate_axial_to_coronal(image: np.ndarray) -> np.ndarray:
     imag = ndimage.rotate(ndimage.rotate(np.imag(image), 90, (1, 2)), 270)
     return real + 1j * imag
 
+def rotate_sagittal_to_coronal(image: np.ndarray) -> np.ndarray:
+    """Rotate sagittal image to coronal.
+
+    Image is assumed to be of complex datatype.
+
+    Args:
+        image (np.ndarray): image viewed in sagittal orientation.
+    Returns:
+        Rotated coronal image.
+    """
+    real = ndimage.rotate(ndimage.rotate(np.real(image), 90, (1, 2)), 180)
+    imag = ndimage.rotate(ndimage.rotate(np.imag(image), 90, (1, 2)), 180)
+    return real + 1j * imag
 
 def flip_and_rotate_image(
     image: np.ndarray, orientation: str = constants.Orientation.CORONAL,
@@ -83,6 +96,8 @@ def flip_and_rotate_image(
             image = np.rot90(image, 1, axes=(0, 1))
             image = np.flip(np.flip(image, axis=1), axis=2)
             return image
+        elif orientation == constants.Orientation.SAGITAL:
+            return rotate_sagittal_to_coronal(flip_image_complex(image))
         elif orientation == constants.Orientation.TRANSVERSE:
             return rotate_axial_to_coronal(flip_image_complex(image))
         elif orientation == constants.Orientation.AXIAL:
