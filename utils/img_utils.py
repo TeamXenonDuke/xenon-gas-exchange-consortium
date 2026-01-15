@@ -15,6 +15,7 @@ matplotlib.use("TkAgg")
 import numpy as np
 import skimage
 from scipy import ndimage
+import pandas as pd
 
 import pdb
 
@@ -228,8 +229,21 @@ def normalize(
     Returns:
         np.ndarray: normalized image
     """
-    if bag_volume is None:
-        raise ValueError("You must provide a numeric value for `bag_volume`.")
+    # Only require bag_volume when doing FRAC_VENT normalization
+    if method == constants.NormalizationMethods.FRAC_VENT and (
+        bag_volume is None or bag_volume in ("None", "NA", "")
+    ):
+        raise ValueError(
+            "FRAC_VENT normalization requires bag_volume to be numeric (liters). "
+            f"Got bag_volume={bag_volume!r}. "
+            "Fix: set config.bag_volume to a number (e.g., 1.0–2.0 L) or ensure AGE/SEX/HEIGHT "
+            "are present so predicted bag volume can be computed."
+        )
+        if isinstance(bag_volume, (int, float)) and pd.isna(bag_volume):
+            raise ValueError(
+                "FRAC_VENT normalization could not determine a valid bag_volume (got NaN). "
+                "Fix: set config.bag_volume to a number (liters) or ensure prediction inputs exist."
+            )
     elif method == constants.NormalizationMethods.MAX:
         return image * 1.0 / np.max(image)
     elif method == constants.NormalizationMethods.PERCENTILE:

@@ -30,8 +30,6 @@ from utils import (
     mask_include_trachea,
 )
 
-from utils.mask_include_trachea import get_or_make_mask_include_trachea
-
 class Subject(object):
     """Module to for processing gas exchange imaging.
 
@@ -455,7 +453,7 @@ class Subject(object):
             self.mask = segmentation.predict(self.image_gas_highreso).astype(bool)
 
             # Build include-trachea mask automatically (unless user provided one)
-            self.mask_include_trachea = self._get_or_make_mask_include_trachea(base_lung_mask=self.mask)
+            self.mask_include_trachea = self._get_or_make_mask_include_trachea()
 
         elif self.config.segmentation_key == constants.SegmentationKey.SKIP.value:
             self.mask = np.ones_like(self.image_gas_highreso, dtype=bool)
@@ -468,25 +466,18 @@ class Subject(object):
                 raise ValueError("Loaded manual mask is empty (sum=0).")
             self.mask = loaded_mask
 
-            self.mask_include_trachea = mask_include_trachea.get_or_make_mask_include_trachea(
-            config=self.config,
-            base_lung_mask=self.mask,
-            image_gas_highreso=np.abs(self.image_gas_highreso),
-            gas_nii_path="tmp/image_gas_highreso.nii",
-        )
+            self.mask_include_trachea = self._get_or_make_mask_include_trachea()
 
         else:
             raise ValueError("Invalid segmentation key.")
-        
 
-    def _get_or_make_mask_include_trachea(self, base_lung_mask: np.ndarray) -> np.ndarray:
-        return get_or_make_mask_include_trachea(
+    def _get_or_make_mask_include_trachea(self) -> np.ndarray:
+        """Return mask_include_trachea based on self.mask and self.image_gas_highreso."""
+        return mask_include_trachea.get_or_make_mask_include_trachea(
             config=self.config,
-            base_lung_mask=base_lung_mask,
-            image_gas_highreso=self.image_gas_highreso,
-            gas_nii_path="tmp/image_gas_highreso.nii",
+            base_lung_mask=self.mask,
+            image_gas_highreso=np.abs(self.image_gas_highreso),
         )
-
 
     def registration(self):
         """Register moving image to target image.

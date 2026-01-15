@@ -3,8 +3,6 @@ from __future__ import annotations
 
 import logging
 import os
-from typing import Optional
-
 import numpy as np
 import nibabel as nib
 
@@ -16,7 +14,6 @@ def get_or_make_mask_include_trachea(
     config,
     base_lung_mask: np.ndarray,
     image_gas_highreso: np.ndarray,
-    gas_nii_path: str = "tmp/image_gas_highreso.nii",
 ) -> np.ndarray:
     """
     Return mask_include_trachea (lung + trachea).
@@ -27,8 +24,7 @@ def get_or_make_mask_include_trachea(
     3) Else -> just return base_lung_mask.
 
     Notes:
-    - Avoids requiring config trachea_mask_params (uses defaults inside utils.trachea_mask).
-    - Writes a deterministic output file if auto-generated.
+    - Writes output into <data_dir>/gx/mask_include_trachea.nii by default.
     """
     base_lung_mask = np.asarray(base_lung_mask).astype(bool)
 
@@ -57,11 +53,14 @@ def get_or_make_mask_include_trachea(
         logging.info("auto_make_trachea_plus_lung_mask is False; using base lung mask only.")
         return base_lung_mask
 
-    if not os.path.exists(gas_nii_path):
-        raise FileNotFoundError(f"Expected {gas_nii_path} to exist for auto trachea mask generation.")
+    # Internal reference nifti location
+    ref_gas_nii_path = "tmp/image_gas_highreso.nii"
+    if not os.path.exists(ref_gas_nii_path):
+        raise FileNotFoundError(
+            f"Expected {ref_gas_nii_path} to exist for auto trachea mask generation + saving."
+        )
 
-    logging.info(f"Auto-generating trachea mask from {gas_nii_path} (Otsu+hysteresis).")
-
+    logging.info("Auto-generating trachea mask (Otsu+hysteresis) from gas image array.")
     trach_mask = trachea_mask.otsu_hysteresis_mask_from_nifti(image_gas_highreso)
     trach_mask = np.asarray(trach_mask).astype(bool)
 
@@ -72,16 +71,18 @@ def get_or_make_mask_include_trachea(
 
     combined = np.logical_or(base_lung_mask, trach_mask)
 
-    out_dir = str(getattr(config, "trachea_plus_lung_mask_output_dir", "") or "").strip() or "tmp"
+    # Default output dir: <data_dir>/gx
+    data_dir = str(getattr(config, "data_dir", "") or "").strip() or "."
+    out_dir = os.path.join(data_dir, "gx")
     os.makedirs(out_dir, exist_ok=True)
 
-    subject_id = str(getattr(config, "subject_id", "subject")).strip() or "subject"
-    out_path = os.path.join(out_dir, f"{subject_id}_mask_include_trachea.nii")
+    # Default output name: mask_include_trachea.nii
+    out_path = os.path.join(out_dir, "mask_include_trachea.nii")
 
-    trachea_mask.save_mask_like(gas_nii_path, combined, out_path)
-    logging.info(f"Saved auto mask_include_trachea to: {out_path}")
+    trachea_mask.save_mask_like(ref_gas_nii_path, combined, out_path)
+    logging.info(f"Saved mask_include_trachea to: {out_path}")
 
-    # Cache into config if possible (nice-to-have, not required)
+    # Cache into config
     try:
         config.trachea_plus_lung_mask_filepath = out_path
     except Exception:
