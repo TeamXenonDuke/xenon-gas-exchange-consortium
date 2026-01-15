@@ -12,7 +12,7 @@ The xenon gas exchange pipeline, developed at the [Driehuys Lab](https://sites.d
 
 4. [Acknowledgments](#acknowledgements)
 
-5. [How to Cite](#howtocite)
+5. [How to Cite](#how-to-cite)
 
 6. [Appendix A: Additional Installation Information](#appendix-a-additional-installation-information)
 
@@ -54,7 +54,7 @@ Check if Homebrew installed correctly to your PATH, with `which brew`. The detai
 
 ### 2.1. Python and Conda Installation
 
-The pipeline requires Python 3.8.8. We will setup and run the program using a dedicated virtual environment. To create a virtual environment, a `conda` distribution is required. You can install a conda distribution by downloading 'Anaconda' or 'Miniconda'. You can download 'Anaconda' from this [link](https://www.anaconda.com/products/individual), or 'Miniconda' from this [link](https://docs.conda.io/en/latest/miniconda.html). (Note: Windows users should download the Linux version since they will be using WSL)
+The pipeline requires Python 3.12. We will setup and run the program using a dedicated virtual environment. To create a virtual environment, a `conda` distribution is required. You can install a conda distribution by downloading 'Anaconda' or 'Miniconda'. You can download 'Anaconda' from this [link](https://www.anaconda.com/products/individual), or 'Miniconda' from this [link](https://docs.conda.io/en/latest/miniconda.html). (Note: Windows users should download the Linux version since they will be using WSL)
 
 Select Conda installation for:
 
@@ -270,13 +270,12 @@ year = {2024}
 To create a virtual environment using `conda` execute the following command in the terminal. "XeGas" is the recommended name, but you may use a different name:
 
 ```bash
-conda create --name XeGas python=3.8.8
+conda create --name XeGas python=3.12
 ```
 
 To activate the environment, execute the following commands. Replace "XeGas" with the name you previously chose if needed:
 
 ```bash
-conda init
 conda activate XeGas
 ```
 
@@ -309,7 +308,7 @@ brew install gcc
 
 ##### Install Packages in your Virtual Environment
 
-Packages must be installed inside the virtual conda environment. Make sure your VE is activated using `conda activate XeGas`.
+Packages must be installed inside the virtual conda environment. Make sure it is activated by using `conda activate XeGas`.
 
 `cd` to the main pipeline folder (`xenon-gas-exchange-consortium`) before running the next command!
 
@@ -327,6 +326,12 @@ pip list
 
 Verify that the packages in the virtual environment include the packages in the `requirements.txt` file.
 
+Addionally, execute the following command in your virtual conda environment.
+
+```bash
+conda install -c conda-forge weasyprint
+```
+
 ##### Install Packages in your Native Computer
 
 Lastly, install the following packages directly to your computer using sudo or brew.
@@ -334,15 +339,12 @@ Lastly, install the following packages directly to your computer using sudo or b
 Linux and WSL Users:
 
 ```bash
-sudo apt install wkhtmltopdf
 sudo apt install poppler-utils
 ```
 
 Mac Users:
 
 ```bash
-curl -L https://github.com/wkhtmltopdf/packaging/releases/download/0.12.6-2/wkhtmltox-0.12.6-2.macos-cocoa.pkg -O
-sudo installer -pkg wkhtmltox-0.12.6-2.macos-cocoa.pkg -target ~
 brew install poppler
 ```
 

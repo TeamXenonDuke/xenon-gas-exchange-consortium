@@ -79,7 +79,7 @@ if !([[ "$1" == "build-only" ]] || [[ "$1" == "install-only" ]]); then
                 break
             elif [[ $reply =~ ^[Nn]$ ]]; then
                 echo "Creating conda VE named '$ve_name'..."
-                conda create --name $ve_name python=3.8.8
+                conda create --name $ve_name python=3.12
                 break
             else 
                 echo -e "${RED}Error: Invalid input. ${NC}Please enter 'y' when if you want to use the VE or 'n' if you want to create a new one with the same name. "
@@ -88,9 +88,9 @@ if !([[ "$1" == "build-only" ]] || [[ "$1" == "install-only" ]]); then
             echo
         done
     else  
-        # Create conda environment with Python 3.8.8
+        # Create conda environment with Python 3.12
         echo "Creating conda VE named '$ve_name'..."
-        conda create --name $ve_name python=3.8.8
+        conda create --name $ve_name python=3.12
     fi
 
     # conda init and conda activate
@@ -152,7 +152,8 @@ if !([[ "$1" == "build-only" ]] || [[ "$1" == "install-only" ]]); then
     error_report
 
     # Prompt for user: pause to move the .h5 files to the correct directory from the Google Drive and confirm.
-    echo -e "${YELLOW}\e]8;;https://drive.google.com/drive/folders/1gcwT14_6Tl_2zkLZ_MHsm-pAYHXWtVOA?usp=sharing\ahttps://drive.google.com/drive/folders/1gcwT14_6Tl_2zkLZ_MHsm-pAYHXWtVOA?usp=sharing\e]8;;\a${NC}"
+    URL='https://drive.google.com/drive/folders/1gcwT14_6Tl_2zkLZ_MHsm-pAYHXWtVOA?usp=sharing'
+    printf '%b\n' "${YELLOW}\e]8;;${URL}\a${URL}\e]8;;\a${NC}"
     read -r -n 1 -p "Download 'model_ANATOMY_UTE.h5' and 'model_ANATOMY_VEN.h5' from the above link and place it in the './models/weights' folder in your main program directory. Enter 'y' when complete. Enter 'n' if you want to exit setup. " reply
     echo
     while true; do
