@@ -694,7 +694,7 @@ class Subject(object):
                 self.image_gas_binned, np.array([2]), self.mask
             ),
             constants.StatsIOFields.VENT_HIGH_PCT: metrics.bin_percentage(
-                self.image_gas_binned, np.array([5, 6]), self.mask
+                self.image_gas_binned, np.array([6]), self.mask
             ),
             constants.StatsIOFields.VENT_MEAN: metrics.mean(
                 img_utils.normalize(np.abs(self.image_gas_cor), self.mask), self.mask
@@ -713,7 +713,7 @@ class Subject(object):
                 self.image_rbc2gas_binned, np.array([2]), self.mask
             ),
             constants.StatsIOFields.RBC_HIGH_PCT: metrics.bin_percentage(
-                self.image_rbc2gas_binned, np.array([5, 6]), self.mask
+                self.image_rbc2gas_binned, np.array([6]), self.mask
             ),
             constants.StatsIOFields.RBC_MEAN: metrics.mean(
                 self.image_rbc2gas, self.mask_vent
