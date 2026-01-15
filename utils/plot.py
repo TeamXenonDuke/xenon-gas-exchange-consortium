@@ -525,8 +525,10 @@ def plot_histogram(
         if thresh_style:
             style.update(thresh_style)
         for t in thresholds:
+            y_at_t = np.interp(t,x_ref,y_ref)
             if 0 <= t <= xlim:
-                ax.axvline(t, **style, zorder=7)
+                ax.plot([t, t],[0, y_at_t], **style, zorder=7) #vertical dashed lines to ref curve
+                ax.plot(t, y_at_t,marker='*',markersize=14,color='k',zorder=8) #stars at ref curve
 
     # axes styling
     ax.set_xlim(0, xlim)

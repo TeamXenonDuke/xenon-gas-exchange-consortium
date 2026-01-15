@@ -93,7 +93,7 @@ You can verify if you have `conda` now by typing `which conda` in your terminal.
 To create a virtual environment using `conda` execute the command in the terminal:
 
 ```bash
-conda create --name XeGas python=3.8.8
+conda create --name XeGas python=3.12
 ```
 
 Here, XeGas is the the given name, but any name can be given.
@@ -152,19 +152,23 @@ pip list
 
 and verify that the packages in the virtual environment agree with that in the `requirements.txt` file.
 
+Additionally, execute the following command in your virtual conda environment:
+
+```
+conda install -c conda-forge weasyprint
+```
+
 ##### Install Packages in your Native Computer:
 
 For Linux and WSL:
 
 ```
-sudo apt install wkhtmltopdf
 sudo apt install poppler-utils
 ```
 
 For Mac:
 
 ```
-brew install wkhtmltopdf
 brew install poppler
 ```
 
@@ -218,7 +222,7 @@ make install 2>&1 | tee install.log
 
 Warning: This might take a while.
 
-After sucessful ANTs SuperBuild, you will have to move 'antApplyTransforms', 'antsRegistration' and 'N4BisaFieldCorrection' files to `xe-gas-exchange-refactor/bin/`. Now we are ready to process MRI scan of human lung.
+After sucessful ANTs SuperBuild, you will have to move 'antApplyTransforms', 'antsRegistration' and 'N4BisaFieldCorrection' files to `xenon-gas-exchange-consortium/bin/`. Now we are ready to process MRI scan of human lung.
 
 Note: If necesary, the details of ANTs Compilation can be seen [here](https://github.com/ANTsX/ANTs/wiki/Compiling-ANTs-on-Linux-and-Mac-OS)
 
