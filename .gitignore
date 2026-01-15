@@ -201,3 +201,11 @@ scripts/.gitkeep
 
 # recon/cs
 recon/cs/**
+
+# logs
+*.log
+
+# Testing
+testing/config/*
+testing/subjects/*
+testing/expected/*

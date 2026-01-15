@@ -1,9 +1,12 @@
-"""Base configuration file."""
+""" Configuration file for end-to-end testing. """
 
 import sys
+import os
 
 import numpy as np
 from ml_collections import config_dict
+
+from config import config_utils
 
 # parent directory
 sys.path.append("..")
@@ -16,7 +19,7 @@ class Config(config_dict.ConfigDict):
 
     Attributes:
         data_dir: str, path to directory with subject imaging files
-        hb_correction_key: str, hemoglobin correction key (NONE, RBC_AND_MEMBRANE)
+        hb_correction_key: str, hemoglobin correction key
         hb: float, subject hb value in g/dL
         manual_reg_filepath: str, path to manual registration nifti file
         manual_seg_filepath: str, path to the manual segmentation nifti file
@@ -28,17 +31,15 @@ class Config(config_dict.ConfigDict):
         remove_noisy_projections: bool, whether to remove noisy projections
         segmentation_key: str, the segmentation key (CNN_VENT, MANUAL)
         subject_id: str, the subject id
-        vol_correction_key: str,lung vollume correction key (NONE, RBC_AND_MEMBRANE)
-        corrected_lung_volume: float, target lung volume in L
     """
 
     def __init__(self):
         """Initialize config parameters."""
         super().__init__()
         # Standard parameters - MUST be verified
-        self.data_dir = ""
-        self.subject_id = "test"
-        self.rbc_m_ratio = 0.0
+        self.data_dir = os.path.join("testing", "subjects", "009-028B")
+        self.subject_id = "009-028B"
+        self.rbc_m_ratio = 0.155330194558714
         self.patient_frc = "None"
         self.bag_volume = "None"
         self.segmentation_key = constants.SegmentationKey.CNN_VENT.value
@@ -49,9 +50,7 @@ class Config(config_dict.ConfigDict):
         self.registration_key = constants.RegistrationKey.SKIP.value
         self.bias_key = constants.BiasfieldKey.N4ITK.value
         self.hb_correction_key = constants.HbCorrectionKey.NONE.value
-        self.hb = "NA"
-        self.vol_correction_key = constants.VolCorrectionKey.NONE.value 
-        self.corrected_lung_volume = "NA"
+        self.hb = 0.0
         self.dicom_proton_dir = ""
         self.multi_echo = False
         self.registration_key = constants.RegistrationKey.SKIP.value
@@ -86,9 +85,12 @@ class Recon(object):
     def __init__(self):
         """Initialize the reconstruction parameters."""
         # Gradient delays - MUST be specified
-        self.del_x = "None"
-        self.del_y = "None"
-        self.del_z = "None"
+        self.del_x = -5
+        self.del_y = -5
+        self.del_z = -5
+
+        # Scan type
+        self.scan_type = constants.ScanType.MEDIUMDIXON.value
 
         # Reconstruction and matrix sizes
         self.recon_size = 64
@@ -99,11 +101,10 @@ class Recon(object):
         self.recon_key = constants.ReconKey.ROBERTSON.value
         self.kernel_sharpness_lr = 0.14
         self.kernel_sharpness_hr = 0.32
-        # Set initial n_skip_start value as NaN, or user input an expected value
-        self.n_skip_start = np.nan
+        self.n_skip_start = config_utils.get_n_skip_start(self.scan_type)
         self.n_skip_end = 0
         self.remove_contamination = False
-        self.remove_noisy_projections = False
+        self.remove_noisy_projections = True
         self.traj_type = constants.TrajType.HALTONSPIRAL
 
 

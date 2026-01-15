@@ -68,13 +68,6 @@
 
         <tr class="basic">
           <td>
-            <p>Dixon Type</p>
-          </td>
-          <td>{scan_type}</td>
-        </tr>
-
-        <tr class="basic">
-          <td>
             <p>Field of View (cm)</p>
           </td>
           <td>{fov}x{fov}x{fov}</td>
@@ -145,21 +138,21 @@
 
         <tr class="basic">
           <td>
-            <p>Remove noisy projections</p>
+            <p>Remove noisy FIDs</p>
           </td>
           <td>{remove_noise}</td>
         </tr>
 
         <tr class="basic">
           <td>
-            <p>Removed Spike Noise FIDs (Gas)</p>
+            <p>Detected Spike Noise FIDs (Gas)</p>
           </td>
           <td>{n_gas_removed}</td>
         </tr>
 
         <tr class="basic">
           <td>
-            <p>Removed Spike Noise FIDs (Dissolved)</p>
+            <p>Detected Spike Noise FIDs (Dissolved)</p>
           </td>
           <td>{n_dis_removed}</td>
         </tr>
@@ -218,23 +211,28 @@
         </tr>
         <tr class="basic">
           <td>
-            <p>Hb Correction Type</p>
+            <p>Hb Correction</p>
           </td>
           <td>{hb_correction_key}</td>
         </tr>
 
         <tr class="basic">
           <td>
-            <p>RBC Hb Correction Factor</p>
+            <p>Hb Correction Value (g/dL)</p>
           </td>
-          <td>{rbc_hb_correction_factor}</td>
+          <td>{hb}</td>
         </tr>
-
         <tr class="basic">
           <td>
-            <p>Membrane Hb Correction Factor</p>
+            <p>Volume Correction</p>
           </td>
-          <td>{membrane_hb_correction_factor}</td>
+          <td>{vol_correction_key}</td>
+        </tr>
+       <tr class="basic">
+          <td>
+            <p>Lung Volume Correction Target (L)</p>
+          </td>
+          <td>{corrected_lung_volume}</td>
         </tr>
 
         <tr class="basic">
@@ -242,6 +240,13 @@
             <p>Reference Data</p>
           </td>
           <td>{reference_data_key}</td>
+        </tr>
+
+        <tr class="basic">
+          <td>
+            <p>Patient FRC/ Bag Volume</p>
+          </td>
+          <td>{user_lung_volume_value}</td>
         </tr>
 
         <tr class="basic">

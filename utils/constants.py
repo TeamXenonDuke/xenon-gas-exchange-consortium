@@ -7,8 +7,8 @@ import numpy as np
 FOVINFLATIONSCALE3D = 1000.0
 GRYOMAGNETIC_RATIO = 11.777  # MHz/T
 T2STAR_GAS = 1.8e-2  # seconds
-T2STAR_RBC_3T = 1.0502 * 1e-3  # seconds
-T2STAR_MEMBRANE_3T = 1.1416 * 1e-3  # seconds
+T2STAR_RBC_3T = 1.044575 * 1e-3  # seconds
+T2STAR_MEMBRANE_3T = 0.988588  * 1e-3  # seconds
 
 
 KCO_ALPHA = 11.2  # membrane
@@ -21,7 +21,11 @@ NONE = "None"
 class IOFields(object):
     """General IOFields constants."""
 
+    AGE = "age"
+    SEX = "sex"
+    HEIGHT = "height"
     BANDWIDTH = "bandwidth"
+    USER_LUNG_VOLUME_VALUE ="user_lung_volume_value"
     BIASFIELD_KEY = "biasfield_key"
     BONUS_SPECTRA_LABELS = "bonus_spectra_labels"
     CONTRAST_LABELS = "contrast_labels"
@@ -62,7 +66,6 @@ class IOFields(object):
     REMOVEOS = "removeos"
     REMOVE_NOISE = "remove_noise"
     SCAN_DATE = "scan_date"
-    SCAN_TYPE = "scan_type"
     SEGMENTATION_KEY = "segmentation_key"
     SHAPE_FIDS = "shape_fids"
     SHAPE_IMAGE = "shape_image"
@@ -76,7 +79,16 @@ class IOFields(object):
     TR_DIS = "tr_dis"
     TRAJ = "traj"
     SYSTEM_VENDOR = "system_vendor"
+    VOL_CORRECTION_KEY = "vol_correction_key"
+    VOL_CORRECTION_FACTOR_MEMBRANE  = "vol_correction_factor_membrane"
+    VOL_CORRECTION_FACTOR_RBC = "vol_correction_factor_rbc"
+    CORRECTED_LUNG_VOLUME = "corrected_lung_volume"
+    PREP_PULSES = "prep_pulses"
 
+class PrepPulses(enum.Enum):
+    """Preparation pulse flags."""
+    
+    PREP_PULSES = "true"
 
 class CNNPaths(object):
     """Paths to saved model files."""
@@ -150,12 +162,21 @@ class HbCorrectionKey(enum.Enum):
     Defines what level of Hb correction to apply to dissolved-phase signal. Options:
     NONE: Apply no hb correction
     RBC_AND_MEMBRANE: Apply Hb correction to both RBC and membrane signals
-    RBC_ONLY: Apply Hb correction only to RBC signal
     """
 
-    NONE = "none"
-    RBC_AND_MEMBRANE = "rbc_and_membrane"
-    RBC_ONLY = "rbc_only"
+    NONE = "False"
+    RBC_AND_MEMBRANE = "True"
+
+
+class VolCorrectionKey(enum.Enum):
+    """Vol correction flags.
+    Defines what level of volume correction to apply to dissolved-phase signal. Options:
+    NONE: Apply no vol correction
+    RBC_AND_MEMBRANE: Apply vol correction to both RBC and membrane signals
+    """
+
+    NONE = "False"
+    RBC_AND_MEMBRANE = "True"
 
 
 class ReferenceDataKey(enum.Enum):
@@ -168,14 +189,6 @@ class ReferenceDataKey(enum.Enum):
 
     DUKE_REFERENCE = "duke_reference"
     MANUAL_REFERENCE = "manual_reference"
-
-
-class ScanType(enum.Enum):
-    """Scan type."""
-
-    NORMALDIXON = "normal"
-    MEDIUMDIXON = "medium"
-    FASTDIXON = "fast"
 
 
 class Institution(enum.Enum):
@@ -246,6 +259,9 @@ class StatsIOFields(object):
     """Statistic IO Fields."""
 
     INFLATION = "inflation"
+    INFLATION_PCT='inflation_percentage'
+    INFLATION_AVG='inflation_avg'
+    INFLATION_DISPLAY='inflation_display'
     RBC_M_RATIO = "rbc_m_ratio"
     RBC_SNR = "rbc_snr"
     MEMBRANE_SNR = "membrane_snr"
@@ -270,6 +286,7 @@ class StatsIOFields(object):
     VENT_STDDEV = "vent_stddev"
     DLCO_EST = "dlco_est"
     KCO_EST = "kco_est"
+    RDP_BA = "rdp_ba"
     ALVEOLAR_VOLUME = "alveolar_volume"
 
 
@@ -388,6 +405,15 @@ class HbCorrection(object):
     M2 = 0.011  # second coefficient of membrane hb correction equation
 
 
+class VolCorrection(object):
+    """Coefficients for volume correction scaling factor equations
+    
+    Reference DOI: 10.1183/13993003.00289-2020
+    """
+    ALPHA_RBC = -0.15963  # slope of trend in rbc equation
+    ALPHA_MEM = -0.38665   # slope of trend in membrane equation
+
+
 class ContrastLabels(object):
     """Numbers for labelling type of FID acquisition excitation."""
 
@@ -416,103 +442,118 @@ class ReferenceDistribution(object):
 
     REFERENCE_218_PPM = {
     "title": "REFERENCE_218_PPM",
-    "threshold_vent": [0.3908, 0.5741, 0.7180, 0.8413, 0.9511],
-    "threshold_rbc": [0.001007, 0.002723, 0.005120, 0.008140, 0.011743],
-    "threshold_membrane": [0.003826, 0.005928, 0.008486, 0.011498, 0.014964, 0.018883, 0.023254],
-    "reference_fit_vent": (0.04074, 0.707, 0.140),
-    "reference_fit_rbc": (0.06106, 0.00543, 0.00277),
-    "reference_fit_membrane": (0.0700, 0.00871, 0.00284),
+    "healthy_histogram_vent_dir" : "assets/histogram_profiles/218_ppm/vent_hist_profile.npy",
+    "healthy_histogram_rbc_dir" : "assets/histogram_profiles/218_ppm/rbc_hist_profile.npy",
+    "healthy_histogram_membrane_dir" : "assets/histogram_profiles/218_ppm/mem_hist_profile.npy",
+    "threshold_vent": [0.3891, 0.5753, 0.7203, 0.8440, 0.9539],
+    "threshold_rbc": [0.001393, 0.002891, 0.004772, 0.006991, 0.009518],
+    "threshold_membrane": [0.004881, 0.006522, 0.008603, 0.011216, 0.014466, 0.018471, 0.023370],
+    "reference_fit_vent": (0.04074, 0.7085, 0.1408),
+    "reference_fit_rbc": (0.06106, 0.004942, 0.002060),
+    "reference_fit_membrane": (0.0700, 0.008871, 0.002420),
     "reference_stats": {
-        "vent_defect_avg": "5",
-        "vent_defect_std": "3",
-        "vent_low_avg": "16",
-        "vent_low_std": "8",
-        "vent_high_avg": "15",
-        "vent_high_std": "5",
-        "membrane_defect_avg": "1",
-        "membrane_defect_std": "<1",
-        "membrane_low_avg": "8",
-        "membrane_low_std": "2",
-        "membrane_high_avg": "1",
-        "membrane_high_std": "1",
-        "rbc_defect_avg": "4",
-        "rbc_defect_std": "2",
+        "vent_defect_avg": "2",
+        "vent_defect_std": "",
+        "vent_low_avg": "14",
+        "vent_low_std": "",
+        "vent_high_avg": "16",
+        "vent_high_std": "",
+        "membrane_defect_avg": "2",
+        "membrane_defect_std": "0",
+        "membrane_low_avg": "14",
+        "membrane_low_std": "0",
+        "membrane_high_avg": "2",
+        "membrane_high_std": "0",
+        "rbc_defect_avg": "2",
+        "rbc_defect_std": "",
         "rbc_low_avg": "14",
-        "rbc_low_std": "6",
-        "rbc_high_avg": "15",
-        "rbc_high_std": "10",
-        "rbc_m_ratio_avg": "0.59",
+        "rbc_low_std": "",
+        "rbc_high_avg": "16",
+        "rbc_high_std": "",
+        "rbc_m_ratio_avg": "0.55",
         "rbc_m_ratio_std": "0.12",
         "inflation_avg": "3.4",
         "inflation_std": "0.33",
+        "inflation_percentage":"0.0",
+        "inflation_display":"0.0",
         }
     }
 
     REFERENCE_208_PPM = {
         "title": "REFERENCE_208_PPM",
-        "threshold_vent": [0.3908, 0.5741, 0.7180, 0.8413, 0.9511],
-        "threshold_rbc": [0.000977, 0.002641, 0.004967, 0.007896, 0.011391],
-        "threshold_membrane": [0.004170, 0.006461, 0.009249, 0.012532, 0.016309, 0.020580, 0.025344],
-        "reference_fit_vent": (0.04074, 0.707, 0.140),
-        "reference_fit_rbc": (0.06106, 0.00527, 0.00268),
-        "reference_fit_membrane": (0.0700, 0.00950, 0.00309),
+        "healthy_histogram_vent_dir" : "assets/histogram_profiles/208_ppm/vent_hist_profile.npy",
+        "healthy_histogram_rbc_dir" : "assets/histogram_profiles/208_ppm/rbc_hist_profile.npy",
+        "healthy_histogram_membrane_dir" : "assets/histogram_profiles/208_ppm/mem_hist_profile.npy",
+        "threshold_vent": [0.3891, 0.5753, 0.7203, 0.8440, 0.9539],
+        "threshold_rbc": [0.001351, 0.002804, 0.004629, 0.006781, 0.009232],
+        "threshold_membrane": [0.005320, 0.007108, 0.009377, 0.012224, 0.015766, 0.020132, 0.025471],
+        "reference_fit_vent": (0.04074, 0.7085, 0.1408),
+        "reference_fit_rbc": (0.06106, 0.004794, 0.001998),
+        "reference_fit_membrane": (0.0700, 0.009668, 0.002638),
         "reference_stats": {
-            "vent_defect_avg": "5",
-            "vent_defect_std": "3",
-            "vent_low_avg": "16",
-            "vent_low_std": "8",
-            "vent_high_avg": "15",
-            "vent_high_std": "5",
-            "membrane_defect_avg": "1",
-            "membrane_defect_std": "<1",
-            "membrane_low_avg": "8",
-            "membrane_low_std": "2",
-            "membrane_high_avg": "1",
-            "membrane_high_std": "1",
-            "rbc_defect_avg": "4",
-            "rbc_defect_std": "2",
+            "vent_defect_avg": "2",
+            "vent_defect_std": "",
+            "vent_low_avg": "14",
+            "vent_low_std": "",
+            "vent_high_avg": "16",
+            "vent_high_std": "",
+            "membrane_defect_avg": "2",
+            "membrane_defect_std": "0",
+            "membrane_low_avg": "14",
+            "membrane_low_std": "0",
+            "membrane_high_avg": "2",
+            "membrane_high_std": "0",
+            "rbc_defect_avg": "2",
+            "rbc_defect_std": "",
             "rbc_low_avg": "14",
-            "rbc_low_std": "6",
-            "rbc_high_avg": "15",
-            "rbc_high_std": "10",
-            "rbc_m_ratio_avg": "0.59",
-            "rbc_m_ratio_std": "0.12",
+            "rbc_low_std": "",
+            "rbc_high_avg": "16",
+            "rbc_high_std": "",
+            "rbc_m_ratio_avg": "0.49",
+            "rbc_m_ratio_std": "0.11",
             "inflation_avg": "3.4",
             "inflation_std": "0.33",
+            "inflation_percentage":"0.0",
+            "inflation_display":"0.0",
             }
         }
     
     REFERENCE_MANUAL = {
         "title": "MANUAL",
-        "threshold_vent": [0.3908, 0.5741, 0.7180, 0.8413, 0.9511],
-        "threshold_rbc": [0.001007, 0.002723, 0.00512, 0.00814, 0.011743],
-        "threshold_membrane": [0.004170, 0.006461, 0.009249, 0.012532, 0.016309, 0.020580, 0.025344],
-        "reference_fit_vent": (0.04074, 0.707, 0.140),
-        "reference_fit_rbc": (0.06106, 0.00527, 0.00268),
-        "reference_fit_membrane": (0.0700, 0.00950, 0.00309),
+        "healthy_histogram_vent_dir" : "assets/histogram_profiles/218_ppm/vent_hist_profile.npy",
+        "healthy_histogram_rbc_dir" : "assets/histogram_profiles/218_ppm/rbc_hist_profile.npy",
+        "healthy_histogram_membrane_dir" : "assets/histogram_profiles/218_ppm/mem_hist_profile.npy",
+        "threshold_vent": [0.3891, 0.5753, 0.7203, 0.8440, 0.9539],
+        "threshold_rbc": [0.001393, 0.002891, 0.004772, 0.006991, 0.009518],
+        "threshold_membrane": [0.004881, 0.006522, 0.008603, 0.011216, 0.014466, 0.018471, 0.023370],
+        "reference_fit_vent": (0.04074, 0.7085, 0.1408),
+        "reference_fit_rbc": (0.06106, 0.004942, 0.002060),
+        "reference_fit_membrane": (0.0700, 0.008871, 0.002420),
         "reference_stats": {
-            "vent_defect_avg": "5",
-            "vent_defect_std": "3",
-            "vent_low_avg": "16",
-            "vent_low_std": "8",
-            "vent_high_avg": "15",
-            "vent_high_std": "5",
-            "membrane_defect_avg": "1",
-            "membrane_defect_std": "<1",
-            "membrane_low_avg": "8",
-            "membrane_low_std": "2",
-            "membrane_high_avg": "1",
-            "membrane_high_std": "1",
-            "rbc_defect_avg": "4",
-            "rbc_defect_std": "2",
-            "rbc_low_avg": "14",
-            "rbc_low_std": "6",
-            "rbc_high_avg": "15",
-            "rbc_high_std": "10",
+            "vent_defect_avg": "2.15",
+            "vent_defect_std": "",
+            "vent_low_avg": "13.59",
+            "vent_low_std": "",
+            "vent_high_avg": "15.74",
+            "vent_high_std": "",
+            "membrane_defect_avg": "2.15",
+            "membrane_defect_std": "0",
+            "membrane_low_avg": "13.59",
+            "membrane_low_std": "0",
+            "membrane_high_avg": "2.28",
+            "membrane_high_std": "0",
+            "rbc_defect_avg": "2.15",
+            "rbc_defect_std": "",
+            "rbc_low_avg": "13.59",
+            "rbc_low_std": "",
+            "rbc_high_avg": "15.74",
+            "rbc_high_std": "",
             "rbc_m_ratio_avg": "0.59",
             "rbc_m_ratio_std": "0.12",
             "inflation_avg": "3.4",
             "inflation_std": "0.33",
+            "inflation_percentage":"0.0",
+            "inflation_display":"0.0",
             }
         }
 

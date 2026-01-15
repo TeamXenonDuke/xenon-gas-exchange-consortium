@@ -7,6 +7,7 @@ from typing import Any, Dict
 
 import nibabel as nib
 import numpy as np
+import pandas as pd
 
 import biasfield
 import preprocessing as pp
@@ -66,6 +67,8 @@ class Subject(object):
         traj_gas (np.array): gas-phase trajectory of shape (n_projections, n_points, 3)
         traj_scaling_factor (float): scaling factor for trajectory
         traj_ute (np.array): UTE proton trajectory of shape
+        vol_correction_factor_rbc (float): rbc volume correction factor
+        vol_correction_factor_membrane (float): membrane volume correction factor
     """
 
     def __init__(self, config: base_config.Config):
@@ -85,13 +88,13 @@ class Subject(object):
         self.image_membrane = np.array([0.0])
         self.image_membrane2gas = np.array([0.0])
         self.image_membrane2gas_binned = np.array([0.0])
-        self.membrane_hb_correction_factor = 1.0
+        self.membrane_hb_correction_factor = "NA"
         self.image_proton = np.array([0.0])
         self.image_proton_reg = np.array([0.0])
         self.image_rbc = np.array([0.0])
         self.image_rbc2gas = np.array([0.0])
         self.image_rbc2gas_binned = np.array([0.0])
-        self.rbc_hb_correction_factor = 1.0
+        self.rbc_hb_correction_factor = "NA"
         self.mask = np.array([0.0])
         self.mask_vent = np.array([0.0])
         self.rbc_m_ratio = 0.0
@@ -103,6 +106,9 @@ class Subject(object):
         self.traj_ute = np.array([])
         self.reference_data_key = str()
         self.reference_data = {}
+        self.user_lung_volume_value = ""
+        self.vol_correction_factor_rbc = "NA"
+        self.vol_correction_factor_membrane ="NA"        
 
     def read_twix_files(self):
         """Read in twix files to dictionary.
@@ -122,9 +128,12 @@ class Subject(object):
         except ValueError:
             logging.info("No dynamic spectroscopy twix file found")
         if self.config.recon.recon_proton:
-            self.dict_ute = io_utils.read_ute_twix(
-                io_utils.get_ute_twix_files(str(self.config.data_dir))
-            )
+            try:
+                self.dict_ute = io_utils.read_ute_twix(
+                    io_utils.get_ute_twix_files(str(self.config.data_dir))
+                )
+            except ValueError:
+                logging.info("No proton twix file found")
 
     def read_mrd_files(self):
         """Read in mrd files to dictionary.
@@ -143,9 +152,12 @@ class Subject(object):
         except ValueError:
             logging.info("No dynamic spectroscopy MRD file found")
         if self.config.recon.recon_proton:
-            self.dict_ute = io_utils.read_ute_mrd(
-                io_utils.get_ute_mrd_files(str(self.config.data_dir))
-            )
+            try:
+                self.dict_ute = io_utils.read_ute_mrd(
+                    io_utils.get_ute_mrd_files(str(self.config.data_dir))
+                )
+            except ValueError:
+                logging.info("No proton MRD file found")            
 
     def read_dicom_files(self):
         """Read in DICOM files for proton image."""
@@ -246,7 +258,15 @@ class Subject(object):
                 self.traj_scaling_factor = (
                     0.903  # cincinnati requires a unique scaling factor
                 )
-        
+        """Calculate the number of frames to skip at the beginning of scan:
+          if the prep_pulse = 'true', there is no skip frames n_skip_start=0; else calculated by dissolved flip angle""" 
+        if (self.dict_dis[constants.IOFields.PREP_PULSES] == constants.PrepPulses.PREP_PULSES.value):
+            self.config.recon.n_skip_start = 0
+            logging.info(f"get prep_pulses: value={self.dict_dis[constants.IOFields.PREP_PULSES]}")
+        else:
+            # Calculate the number of frames to skip at the beginning by dissolved flip angle
+            if np.isnan(self.config.recon.n_skip_start):
+                self.config.recon.n_skip_start = recon_utils.skip_from_flipangle(self.dict_dis[constants.IOFields.FA_DIS])
 
         # truncate gas and dissolved data and trajectories
         self.data_dissolved, self.traj_dissolved = pp.truncate_data_and_traj(
@@ -277,24 +297,26 @@ class Subject(object):
 
         # prepare proton data and trajectories
         if self.config.recon.recon_proton:
-            # get or generate trajectories
-            if constants.IOFields.TRAJ not in self.dict_ute.keys():
-                self.traj_ute = pp.prepare_traj(self.dict_ute)
+            if getattr(self, "dict_ute", None):
+                # get or generate trajectories
+                if constants.IOFields.TRAJ not in self.dict_ute.keys():
+                    self.traj_ute = pp.prepare_traj(self.dict_ute)
+                else:
+                    self.traj_ute = self.dict_ute[constants.IOFields.TRAJ]
+
+                # get proton data
+                self.data_ute = self.dict_ute[constants.IOFields.FIDS]
+
+                # remove noisy FIDs
+                if self.config.recon.remove_noisy_projections:
+                    self.data_ute, self.traj_ute = pp.remove_noisy_projections(
+                        self.data_ute, self.traj_ute
+                    )
+
+                # rescale trajectories
+                self.traj_ute *= self.traj_scaling_factor
             else:
-                self.traj_ute = self.dict_ute[constants.IOFields.TRAJ]
-
-            # get proton data
-            self.data_ute = self.dict_ute[constants.IOFields.FIDS]
-
-            # remove noisy FIDs
-            if self.config.recon.remove_noisy_projections:
-                self.data_ute, self.traj_ute = pp.remove_noisy_projections(
-                    self.data_ute, self.traj_ute
-                )
-
-            # rescale trajectories
-            self.traj_ute *= self.traj_scaling_factor
-
+                logging.info("No dict_ute")    
         
         # Choose appropriate reference distribution
         self.reference_data_key = self.config.reference_data_key
@@ -318,6 +340,7 @@ class Subject(object):
 
         elif self.reference_data_key == constants.ReferenceDataKey.MANUAL_REFERENCE.value:
             self.reference_data = constants.ReferenceDistribution.REFERENCE_MANUAL
+
             
 
     def reconstruction_ute(self):
@@ -547,18 +570,7 @@ class Subject(object):
                     self.rbc_hb_correction_factor,
                     self.membrane_hb_correction_factor,
                 ) = signal_utils.get_hb_correction(self.config.hb)
-
-                # if only applying correction to rbc signal, set membrane factor to 1
-                if (
-                    self.config.hb_correction_key
-                    == constants.HbCorrectionKey.RBC_ONLY.value
-                ):
-                    logging.info("Applying hemoglobin correction to RBC signal only")
-                    self.membrane_hb_correction_factor = 1.0
-                else:
-                    logging.info(
-                        "Applying hemoglobin correction to RBC and membrane signal"
-                    )
+                logging.info("Applying hemoglobin correction to RBC and membrane signal")
 
                 # scale dissolved phase signals by hb correction scaling factors
                 self.rbc_m_ratio *= (
@@ -570,6 +582,44 @@ class Subject(object):
                 raise ValueError("Invalid hemoglobin value")
         else:
             logging.info("Skipping hemoglobin correction")
+            
+    def vol_correction(self):
+        self.dict_stats = {
+            constants.StatsIOFields.INFLATION: metrics.inflation_volume(
+        self.mask, self.dict_dis[constants.IOFields.FOV])}
+        if self.config.vol_correction_key != constants.VolCorrectionKey.NONE.value:
+            if self.dict_stats["inflation"] > 0:
+                self.corrected_lung_volume = self.config.corrected_lung_volume
+                #get volume correction scaling factors
+                
+                (
+                    self.vol_correction_factor_rbc,
+                    self.vol_correction_factor_membrane,
+                    self.predicted_volume,
+                ) = signal_utils.get_vol_correction(self.dict_stats["inflation"], self.corrected_lung_volume)
+            
+                if (
+                    self.config.vol_correction_key 
+                    == constants.VolCorrectionKey.RBC_AND_MEMBRANE.value
+                ):
+                    logging.info(
+                        "Applying volume correction to membrane and RBC signal"
+                        f", Membrane correction factor = {self.vol_correction_factor_membrane}"
+                        f", RBC correction factor = {self.vol_correction_factor_rbc}"
+                    )
+
+                # scale dissolved phase signals by volume correction scaling factors
+                self.rbc_m_ratio /= (
+                    self.vol_correction_factor_rbc / self.vol_correction_factor_membrane
+                )
+                self.image_rbc /= self.vol_correction_factor_rbc
+                self.image_membrane /= self.vol_correction_factor_membrane
+            else:
+                raise ValueError("Invalid volume value")
+        else:
+            self.corrected_lung_volume = "NA"
+            logging.info("Skipping volume correction")
+ 
 
     def dissolved_analysis(self):
         """Calculate the dissolved-phase images relative to gas image."""
@@ -715,7 +765,68 @@ class Subject(object):
                 self.reference_data['reference_fit_membrane'][1],
                 self.reference_data['reference_fit_rbc'][1],
             ),
+            constants.StatsIOFields.RDP_BA: round(metrics.rdp_ba(
+                self.image_rbc2gas_binned,
+                self.mask,
+            ), 1),
         }
+        
+        if isinstance(self.config.patient_frc, (int, float)):
+            FRC_Volume = float(self.config.patient_frc)
+            User_Volume_FRC = f"{FRC_Volume}L"
+        else:
+            FRC_Volume = metrics.GLI_volume(
+                self.dict_dis[constants.IOFields.AGE],
+                self.dict_dis[constants.IOFields.SEX],
+                self.dict_dis[constants.IOFields.HEIGHT],
+                volume_type="frc"
+            )
+            User_Volume_FRC = "Predicted"
+
+        if isinstance(self.config.bag_volume, (int, float)):
+            Bag_Volume = float(self.config.bag_volume)
+            User_Volume_Bag = f"{Bag_Volume}L"
+        else:
+            User_Volume_Bag = "Predicted"
+            FVC_Volume = metrics.GLI_volume(
+                self.dict_dis[constants.IOFields.AGE],
+                self.dict_dis[constants.IOFields.SEX],
+                self.dict_dis[constants.IOFields.HEIGHT],
+                volume_type="fvc"
+            )
+            if isinstance(FVC_Volume, (int, float)) and not pd.isna(FVC_Volume):
+                Bag_Volume = metrics.get_bag_volume(FVC_Volume)
+            else:
+                Bag_Volume = np.nan
+
+        if pd.isna(FRC_Volume):
+            display_frc = "NA"
+        elif User_Volume_FRC == "Predicted":
+            display_frc = "Predicted"
+        else:
+            display_frc = User_Volume_FRC
+
+        if pd.isna(Bag_Volume):
+            display_bag = "NA"
+        elif User_Volume_Bag == "Predicted":
+            display_bag = "Predicted"
+        else:
+            display_bag = User_Volume_Bag
+
+        self.user_lung_volume_value = f"{display_frc}/ {display_bag}"
+
+        if pd.isna(FRC_Volume) or pd.isna(Bag_Volume):
+            self.reference_data['reference_stats'][constants.StatsIOFields.INFLATION_PCT] = "NA";
+            self.reference_data['reference_stats'][constants.StatsIOFields.INFLATION_AVG] ="NA";
+            self.reference_data['reference_stats'][constants.StatsIOFields.INFLATION_DISPLAY] ="NA";
+            self.dict_stats[constants.StatsIOFields.INFLATION] = round(self.dict_stats[constants.StatsIOFields.INFLATION],1);
+        else:
+            predicted_volume = FRC_Volume + Bag_Volume
+            self.reference_data['reference_stats'][constants.StatsIOFields.INFLATION_PCT] = int(round(self.dict_stats[constants.StatsIOFields.INFLATION] / predicted_volume * 100, 0));
+            self.reference_data['reference_stats'][constants.StatsIOFields.INFLATION_AVG] =round(predicted_volume,1);
+            self.reference_data['reference_stats'][constants.StatsIOFields.INFLATION_DISPLAY] = f"{self.reference_data['reference_stats'][constants.StatsIOFields.INFLATION_AVG] }L ({self.reference_data['reference_stats'][constants.StatsIOFields.INFLATION_PCT]}%)";
+            self.dict_stats[constants.StatsIOFields.INFLATION] = round(self.dict_stats[constants.StatsIOFields.INFLATION],1);
+
         return self.dict_stats
 
     def get_info(self) -> Dict[str, Any]:
@@ -728,7 +839,6 @@ class Subject(object):
             constants.IOFields.SUBJECT_ID: self.config.subject_id,
             constants.IOFields.SCAN_DATE: self.dict_dis[constants.IOFields.SCAN_DATE],
             constants.IOFields.PROCESS_DATE: metrics.process_date(),
-            constants.IOFields.SCAN_TYPE: self.config.recon.scan_type,
             constants.IOFields.PIPELINE_VERSION: constants.PipelineVersion.VERSION_NUMBER,
             constants.IOFields.SOFTWARE_VERSION: self.dict_dis[
                 constants.IOFields.SOFTWARE_VERSION
@@ -765,6 +875,10 @@ class Subject(object):
             constants.IOFields.HB: self.config.hb,
             constants.IOFields.RBC_HB_CORRECTION_FACTOR: self.rbc_hb_correction_factor,
             constants.IOFields.MEMBRANE_HB_CORRECTION_FACTOR: self.membrane_hb_correction_factor,
+            constants.IOFields.VOL_CORRECTION_KEY: self.config.vol_correction_key,
+            constants.IOFields.CORRECTED_LUNG_VOLUME: self.corrected_lung_volume,
+            constants.IOFields.VOL_CORRECTION_FACTOR_MEMBRANE: self.vol_correction_factor_membrane,
+            constants.IOFields.VOL_CORRECTION_FACTOR_RBC: self.vol_correction_factor_rbc,
             constants.IOFields.KERNEL_SHARPNESS: self.config.recon.kernel_sharpness_hr,
             constants.IOFields.N_SKIP_START: self.config.recon.n_skip_start,
             constants.IOFields.N_DIS_REMOVED: len(
@@ -798,13 +912,12 @@ class Subject(object):
             ),
             constants.IOFields.TE90: 1e6 * self.dict_dis[constants.IOFields.TE90],
             constants.IOFields.TR_DIS: 1e3 * self.dict_dis[constants.IOFields.TR],
+            constants.IOFields.USER_LUNG_VOLUME_VALUE:self.user_lung_volume_value,
         }
         return self.dict_info
 
     def generate_figures(self):
         """Export image figures."""
-        #Issues with index_start, index_skip, index_end; all equal 0
-        #everything fine up to this point as far as I can tell
         index_start, index_skip = plot.get_plot_indices(self.mask)
         proton_reg = img_utils.normalize(
             np.abs(self.image_proton),
@@ -816,18 +929,21 @@ class Subject(object):
             path="tmp/montage_vent.png",
             index_start=index_start,
             index_skip=index_skip,
+            mask=self.mask,
         )
         plot.plot_montage_grey(
             image=np.abs(self.image_membrane),
             path="tmp/montage_membrane.png",
             index_start=index_start,
             index_skip=index_skip,
+            mask=self.mask,
         )
         plot.plot_montage_grey(
             image=np.abs(self.image_rbc),
             path="tmp/montage_rbc.png",
             index_start=index_start,
             index_skip=index_skip,
+            mask=self.mask,
         )
         plot.plot_montage_color(
             image=plot.map_and_overlay_to_rgb(
@@ -878,53 +994,57 @@ class Subject(object):
             index_skip=index_skip,
         )
         plot.plot_histogram(
-            data=img_utils.normalize(self.image_gas_cor, self.mask)[
-                np.array(self.mask, dtype=bool)
-            ].flatten(),
+            data=img_utils.normalize(self.image_gas_cor, self.mask)[np.array(self.mask, dtype=bool)].flatten(),
             path="tmp/hist_vent.png",
             color=constants.VENTHISTOGRAMFields.COLOR,
             xlim=constants.VENTHISTOGRAMFields.XLIM,
             ylim=constants.VENTHISTOGRAMFields.YLIM,
             num_bins=constants.VENTHISTOGRAMFields.NUMBINS,
-            refer_fit=self.reference_data['reference_fit_vent'],
+            refer_fit=self.reference_data["healthy_histogram_vent_dir"],  # Gaussian tuple or profile path
             xticks=constants.VENTHISTOGRAMFields.XTICKS,
             yticks=constants.VENTHISTOGRAMFields.YTICKS,
             xticklabels=constants.VENTHISTOGRAMFields.XTICKLABELS,
             yticklabels=constants.VENTHISTOGRAMFields.YTICKLABELS,
             title=constants.VENTHISTOGRAMFields.TITLE,
+            thresholds=self.reference_data["threshold_vent"],             # list of 5 (raw units)
+            band_colors=constants.CMAP.VENT_BIN2COLOR,                    # per-segment bar colors (bin 0 ignored)
+            outline="data",
         )
         plot.plot_histogram(
-            data=np.abs(self.image_rbc2gas)[
-                np.array(self.mask_vent, dtype=bool)
-            ].flatten(),
+            data=np.abs(self.image_rbc2gas)[np.array(self.mask_vent, dtype=bool)].flatten(),
             path="tmp/hist_rbc.png",
             color=constants.RBCHISTOGRAMFields.COLOR,
             xlim=constants.RBCHISTOGRAMFields.XLIM,
             ylim=constants.RBCHISTOGRAMFields.YLIM,
             num_bins=constants.RBCHISTOGRAMFields.NUMBINS,
-            refer_fit=self.reference_data['reference_fit_rbc'],
+            refer_fit=self.reference_data["healthy_histogram_rbc_dir"],   # Gaussian tuple or profile path
             xticks=constants.RBCHISTOGRAMFields.XTICKS,
             yticks=constants.RBCHISTOGRAMFields.YTICKS,
             xticklabels=constants.RBCHISTOGRAMFields.XTICKLABELS,
             yticklabels=constants.RBCHISTOGRAMFields.YTICKLABELS,
             title=constants.RBCHISTOGRAMFields.TITLE,
+            thresholds=self.reference_data["threshold_rbc"],              # list of 5 (raw units)
+            band_colors=constants.CMAP.RBC_BIN2COLOR,
+            outline="data",
         )
         plot.plot_histogram(
-            data=np.abs(self.image_membrane2gas)[
-                np.array(self.mask_vent, dtype=bool)
-            ].flatten(),
+            data=np.abs(self.image_membrane2gas)[np.array(self.mask_vent, dtype=bool)].flatten(),
             path="tmp/hist_membrane.png",
             color=constants.MEMBRANEHISTOGRAMFields.COLOR,
             xlim=constants.MEMBRANEHISTOGRAMFields.XLIM,
             ylim=constants.MEMBRANEHISTOGRAMFields.YLIM,
             num_bins=constants.MEMBRANEHISTOGRAMFields.NUMBINS,
-            refer_fit=self.reference_data['reference_fit_membrane'],
+            refer_fit=self.reference_data["healthy_histogram_membrane_dir"],  # Gaussian tuple or profile path
             xticks=constants.MEMBRANEHISTOGRAMFields.XTICKS,
             yticks=constants.MEMBRANEHISTOGRAMFields.YTICKS,
             xticklabels=constants.MEMBRANEHISTOGRAMFields.XTICKLABELS,
             yticklabels=constants.MEMBRANEHISTOGRAMFields.YTICKLABELS,
             title=constants.MEMBRANEHISTOGRAMFields.TITLE,
+            thresholds=self.reference_data["threshold_membrane"],             # list of 7 (raw units)
+            band_colors=constants.CMAP.MEMBRANE_BIN2COLOR,
+            outline="data",
         )
+
 
     def generate_pdf(self):
         """Generate HTML and PDF files."""
