@@ -27,8 +27,8 @@ from utils import (
     signal_utils,
     spect_utils,
     traj_utils,
-    mask_include_trachea,
 )
+
 
 class Subject(object):
     """Module to for processing gas exchange imaging.
@@ -189,7 +189,6 @@ class Subject(object):
         self.image_biasfield = mdict["image_biasfield"]
         self.mask = mdict["mask"].astype(bool)
         self.mask_vent = mdict["mask_vent"].astype(bool)
-        self.mask_include_trachea = mdict["mask_include_trachea"].astype(bool)
         self.traj_dissolved = mdict["traj_dissolved"]
         self.traj_gas = mdict["traj_gas"]
         if self.config.rbc_m_ratio > 0:
@@ -447,37 +446,24 @@ class Subject(object):
         )
 
     def segmentation(self):
-        """Segment the thoracic cavity (lung mask) and build mask_include_trachea."""
+        """Segment the thoracic cavity."""
         if self.config.segmentation_key == constants.SegmentationKey.CNN_VENT.value:
-            logging.info("Performing neural network segmentation.")
-            self.mask = segmentation.predict(self.image_gas_highreso).astype(bool)
-
-            # Build include-trachea mask automatically (unless user provided one)
-            self.mask_include_trachea = self._get_or_make_mask_include_trachea()
-
+            logging.info("Performing neural network segmenation.")
+            self.mask = segmentation.predict(self.image_gas_highreso)
         elif self.config.segmentation_key == constants.SegmentationKey.SKIP.value:
-            self.mask = np.ones_like(self.image_gas_highreso, dtype=bool)
-            self.mask_include_trachea = self.mask.copy()
-
-        elif self.config.segmentation_key == constants.SegmentationKey.MANUAL_VENT.value:
-            logging.info("Loading manual mask file specified by the user.")
-            loaded_mask = np.squeeze(np.array(nib.load(self.config.manual_seg_filepath).get_fdata())).astype(bool)
-            if np.sum(loaded_mask) == 0:
-                raise ValueError("Loaded manual mask is empty (sum=0).")
-            self.mask = loaded_mask
-
-            self.mask_include_trachea = self._get_or_make_mask_include_trachea()
-
+            self.mask = np.ones_like(self.image_gas_highreso)
+        elif (
+            self.config.segmentation_key == constants.SegmentationKey.MANUAL_VENT.value
+        ):
+            logging.info("Loading mask file specified by the user.")
+            try:
+                self.mask = np.squeeze(
+                    np.array(nib.load(self.config.manual_seg_filepath).get_fdata())
+                ).astype(bool)
+            except ValueError:
+                logging.error("Invalid mask nifti file.")
         else:
             raise ValueError("Invalid segmentation key.")
-
-    def _get_or_make_mask_include_trachea(self) -> np.ndarray:
-        """Return mask_include_trachea based on self.mask and self.image_gas_highreso."""
-        return mask_include_trachea.get_or_make_mask_include_trachea(
-            config=self.config,
-            base_lung_mask=self.mask,
-            image_gas_highreso=np.abs(self.image_gas_highreso),
-        )
 
     def registration(self):
         """Register moving image to target image.
@@ -559,27 +545,12 @@ class Subject(object):
 
     def gas_binning(self):
         """Bin gas images to colormap bins."""
-
-        if self.config.vent_normalization_method == constants.NormalizationMethods.PERCENTILE_MASKED:
-            self.image_gas_binned = binning.linear_bin(
-                image=img_utils.normalize(self.image_gas_cor, self.mask, bag_volume=self.config.bag_volume, method=constants.NormalizationMethods.PERCENTILE_MASKED),
-                mask=self.mask,
-                thresholds=self.reference_data['threshold_vent'],
-            )
-            self.mask_vent = np.logical_and(self.image_gas_binned > 1, self.mask)
-            gas_nifti_img = nib.Nifti1Image(self.image_gas_binned, affine=np.eye(4))
-            gas_nifti_img.to_filename('tmp/image_gas_binned.nii')
-
-        elif self.config.vent_normalization_method == constants.NormalizationMethods.FRAC_VENT:
-            self.image_gas_binned = binning.linear_bin(
-            image=img_utils.normalize(self.image_gas_cor, self.mask_include_trachea, bag_volume=self.config.bag_volume, method=constants.NormalizationMethods.FRAC_VENT), #big mask here 
+        self.image_gas_binned = binning.linear_bin(
+            image=img_utils.normalize(self.image_gas_cor, self.mask),
             mask=self.mask,
-            thresholds=self.reference_data['thresholds_fractional_ventilation'],
+            thresholds=self.reference_data['threshold_vent'],
         )
-            self.mask_vent = np.logical_and(self.image_gas_binned > 1, self.mask)
-
-            gas_nifti_img = nib.Nifti1Image(self.image_gas_binned, affine=np.eye(4))
-            gas_nifti_img.to_filename('tmp/image_gas_binned_frac_vent.nii')
+        self.mask_vent = np.logical_and(self.image_gas_binned > 1, self.mask)
 
     def dixon_decomposition(self):
         """Perform Dixon decomposition on the dissolved-phase images."""
@@ -726,13 +697,13 @@ class Subject(object):
                 self.image_gas_binned, np.array([6]), self.mask
             ),
             constants.StatsIOFields.VENT_MEAN: metrics.mean(
-                img_utils.normalize(np.abs(self.image_gas_cor), self.mask_include_trachea, bag_volume=self.config.bag_volume, method=self.config.vent_normalization_method), self.mask
+                img_utils.normalize(np.abs(self.image_gas_cor), self.mask), self.mask
             ),
             constants.StatsIOFields.VENT_MEDIAN: metrics.median(
-                img_utils.normalize(np.abs(self.image_gas_cor), self.mask_include_trachea, bag_volume=self.config.bag_volume, method=self.config.vent_normalization_method), self.mask
+                img_utils.normalize(np.abs(self.image_gas_cor), self.mask), self.mask
             ),
             constants.StatsIOFields.VENT_STDDEV: metrics.std(
-                img_utils.normalize(np.abs(self.image_gas_cor), self.mask_include_trachea, bag_volume=self.config.bag_volume, method=self.config.vent_normalization_method), self.mask
+                img_utils.normalize(np.abs(self.image_gas_cor), self.mask), self.mask
             ),
             constants.StatsIOFields.RBC_SNR: metrics.snr(self.image_rbc, self.mask)[0],
             constants.StatsIOFields.RBC_DEFECT_PCT: metrics.bin_percentage(
@@ -951,7 +922,6 @@ class Subject(object):
         proton_reg = img_utils.normalize(
             np.abs(self.image_proton),
             self.mask,
-            bag_volume=self.config.bag_volume,
             method=constants.NormalizationMethods.PERCENTILE,
         )
         plot.plot_montage_grey(
@@ -960,13 +930,6 @@ class Subject(object):
             index_start=index_start,
             index_skip=index_skip,
             mask=self.mask,
-        )
-        plot.plot_montage_grey_mask(
-            image=np.abs(self.image_gas_cor),
-            mask=self.mask,
-            path="tmp/montage_vent_cor.png",
-            index_start=index_start,
-            index_skip=index_skip,
         )
         plot.plot_montage_grey(
             image=np.abs(self.image_membrane),
@@ -1031,27 +994,19 @@ class Subject(object):
             index_skip=index_skip,
         )
         plot.plot_histogram(
-            data = img_utils.normalize(self.image_gas_cor, self.mask_include_trachea, bag_volume=self.config.bag_volume, method=self.config.vent_normalization_method)[self.mask > 0],
+            data=img_utils.normalize(self.image_gas_cor, self.mask)[np.array(self.mask, dtype=bool)].flatten(),
             path="tmp/hist_vent.png",
             color=constants.VENTHISTOGRAMFields.COLOR,
             xlim=constants.VENTHISTOGRAMFields.XLIM,
             ylim=constants.VENTHISTOGRAMFields.YLIM,
             num_bins=constants.VENTHISTOGRAMFields.NUMBINS,
-            refer_fit= (
-                self.reference_data["healthy_histogram_vent_dir"] 
-                if self.config.vent_normalization_method == constants.NormalizationMethods.PERCENTILE_MASKED
-                else self.reference_data["healthy_histogram_vent_frac_dir"],   # Gaussian tuple or profile path
-            )[0],
+            refer_fit=self.reference_data["healthy_histogram_vent_dir"],  # Gaussian tuple or profile path
             xticks=constants.VENTHISTOGRAMFields.XTICKS,
             yticks=constants.VENTHISTOGRAMFields.YTICKS,
             xticklabels=constants.VENTHISTOGRAMFields.XTICKLABELS,
             yticklabels=constants.VENTHISTOGRAMFields.YTICKLABELS,
             title=constants.VENTHISTOGRAMFields.TITLE,
-            thresholds = (
-                self.reference_data["threshold_vent"]
-                if self.config.vent_normalization_method == constants.NormalizationMethods.PERCENTILE_MASKED
-                else self.reference_data["thresholds_fractional_ventilation"]
-            ),
+            thresholds=self.reference_data["threshold_vent"],             # list of 5 (raw units)
             band_colors=constants.CMAP.VENT_BIN2COLOR,                    # per-segment bar colors (bin 0 ignored)
             outline="data",
         )
@@ -1096,7 +1051,7 @@ class Subject(object):
         # generate individual PDFs
         pdf_list = [
             os.path.join("tmp", pdf)
-            for pdf in ["intro.pdf", "clinical.pdf", "grayscale.pdf", "grayscale_cor.pdf", "qa"]
+            for pdf in ["intro.pdf", "clinical.pdf", "grayscale.pdf", "qa"]
         ]
         report.intro(self.dict_info, path=pdf_list[0])
         report.clinical(
@@ -1107,13 +1062,9 @@ class Subject(object):
             {**self.dict_stats, **self.reference_data['reference_stats']},
             path=pdf_list[2],
         )
-        report.grayscale_cor(
-            {**self.dict_stats, **self.reference_data['reference_stats']},
-            path=pdf_list[3],
-        )
         report.qa(
             {**self.dict_stats, **self.reference_data['reference_stats']},
-            path=pdf_list[4],
+            path=pdf_list[3],
         )
 
         # combine PDFs into one
@@ -1144,7 +1095,6 @@ class Subject(object):
         proton_reg = img_utils.normalize(
             np.abs(self.image_proton),
             self.mask,
-            bag_volume=self.config.bag_volume,
             method=constants.NormalizationMethods.PERCENTILE,
         )
         io_utils.export_nii(
@@ -1220,8 +1170,6 @@ class Subject(object):
             ),
             "tmp/gas_rgb.nii",
         )
-
-        io_utils.export_nii(img_utils.normalize(self.image_gas_cor, self.mask_include_trachea, bag_volume=self.config.bag_volume, method=self.config.vent_normalization_method), "tmp/frac_vent.nii")
 
     def save_config_as_json(self):
         """Save subject config .py file as json."""

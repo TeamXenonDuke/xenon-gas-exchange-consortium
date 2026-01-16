@@ -177,11 +177,6 @@ assets/tests/**/**.mat
 assets/tests/**/**.pptx
 assets/tests/**/**.dat
 assets/tests/**/**.csv
-!assets/histogram_profiles/**/*.npy
-
-
-
-
 # ignore the data folder
 data/*
 !data/.gitkeep
@@ -214,6 +209,3 @@ recon/cs/**
 testing/config/*
 testing/subjects/*
 testing/expected/*
-
-make_healthy_hist_profile.py
-visualize_hist.py

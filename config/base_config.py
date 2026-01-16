@@ -10,7 +10,6 @@ sys.path.append("..")
 
 from utils import constants
 
-import os
 
 class Config(config_dict.ConfigDict):
     """Base config file.
@@ -44,12 +43,6 @@ class Config(config_dict.ConfigDict):
         self.bag_volume = "None"
         self.segmentation_key = constants.SegmentationKey.CNN_VENT.value
         self.manual_seg_filepath = ""
-        # default 99th percentile rescaling method
-        self.vent_normalization_method = constants.NormalizationMethods.FRAC_VENT
-        # auto-generate if filepath missing or file not found
-        self.auto_make_trachea_plus_lung_mask = True
-        # where to write it if auto-generated
-        self.trachea_plus_lung_mask_output_dir = self.data_dir
 
         # Additional options
         self.reference_data_key = constants.ReferenceDataKey.DUKE_REFERENCE.value
@@ -65,7 +58,6 @@ class Config(config_dict.ConfigDict):
         self.manual_reg_filepath = ""
         self.processes = Process()
         self.recon = Recon()
-        self.trachea_plus_lung_mask_filepath = "" # optional user override of big mask
 
 
 class Recon(object):
@@ -80,6 +72,7 @@ class Recon(object):
         recon_proton: bool, whether to reconstruct proton images
         remove_contamination: bool, whether to remove gas contamination
         remove_noisy_projections: bool, whether to remove noisy projections
+        scan_type: str, the scan type
         kernel_sharpness_lr: float, the kernel sharpness for low resolution, higher
             SNR images
         kernel_sharpness_hr: float, the kernel sharpness for high resolution, lower

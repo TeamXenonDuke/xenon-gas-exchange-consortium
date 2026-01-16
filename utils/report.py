@@ -161,30 +161,6 @@ def grayscale(dict_stats: Dict[str, Any], path: str):
     )
 
 
-def grayscale_cor(dict_stats: Dict[str, Any], path: str):
-    """Make clinical report with corrected grayscale images.
-
-    First converts dictionary to html format. Then saves to path.
-    Args:
-        dict_stats (Dict[str, Any]): dictionary of statistics
-        path (str): path to save report
-    """
-    dict_stats = format_dict(dict_stats)
-    current_path = os.path.dirname(__file__)
-    path_clinical = os.path.abspath(
-        os.path.join(current_path, os.pardir, "assets", "html", "grayscale_cor.html")
-    )
-    path_html = os.path.join("tmp", "grayscale_cor.html")
-    # write report to html
-    with open(path_clinical, "r") as f:
-        file = f.read()
-        rendered = file.format(**dict_stats)
-    with open(path_html, "w") as o:
-        o.write(rendered)
-    # write clinical report to pdf
-    pdfkit.from_file(path_html, path, options=PDF_OPTIONS)
-
-
 def intro(dict_info: Dict[str, Any], path: str):
     """Make info report.
 
