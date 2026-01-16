@@ -309,7 +309,7 @@ def get_orientation(header: ismrmrd.xsd.ismrmrdschema.ismrmrd.ismrmrdHeader) -> 
         constants.Orientation.CORONAL,
         constants.Orientation.AXIAL,
         constants.Orientation.TRANSVERSE,
-        constants.Orientation.SAGITAL,
+        constants.Orientation.SAGITTAL,
     }
     if system_vendor in supported_vendors and orientation in valid_orientations:
         return orientation

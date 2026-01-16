@@ -225,7 +225,7 @@ class Orientation(object):
     CORONAL = "coronal"
     AXIAL = "axial"
     TRANSVERSE = "transverse"
-    SAGITAL = "sagittal"
+    SAGITTAL = "sagittal"
     NONE = "none"
 
 

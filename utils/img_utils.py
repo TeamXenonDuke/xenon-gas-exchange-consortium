@@ -96,7 +96,7 @@ def flip_and_rotate_image(
             image = np.rot90(image, 1, axes=(0, 1))
             image = np.flip(np.flip(image, axis=1), axis=2)
             return image
-        elif orientation == constants.Orientation.SAGITAL:
+        elif orientation == constants.Orientation.SAGITTAL:
             return rotate_sagittal_to_coronal(flip_image_complex(image))
         elif orientation == constants.Orientation.TRANSVERSE:
             return rotate_axial_to_coronal(flip_image_complex(image))
