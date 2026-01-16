@@ -13,6 +13,8 @@ import numpy as np
 
 from utils import io_utils
 
+import logging
+
 def _to_rgb(c):
     """
     _to_rgb(c)
@@ -352,6 +354,44 @@ def plot_montage_grey(
     plt.clf()
     plt.close()
 
+def plot_montage_grey_mask(
+    image: np.ndarray,mask: np.ndarray, path: str, index_start: int, index_skip: int = 1
+):
+    """Plot a montage of the image in grey scale.
+
+    Will make a montage of 2x8 of the image in grey scale and save it to the path.
+    Assumes the image is of shape (x, y, z) where there are at least 16 slices.
+    Otherwise, will plot all slices.
+
+    The image will be rescale again inside the mask to highlight the content.
+
+    Args:
+        image (np.ndarray): gray scale image to plot of shape (x, y, z)
+        path (str): path to save the image.
+        index_start (int): index to start plotting from.
+        index_skip (int, optional): indices to skip. Defaults to 1.
+    """
+    
+    # divide by the maximum value
+    image = image / np.max(image)
+    # Then highlight image inside the mask
+    mask = mask.astype(bool)
+    image[mask] = image[mask] / np.max(image[mask])
+
+    # stack the image to make it 4D (x, y, z, 3)
+    image = np.stack((image, image, image), axis=-1)
+    # plot the montage
+    index_end = index_start + index_skip * 16
+    montage = make_montage(
+        image[:, :, index_start:index_end:index_skip, :], n_slices=16
+    )
+    plt.figure()
+    plt.imshow(montage, cmap="gray")
+    plt.axis("off")
+    plt.savefig(path, transparent=True, bbox_inches="tight", pad_inches=-0.05, dpi=300)
+    plt.clf()
+    plt.close()
+
 
 def plot_montage_color(
     image: np.ndarray,
@@ -504,6 +544,9 @@ def plot_histogram(
         if outline_style:
             st.update(outline_style)
         ax.step(edges, np.r_[probs, 0.0], where="post", zorder=6, **st)
+
+    print("refer_fit:", refer_fit)
+    logging.info(refer_fit)
 
     # dashed healthy reference overlay (optional)
     if refer_fit is not None:

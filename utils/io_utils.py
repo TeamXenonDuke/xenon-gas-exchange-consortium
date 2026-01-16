@@ -600,7 +600,7 @@ def export_subject_mat(subject: object, path: str):
         subject: subject instance
         path: str file path of mat file
     """
-    sio.savemat(path, vars(subject))
+    sio.savemat(path, vars(subject), long_field_names=True)
 
 
 def export_np(arr: np.ndarray, path: str):
