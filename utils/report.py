@@ -179,10 +179,23 @@ def grayscale_cor(dict_stats: Dict[str, Any], path: str):
     with open(path_clinical, "r") as f:
         file = f.read()
         rendered = file.format(**dict_stats)
+        rendered = rendered.replace("../assets/", "assets/").replace("../tmp/", "tmp/")
     with open(path_html, "w") as o:
         o.write(rendered)
-    # write clinical report to pdf
-    pdfkit.from_file(path_html, path, options=PDF_OPTIONS)
+    # write html report to pdf 
+    # Define project root explicitly
+    project_root = Path(__file__).resolve().parents[1]
+    # Read the rendered HTML as text
+    with open(path_html, "r", encoding="utf-8") as f:
+        html_content = f.read()
+    # Render PDF from HTML string, ensuring correct base for relative URLs
+    HTML(
+        string=html_content,
+        base_url=str(project_root)
+    ).write_pdf(
+        target=path,
+        dpi=96,
+    )
 
 
 def intro(dict_info: Dict[str, Any], path: str):
