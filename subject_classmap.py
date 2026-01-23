@@ -726,14 +726,14 @@ class Subject(object):
                 self.image_gas_binned, np.array([6]), self.mask
             ),
             constants.StatsIOFields.VENT_MEAN: metrics.mean(
-                img_utils.normalize(np.abs(self.image_gas_cor), self.mask_include_trachea, bag_volume=self.config.bag_volume, method=self.config.vent_normalization_method), self.mask
-            ),
+                img_utils.normalize(np.abs(self.image_gas_cor), self.mask_include_trachea if self.config.vent_normalization_method == constants.NormalizationMethods.FRAC_VENT else self.mask, 
+                bag_volume=self.config.bag_volume, method=self.config.vent_normalization_method), self.mask),
             constants.StatsIOFields.VENT_MEDIAN: metrics.median(
-                img_utils.normalize(np.abs(self.image_gas_cor), self.mask_include_trachea, bag_volume=self.config.bag_volume, method=self.config.vent_normalization_method), self.mask
-            ),
+                img_utils.normalize(np.abs(self.image_gas_cor), img_utils.normalize(np.abs(self.image_gas_cor), self.mask_include_trachea if self.config.vent_normalization_method == constants.NormalizationMethods.FRAC_VENT else self.mask, 
+                bag_volume=self.config.bag_volume, method=self.config.vent_normalization_method), self.mask),
             constants.StatsIOFields.VENT_STDDEV: metrics.std(
-                img_utils.normalize(np.abs(self.image_gas_cor), self.mask_include_trachea, bag_volume=self.config.bag_volume, method=self.config.vent_normalization_method), self.mask
-            ),
+                img_utils.normalize(np.abs(self.image_gas_cor), img_utils.normalize(np.abs(self.image_gas_cor), self.mask_include_trachea if self.config.vent_normalization_method == constants.NormalizationMethods.FRAC_VENT else self.mask, 
+                bag_volume=self.config.bag_volume, method=self.config.vent_normalization_method), self.mask),
             constants.StatsIOFields.RBC_SNR: metrics.snr(self.image_rbc, self.mask)[0],
             constants.StatsIOFields.RBC_DEFECT_PCT: metrics.bin_percentage(
                 self.image_rbc2gas_binned, np.array([1]), self.mask
@@ -1031,7 +1031,8 @@ class Subject(object):
             index_skip=index_skip,
         )
         plot.plot_histogram(
-            data = img_utils.normalize(self.image_gas_cor, self.mask_include_trachea, bag_volume=self.config.bag_volume, method=self.config.vent_normalization_method)[self.mask > 0],
+            data = img_utils.normalize(np.abs(self.image_gas_cor), self.mask_include_trachea if self.config.vent_normalization_method == constants.NormalizationMethods.FRAC_VENT else self.mask, 
+                bag_volume=self.config.bag_volume, method=self.config.vent_normalization_method)[self.mask > 0],
             path="tmp/hist_vent.png",
             color=constants.VENTHISTOGRAMFields.COLOR,
             xlim=constants.VENTHISTOGRAMFields.XLIM,
@@ -1221,7 +1222,7 @@ class Subject(object):
             "tmp/gas_rgb.nii",
         )
 
-        io_utils.export_nii(img_utils.normalize(self.image_gas_cor, self.mask_include_trachea, bag_volume=self.config.bag_volume, method=self.config.vent_normalization_method), "tmp/frac_vent.nii")
+    if self.config.vent_normalization_method == constants.NormalizationMethods.FRAC_VENT: io_utils.export_nii(img_utils.normalize(self.image_gas_cor, self.mask_include_trachea, bag_volume=self.config.bag_volume, method=self.config.vent_normalization_method), "tmp/frac_vent.nii")
 
     def save_config_as_json(self):
         """Save subject config .py file as json."""
