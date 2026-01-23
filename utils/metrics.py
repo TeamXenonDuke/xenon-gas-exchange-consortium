@@ -12,6 +12,7 @@ import numpy as np
 from scipy.ndimage import binary_dilation
 
 from utils import constants
+import subject_classmap as sc
 
 import pandas as pd
 import logging
@@ -275,6 +276,7 @@ def dlco(
     mask: np.ndarray,
     mask_vent: np.ndarray,
     fov: float,
+    frequency: float,
     membrane_mean: float = 0.89,
     rbc_mean: float = 0.455,
 ) -> float:
@@ -292,7 +294,7 @@ def dlco(
         rbc_mean: float. The mean RBC in healthy subjects.
     """
 
-    kco_v = kco(image_membrane, image_rbc, mask_vent, membrane_mean, rbc_mean)
+    kco_v = kco(image_membrane, image_rbc, mask_vent, frequency, membrane_mean, rbc_mean)
     va_v = alveolar_volume(image_gas, mask, fov)
     dlco_v = kco_v * va_v
     return dlco_v
@@ -319,6 +321,7 @@ def kco(
     image_membrane: np.ndarray,
     image_rbc: np.ndarray,
     mask: np.ndarray,
+    frequency: float,
     membrane_mean: float = 0.89,
     rbc_mean: float = 0.455,
 ) -> float:
@@ -334,8 +337,14 @@ def kco(
         KCO_ALPHA: membrane coefficient
         KCO_BETA: rbc coefficient
     """
-    membrane_rel = mean(image_membrane, mask) / membrane_mean
-    rbc_rel = mean(image_rbc, mask) / rbc_mean
+    if 206<= frequency <= 210:
+        mem = mean(image_membrane, mask)*0.918
+        rbc = mean(image_rbc, mask)*1.031
+    else: 
+        mem = mean(image_membrane, mask)
+        rbc = mean(image_rbc, mask)
+    membrane_rel = mem / membrane_mean
+    rbc_rel = rbc / rbc_mean
     membrane_rel = 1.0 / membrane_rel if membrane_rel > 1 else membrane_rel
     kco_v = 1 / (1 / (constants.KCO_ALPHA * membrane_rel) + 1 / (constants.KCO_BETA * rbc_rel))
     return kco_v

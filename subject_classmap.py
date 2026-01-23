@@ -762,6 +762,7 @@ class Subject(object):
                 self.mask,
                 self.mask_vent,
                 self.dict_dis[constants.IOFields.FOV],
+                self.dict_dis[constants.IOFields.XE_DISSOLVED_OFFSET_FREQUENCY],
                 self.reference_data['reference_fit_membrane'][1],
                 self.reference_data['reference_fit_rbc'][1],
             ),
