@@ -752,8 +752,9 @@ class Subject(object):
                 self.image_membrane2gas,
                 self.image_rbc2gas,
                 self.mask_vent,
-                self.reference_data['reference_fit_membrane'][1],
-                self.reference_data['reference_fit_rbc'][1],
+                self.dict_dis[constants.IOFields.XE_DISSOLVED_OFFSET_FREQUENCY],
+                0.008871,
+                0.00455,
             ),
             constants.StatsIOFields.DLCO_EST: metrics.dlco(
                 self.image_gas_binned,
@@ -763,8 +764,8 @@ class Subject(object):
                 self.mask_vent,
                 self.dict_dis[constants.IOFields.FOV],
                 self.dict_dis[constants.IOFields.XE_DISSOLVED_OFFSET_FREQUENCY],
-                self.reference_data['reference_fit_membrane'][1],
-                self.reference_data['reference_fit_rbc'][1],
+                0.008871,
+                0.00455,
             ),
             constants.StatsIOFields.RDP_BA: round(metrics.rdp_ba(
                 self.image_rbc2gas_binned,

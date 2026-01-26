@@ -12,7 +12,6 @@ import numpy as np
 from scipy.ndimage import binary_dilation
 
 from utils import constants
-import subject_classmap as sc
 
 import pandas as pd
 import logging
@@ -343,8 +342,9 @@ def kco(
     else: 
         mem = mean(image_membrane, mask)
         rbc = mean(image_rbc, mask)
-    membrane_rel = mem / membrane_mean
-    rbc_rel = rbc / rbc_mean
+
+    membrane_rel = mem / membrane_mean # relative mean membrane
+    rbc_rel = rbc / rbc_mean # relative mean RBC
     membrane_rel = 1.0 / membrane_rel if membrane_rel > 1 else membrane_rel
     kco_v = 1 / (1 / (constants.KCO_ALPHA * membrane_rel) + 1 / (constants.KCO_BETA * rbc_rel))
     return kco_v
