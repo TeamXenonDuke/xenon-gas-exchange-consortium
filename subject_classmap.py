@@ -754,7 +754,7 @@ class Subject(object):
                 self.mask_vent,
                 self.dict_dis[constants.IOFields.XE_DISSOLVED_OFFSET_FREQUENCY],
                 0.008871,
-                0.00455,
+                0.00455, # sex- and hemoglobin averaged, the value in Sup's paper is non-Hb-corrected, non-sex-specific average
             ),
             constants.StatsIOFields.DLCO_EST: metrics.dlco(
                 self.image_gas_binned,
@@ -765,7 +765,7 @@ class Subject(object):
                 self.dict_dis[constants.IOFields.FOV],
                 self.dict_dis[constants.IOFields.XE_DISSOLVED_OFFSET_FREQUENCY],
                 0.008871,
-                0.00455,
+                0.00455, # sex- and hemoglobin averaged, the value in Sup's paper is non-Hb-corrected, non-sex-specific average
             ),
             constants.StatsIOFields.RDP_BA: round(metrics.rdp_ba(
                 self.image_rbc2gas_binned,
