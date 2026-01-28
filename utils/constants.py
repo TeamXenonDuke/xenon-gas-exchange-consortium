@@ -11,9 +11,9 @@ T2STAR_RBC_3T = 1.044575 * 1e-3  # seconds
 T2STAR_MEMBRANE_3T = 0.988588  * 1e-3  # seconds
 
 
-KCO_ALPHA = 11.2  # membrane
-KCO_BETA = 14.6  # RBC
-VA_ALPHA = 1.43
+KCO_ALPHA = 22.6 # membrane coefficient
+KCO_BETA = 7.42  # RBC coefficient
+VA_ALPHA = 1.58
 
 NONE = "None"
 
