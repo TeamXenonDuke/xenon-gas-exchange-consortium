@@ -308,8 +308,6 @@ def read_dis_twix(path: str, config: Optional[ml_collections.ConfigDict] = None)
         constants.IOFields.INSTITUTION: twix_utils.get_institution_name(twix_obj),
         constants.IOFields.SYSTEM_VENDOR: twix_utils.get_system_vendor(twix_obj),
         constants.IOFields.N_FRAMES: data_dict[constants.IOFields.N_FRAMES],
-        constants.IOFields.N_SKIP_END: data_dict[constants.IOFields.N_SKIP_END],
-        constants.IOFields.N_SKIP_START: data_dict[constants.IOFields.N_SKIP_START],
         constants.IOFields.ORIENTATION: twix_utils.get_orientation(twix_obj),
         constants.IOFields.PROTOCOL_NAME: twix_utils.get_protocol_name(twix_obj),
         constants.IOFields.RAMP_TIME: twix_utils.get_ramp_time(twix_obj),
