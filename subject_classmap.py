@@ -729,10 +729,10 @@ class Subject(object):
                 img_utils.normalize(np.abs(self.image_gas_cor), self.mask_include_trachea if self.config.vent_normalization_method == constants.NormalizationMethods.FRAC_VENT else self.mask, 
                 bag_volume=self.config.bag_volume, method=self.config.vent_normalization_method), self.mask),
             constants.StatsIOFields.VENT_MEDIAN: metrics.median(
-                img_utils.normalize(np.abs(self.image_gas_cor), img_utils.normalize(np.abs(self.image_gas_cor), self.mask_include_trachea if self.config.vent_normalization_method == constants.NormalizationMethods.FRAC_VENT else self.mask, 
+                img_utils.normalize(np.abs(self.image_gas_cor), self.mask_include_trachea if self.config.vent_normalization_method == constants.NormalizationMethods.FRAC_VENT else self.mask, 
                 bag_volume=self.config.bag_volume, method=self.config.vent_normalization_method), self.mask),
             constants.StatsIOFields.VENT_STDDEV: metrics.std(
-                img_utils.normalize(np.abs(self.image_gas_cor), img_utils.normalize(np.abs(self.image_gas_cor), self.mask_include_trachea if self.config.vent_normalization_method == constants.NormalizationMethods.FRAC_VENT else self.mask, 
+                img_utils.normalize(np.abs(self.image_gas_cor), self.mask_include_trachea if self.config.vent_normalization_method == constants.NormalizationMethods.FRAC_VENT else self.mask, 
                 bag_volume=self.config.bag_volume, method=self.config.vent_normalization_method), self.mask),
             constants.StatsIOFields.RBC_SNR: metrics.snr(self.image_rbc, self.mask)[0],
             constants.StatsIOFields.RBC_DEFECT_PCT: metrics.bin_percentage(
@@ -1222,7 +1222,8 @@ class Subject(object):
             "tmp/gas_rgb.nii",
         )
 
-    if self.config.vent_normalization_method == constants.NormalizationMethods.FRAC_VENT: io_utils.export_nii(img_utils.normalize(self.image_gas_cor, self.mask_include_trachea, bag_volume=self.config.bag_volume, method=self.config.vent_normalization_method), "tmp/frac_vent.nii")
+        if self.config.vent_normalization_method == constants.NormalizationMethods.FRAC_VENT: 
+            io_utils.export_nii(img_utils.normalize(self.image_gas_cor, self.mask_include_trachea, bag_volume=self.config.bag_volume, method=constants.NormalizationMethods.FRAC_VENT), "tmp/frac_vent.nii")
 
     def save_config_as_json(self):
         """Save subject config .py file as json."""
