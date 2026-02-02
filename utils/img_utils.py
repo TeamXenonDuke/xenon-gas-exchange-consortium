@@ -3,7 +3,7 @@
 import os
 import sys
 import nibabel as nb
-
+import logging 
 import cv2
 
 sys.path.append("..")
@@ -230,21 +230,8 @@ def normalize(
         np.ndarray: normalized image
     """
     # Only require bag_volume when doing FRAC_VENT normalization
-    if method == constants.NormalizationMethods.FRAC_VENT and (
-        bag_volume is None or bag_volume in ("None", "NA", "")
-    ):
-        raise ValueError(
-            "FRAC_VENT normalization requires bag_volume to be numeric (liters). "
-            f"Got bag_volume={bag_volume!r}. "
-            "Fix: set config.bag_volume to a number (e.g., 1.0–2.0 L) or ensure AGE/SEX/HEIGHT "
-            "are present so predicted bag volume can be computed."
-        )
-        if isinstance(bag_volume, (int, float)) and pd.isna(bag_volume):
-            raise ValueError(
-                "FRAC_VENT normalization could not determine a valid bag_volume (got NaN). "
-                "Fix: set config.bag_volume to a number (liters) or ensure prediction inputs exist."
-            )
-    elif method == constants.NormalizationMethods.MAX:
+
+    if method == constants.NormalizationMethods.MAX:
         return image * 1.0 / np.max(image)
     elif method == constants.NormalizationMethods.PERCENTILE:
         return image * 1.0 / np.percentile(image, percentile)
@@ -258,6 +245,22 @@ def normalize(
         image[np.isinf(image)] = 0
         return image / np.mean(image[mask])
     elif method == constants.NormalizationMethods.FRAC_VENT:
+
+        if bag_volume is None or bag_volume in ("None", "NA", "") or pd.isna(bag_volume):
+            raise ValueError(
+                "FRAC_VENT normalization requires bag_volume to be numeric (liters). "
+                f"Got bag_volume={bag_volume!r}. "
+                "Fix: set config.bag_volume to a number (e.g., 1.0–2.0 L) or ensure AGE/SEX/HEIGHT "
+                "are present so predicted bag volume can be computed."
+            )
+        elif not isinstance(bag_volume, (int, float)):
+            logging.info(
+                f"WARNING :FRAC_VENT: bag_volume provided as string {bag_volume!r}; coercing to float.",
+                RuntimeWarning,
+                stacklevel=2,
+            )
+
+            bag_volume = float(bag_volume)
         bag_volume = bag_volume * 1000  # convert L to mL
         tcv_gas_vol = bag_volume - 10 #new estimate in mL
         voxel_side = .3125  # cm
