@@ -448,12 +448,21 @@ class Subject(object):
 
     def segmentation(self):
         """Segment the thoracic cavity (lung mask) and build mask_include_trachea."""
+
+        def get_or_make_mask_include_trachea() -> np.ndarray:
+            """Return mask_include_trachea based on self.mask and self.image_gas_highreso."""
+            return mask_include_trachea.get_or_make_mask_include_trachea(
+                config=self.config,
+                base_lung_mask=self.mask,
+                image_gas_highreso=np.abs(self.image_gas_highreso),
+            )
+
         if self.config.segmentation_key == constants.SegmentationKey.CNN_VENT.value:
             logging.info("Performing neural network segmentation.")
             self.mask = segmentation.predict(self.image_gas_highreso).astype(bool)
 
             # Build include-trachea mask automatically (unless user provided one)
-            self.mask_include_trachea = self._get_or_make_mask_include_trachea()
+            self.mask_include_trachea = get_or_make_mask_include_trachea()
 
         elif self.config.segmentation_key == constants.SegmentationKey.SKIP.value:
             self.mask = np.ones_like(self.image_gas_highreso, dtype=bool)
@@ -461,23 +470,17 @@ class Subject(object):
 
         elif self.config.segmentation_key == constants.SegmentationKey.MANUAL_VENT.value:
             logging.info("Loading manual mask file specified by the user.")
-            loaded_mask = np.squeeze(np.array(nib.load(self.config.manual_seg_filepath).get_fdata())).astype(bool)
+            loaded_mask = np.squeeze(
+                np.array(nib.load(self.config.manual_seg_filepath).get_fdata())
+            ).astype(bool)
             if np.sum(loaded_mask) == 0:
                 raise ValueError("Loaded manual mask is empty (sum=0).")
             self.mask = loaded_mask
 
-            self.mask_include_trachea = self._get_or_make_mask_include_trachea()
+            self.mask_include_trachea = get_or_make_mask_include_trachea()
 
         else:
             raise ValueError("Invalid segmentation key.")
-
-    def _get_or_make_mask_include_trachea(self) -> np.ndarray:
-        """Return mask_include_trachea based on self.mask and self.image_gas_highreso."""
-        return mask_include_trachea.get_or_make_mask_include_trachea(
-            config=self.config,
-            base_lung_mask=self.mask,
-            image_gas_highreso=np.abs(self.image_gas_highreso),
-        )
 
     def registration(self):
         """Register moving image to target image.
@@ -1038,7 +1041,7 @@ class Subject(object):
             path="tmp/hist_vent.png",
             color=constants.VENTHISTOGRAMFields.COLOR,
             xlim=constants.VENTHISTOGRAMFields.XLIM,
-            ylim=constants.VENTHISTOGRAMFields.YLIM,
+            ylim=constants.VENTHISTOGRAMFields.YLIM_FRAC_VENT if self.config.vent_normalization_method == constants.NormalizationMethods.FRAC_VENT else constants.VENTHISTOGRAMFields.YLIM,
             num_bins=constants.VENTHISTOGRAMFields.NUMBINS,
             refer_fit= (
                 self.reference_data["healthy_histogram_vent_dir"] 
@@ -1046,9 +1049,9 @@ class Subject(object):
                 else self.reference_data["healthy_histogram_vent_frac_dir"],   # Gaussian tuple or profile path
             )[0],
             xticks=constants.VENTHISTOGRAMFields.XTICKS,
-            yticks=constants.VENTHISTOGRAMFields.YTICKS,
+            yticks=constants.VENTHISTOGRAMFields.YTICKS_FRAC_VENT if self.config.vent_normalization_method == constants.NormalizationMethods.FRAC_VENT else constants.VENTHISTOGRAMFields.YTICKS,
             xticklabels=constants.VENTHISTOGRAMFields.XTICKLABELS,
-            yticklabels=constants.VENTHISTOGRAMFields.YTICKLABELS,
+            yticklabels=constants.VENTHISTOGRAMFields.YTICKLABELS_FRAC_VENT if self.config.vent_normalization_method == constants.NormalizationMethods.FRAC_VENT else constants.VENTHISTOGRAMFields.YTICKLABELS,
             title=constants.VENTHISTOGRAMFields.TITLE,
             thresholds = (
                 self.reference_data["threshold_vent"]

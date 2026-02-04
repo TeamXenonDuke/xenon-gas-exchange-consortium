@@ -298,11 +298,14 @@ class VENTHISTOGRAMFields(object):
     COLOR = (0.4196, 0.6824, 0.8392)
     XLIM = 1.0
     YLIM = 0.07
+    YLIM_FRAC_VENT = 0.15
     NUMBINS = 50
     XTICKS = np.linspace(0, XLIM, 4)
     YTICKS = np.linspace(0, YLIM, 5)
+    YTICKS_FRAC_VENT = np.linspace(0, YLIM_FRAC_VENT, 5)
     XTICKLABELS = ["{:.2f}".format(x) for x in XTICKS]
     YTICKLABELS = ["{:.2f}".format(x) for x in YTICKS]
+    YTICKLABELS_FRAC_VENT = ["{:.2f}".format(x) for x in YTICKS_FRAC_VENT]
     TITLE = "Ventilation"
 
 
