@@ -11,9 +11,9 @@ T2STAR_RBC_3T = 1.044575 * 1e-3  # seconds
 T2STAR_MEMBRANE_3T = 0.988588  * 1e-3  # seconds
 
 
-KCO_ALPHA = 11.2  # membrane
-KCO_BETA = 14.6  # RBC
-VA_ALPHA = 1.43
+KCO_ALPHA = 22.6 # membrane coefficient
+KCO_BETA = 7.42  # RBC coefficient
+VA_ALPHA = 1.58
 
 NONE = "None"
 
@@ -226,6 +226,7 @@ class Orientation(object):
     CORONAL = "coronal"
     AXIAL = "axial"
     TRANSVERSE = "transverse"
+    SAGITTAL = "sagittal"
     NONE = "none"
 
 
@@ -296,7 +297,7 @@ class VENTHISTOGRAMFields(object):
 
     COLOR = (0.4196, 0.6824, 0.8392)
     XLIM = 1.0
-    YLIM = 0.15
+    YLIM = 0.07
     NUMBINS = 50
     XTICKS = np.linspace(0, XLIM, 4)
     YTICKS = np.linspace(0, YLIM, 5)
