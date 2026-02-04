@@ -356,12 +356,11 @@ class PDFOPTIONS(object):
 class NormalizationMethods(object):
     """Image normalization methods."""
 
-    MAX = "max"
-    PERCENTILE_MASKED = "percentile_masked"
-    FRAC_VENT = "frac_vent"
-    PERCENTILE = "percentile"
-    MEAN = "mean"
-    FRAC_VENT = "frac_vent"
+    MAX = "max"  # Normalize by the global maximum intensity in the image
+    PERCENTILE_MASKED = "percentile_masked"  # Normalize by a given percentile computed only within the mask
+    FRAC_VENT = "frac_vent"  # Normalize to estimate fractional ventilation using bag volume and voxel size
+    PERCENTILE = "percentile"  # Normalize by a given percentile of the entire image
+    MEAN = "mean"  # Normalize by the mean intensity within the mask
 
 
 class CMAP(object):
