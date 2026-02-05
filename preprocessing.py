@@ -12,24 +12,20 @@ import logging
 from utils import constants, recon_utils, signal_utils, spect_utils, traj_utils
 
 
-def remove_contamination(dict_dyn: Dict[str, Any], dict_dis: Dict[str, Any]) -> Dict:
+def gas_contamination_correction(
+    dict_dis: Dict[str, Any], config: Optional[ml_collections.ConfigDict] = None
+) -> Dict:
     """Remove gas contamination from data."""
-    _, fit_obj = spect_utils.calculate_static_spectroscopy(
-        fid=dict_dyn[constants.IOFields.FIDS_DIS],
-        sample_time=dict_dyn[constants.IOFields.SAMPLE_TIME],
-        tr=dict_dyn[constants.IOFields.TR],
-        center_freq=dict_dyn[constants.IOFields.XE_CENTER_FREQUENCY],
-        rf_excitation=dict_dyn[constants.IOFields.XE_DISSOLVED_OFFSET_FREQUENCY],
-    )
 
     dict_dis[constants.IOFields.FIDS_DIS] = signal_utils.remove_gasphase_contamination(
         data_dissolved=dict_dis[constants.IOFields.FIDS_DIS],
-        data_gas=dict_dis[constants.IOFields.FIDS_DIS],
-        sample_time=dict_dyn[constants.IOFields.SAMPLE_TIME],
-        freq_gas_acq_diss=fit_obj.freq[2],
-        phase_gas_acq_diss=fit_obj.phase[2],
-        area_gas_acq_diss=fit_obj.area[2],
-        fa_gas=0.5,
+        data_gas=dict_dis[constants.IOFields.FIDS_GAS],
+        sample_time=dict_dis[constants.IOFields.SAMPLE_TIME],
+        freq_gas_acq_diss= dict_dis[constants.IOFields.XE_CENTER_FREQUENCY]*dict_dis[constants.IOFields.XE_DISSOLVED_OFFSET_FREQUENCY]*(-1.0),
+        phase_gas_acq_diss=config.phase_gas_acq_diss,
+        area_gas_acq_diss=config.area_gas_acq_diss,
+        optimized_conta_phase = config.recon.optimized_conta_phase,
+        fa_gas=dict_dis[constants.IOFields.FA_GAS],
     )
     return dict_dis
 
