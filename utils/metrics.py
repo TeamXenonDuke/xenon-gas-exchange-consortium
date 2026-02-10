@@ -275,8 +275,9 @@ def dlco(
     mask: np.ndarray,
     mask_vent: np.ndarray,
     fov: float,
-    membrane_mean: float = 0.736,
-    rbc_mean: float = 0.471,
+    frequency: float,
+    membrane_mean: float = 0.89,
+    rbc_mean: float = 0.455,
 ) -> float:
     """Get the DLCO of the image.
 
@@ -291,9 +292,11 @@ def dlco(
         membrane_mean: float. The mean membrane in healthy subjects.
         rbc_mean: float. The mean RBC in healthy subjects.
     """
-    return kco(
-        image_membrane, image_rbc, mask_vent, membrane_mean, rbc_mean
-    ) * alveolar_volume(image_gas, mask, fov)
+
+    kco_v = kco(image_membrane, image_rbc, mask_vent, frequency, membrane_mean, rbc_mean)
+    va_v = alveolar_volume(image_gas, mask, fov)
+    dlco_v = kco_v * va_v
+    return dlco_v
 
 
 def alveolar_volume(image: np.ndarray, mask: np.ndarray, fov: float) -> float:
@@ -307,19 +310,19 @@ def alveolar_volume(image: np.ndarray, mask: np.ndarray, fov: float) -> float:
     Returns:
         Alveolar volume in L.
     """
-    return (
-        constants.VA_ALPHA
-        * inflation_volume(mask, fov)
-        * (1.0 - bin_percentage(image, np.asarray([1]), mask) / 100)
-    )
+    kv = constants.VA_ALPHA
+    vv = inflation_volume(mask, fov) * (1.0 - bin_percentage(image, np.asarray([1]), mask) / 100)
+    va = kv * vv
+    return va
 
 
 def kco(
     image_membrane: np.ndarray,
     image_rbc: np.ndarray,
     mask: np.ndarray,
-    membrane_mean: float = 0.736,
-    rbc_mean: float = 0.471,
+    frequency: float,
+    membrane_mean: float = 0.89,
+    rbc_mean: float = 0.455,
 ) -> float:
     """Get the KCO of the image.
 
@@ -330,13 +333,21 @@ def kco(
         mask: np.ndarray. mask of non-VDP region.
         membrane_mean: float. The mean membrane in healthy subjects.
         rbc_mean: float. The mean RBC in healthy subjects.
+        KCO_ALPHA: membrane coefficient
+        KCO_BETA: rbc coefficient
     """
-    membrane_rel = mean(image_membrane, mask) / membrane_mean
-    rbc_rel = mean(image_rbc, mask) / rbc_mean
+    if 206<= frequency <= 210:
+        mem = mean(image_membrane, mask)*0.918
+        rbc = mean(image_rbc, mask)*1.031
+    else: 
+        mem = mean(image_membrane, mask)
+        rbc = mean(image_rbc, mask)
+
+    membrane_rel = mem / membrane_mean # relative mean membrane
+    rbc_rel = rbc / rbc_mean # relative mean RBC
     membrane_rel = 1.0 / membrane_rel if membrane_rel > 1 else membrane_rel
-    return 1 / (
-        1 / (constants.KCO_ALPHA * membrane_rel) + 1 / (constants.KCO_BETA * rbc_rel)
-    )
+    kco_v = 1 / (1 / (constants.KCO_ALPHA * membrane_rel) + 1 / (constants.KCO_BETA * rbc_rel))
+    return kco_v
 
 
 def rdp_ba(

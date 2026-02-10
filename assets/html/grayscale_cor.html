@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta
+      name="description"
+      content="Gas exchange Imaging Report with 129Xe MRI-technical report"
+    />
+    <meta name="author" content="Junlan Lu" />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700;900&display=swap"
+      rel="stylesheet"
+    />
+    <link href="../assets/css/report_reset.css" rel="stylesheet" />
+    <link href="../assets/css/report_clinical.css" rel="stylesheet" />
+    <title>Gas exchange Imaging Report</title>
+  </head>
+  <body>
+    <div class="title-container">
+      <h1 id="big-title">Summary of {subject_id}</h1>
+      <h5 id="date-title">scan: {scan_date}; processed: {process_date}</h5>
+    </div>
+    <div class="hist-container">
+      <div class="hist-tile" align="left">
+        <img src="../tmp/hist_vent.png" style="width: 100%" />
+        <div class="hist-label">
+          <p>SNR:{vent_snr}</p>
+          <p>Mean:{vent_mean}&plusmn;{vent_stddev}</p>
+        </div>
+      </div>
+      <div class="hist-tile" align="left">
+        <img src="../tmp/hist_membrane.png" style="width: 100%" />
+        <div class="hist-label">
+          <p>SNR:{membrane_snr}</p>
+          <p>Mean:{membrane_mean}&plusmn;{membrane_stddev}</p>
+        </div>
+      </div>
+      <div class="hist-tile" align="left">
+        <img src="../tmp/hist_rbc.png" style="width: 100%" />
+        <div class="hist-label">
+          <p>SNR:{rbc_snr}</p>
+          <p>Mean:{rbc_mean}&plusmn;{rbc_stddev}</p>
+        </div>
+      </div>
+    </div>
+    <div class="map-container">
+      <div class="map-tile">
+        <img
+          style="border: 10px solid black"
+          src="../tmp/montage_vent_cor.png"
+          width="680"
+          height="170px"
+        />
+        <img
+          style="border: 10px solid black"
+          src="../tmp/montage_membrane.png"
+          width="680"
+          height="170px"
+        />
+        <img
+          style="border: 10px solid black"
+          src="../tmp/montage_rbc.png"
+          width="680"
+          height="170px"
+        />
+      </div>
+      <div class="colorbar-tile">
+        <img src=../assets/img/colorbin_short.png height=150px>
+        <div class="space"></div>
+        <img src=../assets/img/colorbin_long.png height=200px>
+        <div class="space"></div>
+        <img src=../assets/img/colorbin_short.png height=150px>
+      </div>
+      <div class="predict-values">
+        <p>
+          Estimated KCO:{kco_est} ---- VA:{alveolar_volume} ---- DLCO:{dlco_est} ---- RDP_BA:{rdp_ba}%
+        </p>
+      </div>
+    </div>
+    <div class="table-container">
+      <table>
+        <tr class="title">
+          <th>Subject</th>
+          <th>{subject_id}</th>
+          <th>Ref</th>
+        </tr>
+        <tr class="basic">
+          <td>RBC:M</td>
+          <td>{rbc_m_ratio}</td>
+          <td>{rbc_m_ratio_avg}&#177;{rbc_m_ratio_std}</td>
+        </tr>
+        <tr class="basic">
+          <td>Inflation</td>
+          <td>{inflation}L</td>
+          <td>{inflation_display}</td>
+        </tr>
+        <tr class="ven">
+          <td>Defect</td>
+          <td>{vent_defect_pct}%</td>
+          <td>{vent_defect_avg}%</td>
+        </tr>
+        <tr class="ven">
+          <td>Low</td>
+          <td>{vent_low_pct}%</td>
+          <td>{vent_low_avg}%</td>
+        </tr>
+        <tr class="ven">
+          <td>High</td>
+          <td>{vent_high_pct}%</td>
+          <td>{vent_high_avg}%</td>
+        </tr>
+        <tr class="membrane">
+          <td>Defect</td>
+          <td>{membrane_defect_pct}%</td>
+          <td>{membrane_defect_avg}%</td>
+        </tr>
+        <tr class="membrane">
+          <td>Low</td>
+          <td>{membrane_low_pct}%</td>
+          <td>{membrane_low_avg}%</td>
+        </tr>
+        <tr class="membrane">
+          <td>High</td>
+          <td>{membrane_high_pct}%</td>
+          <td>{membrane_high_avg}%</td>
+        </tr>
+        <tr class="rbc">
+          <td>Defect</td>
+          <td>{rbc_defect_pct}%</td>
+          <td>{rbc_defect_avg}%</td>
+        </tr>
+        <tr class="rbc">
+          <td>Low</td>
+          <td>{rbc_low_pct}%</td>
+          <td>{rbc_low_avg}%</td>
+        </tr>
+        <tr class="rbc">
+          <td>High</td>
+          <td>{rbc_high_pct}%</td>
+          <td>{rbc_high_avg}%</td>
+        </tr>
+      </table>
+    </div>
+  </body>
+</html>
