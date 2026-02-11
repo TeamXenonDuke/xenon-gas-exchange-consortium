@@ -496,12 +496,7 @@ def get_gx_data(twix_obj: mapvbvd._attrdict.AttrDict) -> Dict[str, Any]:
         2. gas phase FIDs in shape (number of projections, number of points in ray).
         3. number of fids in each phase, used for trajectory calculation. Note:
             this may not always be equal to the shape in 1 and 2.
-        4. number of FIDs to skip from the beginning. This may be due to a noise frame.
-        5. number of FIDs to skip from the end. This may be due to calibration.
-        6. gradient delay x in microseconds.
-        7. gradient delay y in microseconds.
-        8. gradient delay z in microseconds.
-        9. raw fids in shape (number of projections, number of points in ray).
+        4. raw fids in shape (number of projections, number of points in ray).
     """
     raw_fids = np.transpose(twix_obj.image.unsorted().astype(np.cdouble))
     try:
