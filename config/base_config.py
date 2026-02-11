@@ -68,6 +68,11 @@ class Config(config_dict.ConfigDict):
         self.phase_gas_acq_diss = "None" #degree
         self.area_gas_acq_diss = "None"
 
+        # Git/version check options (optional)
+        self.git_compare_branch = "origin/main"  # Compare HEAD to this ref (None -> auto origin/HEAD -> origin/main).
+        self.git_always_show = False            # If True log every run; if False log only when compare-branch warnings exist.
+
+
         # Loading the paramater to base_config
         self.processes = Process()
         self.recon = Recon()
