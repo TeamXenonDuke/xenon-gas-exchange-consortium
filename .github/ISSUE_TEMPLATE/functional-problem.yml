@@ -1,0 +1,79 @@
+name: Functional Problem Form
+description: Report bugs to be squashed
+title: "[Bug]: "
+labels:
+  - bug
+assignees: []
+
+body:
+  - type: textarea
+    id: problem_summary
+    attributes:
+      label: Problem Summary
+      description: Explain what isn't working as expected.
+      placeholder: |
+          The pipeline is failing when...
+    validations:
+      required: true
+
+  - type: textarea
+    id: impact
+    attributes:
+      label: Impact
+      description: Explain why this is a problem.
+      placeholder: |
+          This is a problem because...
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected_behavior
+    attributes:
+      label: Expected Behavior
+      description: A clear and concise description of what you expected to happen.
+      placeholder: |
+          It should be doing...
+    validations:
+      required: true
+
+  - type: textarea
+    id: steps_to_reproduce
+    attributes:
+      label: How to Reproduce
+      description: Steps to reproduce the behavior.
+      placeholder: |
+         1. 
+         2. 
+         3.
+    validations:
+      required: true
+
+  - type: textarea
+    id: screenshots
+    attributes:
+      label: Screenshots
+      description: (Optional) Add screenshots to help explain your problem.
+      placeholder: |
+          Included supplemental text if needed...
+    validations:
+      required: false
+
+  - type: textarea
+    id: additional_info
+    attributes:
+      label: Additional Info
+      description: (Optional) Add any other context about the problem here.
+      placeholder: |
+          You should also know...
+    validations:
+      required: false
+
+  - type: textarea
+    id: suggested_fix
+    attributes:
+      label: Suggested Fix
+      description: (Optional) Share your thoughts, whether technical or abstract.
+      placeholder: |
+          This can be fixed by...
+    validations:
+      required: false
