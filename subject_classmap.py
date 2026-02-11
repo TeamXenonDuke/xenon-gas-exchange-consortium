@@ -27,6 +27,7 @@ from utils import (
     signal_utils,
     spect_utils,
     traj_utils,
+    git_utils,
     mask_include_trachea,
 )
 
@@ -1265,5 +1266,39 @@ class Subject(object):
         os.makedirs(subfolder, exist_ok=True)
         io_utils.move_files(output_files, subfolder)
 
+    def check_git_version(self) -> None:
+        """
+        Run a git “health check” for this repo and emit warnings if you are not in sync
+        with the target branch (default: origin/main).
 
+        What it checks
+        --------------
+        1) Remote sync vs compare_branch (here: origin/main)
+           - Warn if you are BEHIND (you need to pull/rebase)
+           - Warn if you are AHEAD  (you have local commits not pushed)
 
+        2) Local repo state (actionable problems)
+           - Dirty working tree (uncommitted and/or untracked files)
+           - Merge/rebase/cherry-pick in progress
+           - Unmerged conflict files
+
+        Behavior / Output
+        -----------------
+        - Runs `git fetch --all --prune` (best effort) so comparisons use fresh remote refs.
+          If offline, it falls back to cached refs.
+        - Shows up to `show_n` commit lines for:
+            * incoming commits (what would be pulled from compare_branch)
+            * outgoing commits (what would be pushed)
+        - always_show=False means it only logs if there is a compare-branch related warning
+          (behind/ahead compare_branch, or missing compare_branch). If you want the header
+          printed every run, set always_show=True.
+        """
+        # Run the repo status check in the current working directory ("."),
+        # which is typically the repo root when you run the pipeline from the cloned folder.
+        git_utils.warn_git_status(
+            repo_dir=".",
+            do_fetch=True,
+            show_n=8,
+            compare_branch=self.config.git_compare_branch,
+            git_always_show=self.config.git_always_show,
+        )
