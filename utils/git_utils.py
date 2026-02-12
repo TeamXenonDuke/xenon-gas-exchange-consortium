@@ -207,6 +207,15 @@ def warn_git_status(
     """
     Log a “git health check” for the repository.
 
+    Behavior
+    --------
+    - Compares HEAD against `compare_branch` (default: remote default branch like origin/main).
+    - Emits WARNING (red) only when:
+        * you are BEHIND `compare_branch`, or
+        * `compare_branch` cannot be resolved.
+    - Being AHEAD of `compare_branch` is INFO-only (no warning).
+    - Shows incoming/outgoing commits in YELLOW when displayed.
+
     Parameters
     ----------
     repo_dir:
@@ -216,17 +225,12 @@ def warn_git_status(
     show_n:
         Max commit lines to show for incoming/outgoing.
     compare_branch:
-        The branch/ref to compare against (default: remote default branch like origin/main).
-        Examples:
-            - "origin/main"
-            - "origin/redo-fv-and-99-separate"
-            - "redo-fv-and-99-separate"  (auto-prefixes "origin/")
-        If None, auto-detects origin/HEAD (fallback origin/main or origin/master).
+        Ref to compare against (e.g., "origin/main").
+        If None, auto-detects origin/HEAD (fallback origin/main/origin/master).
+        If you pass "main" or "some-branch" (no "/"), it auto-prefixes "origin/".
     git_always_show:
-        - True  -> always log header/status
-        - False -> only log if there is a compare-branch related warning
-                  (behind/ahead compare_branch, or cannot find compare_branch).
-                  Local-only dirtiness won't trigger output by itself.
+        - True  -> always log header/status.
+        - False -> only log when there is a compare-branch WARNING (behind/missing ref).
     """
     log = logging.getLogger("git-check")
     repo_dir = os.path.abspath(repo_dir)
@@ -236,24 +240,12 @@ def warn_git_status(
 
     st = get_repo_state(repo_dir)
 
-    issues: List[str] = []
-    compare_issues: List[str] = []
-
-    # Local state warnings
-    if st.in_merge:
-        issues.append("Merge in progress (MERGE_HEAD exists).")
-    if st.in_rebase:
-        issues.append("Rebase in progress.")
-    if st.in_cherry_pick:
-        issues.append("Cherry-pick in progress.")
-    if st.unmerged_files:
-        issues.append(f"Unmerged conflict files: {', '.join(st.unmerged_files)}")
-    if st.dirty:
-        issues.append("Working tree has local changes (uncommitted and/or untracked).")
+    issues: List[str] = []         # all issues we will print if output is enabled
+    compare_issues: List[str] = [] # only issues that should trigger output when git_always_show=False
 
     # Decide what to compare against
     if compare_branch is None:
-        compare_branch = _remote_default_branch(repo_dir, remote="origin")  # e.g., origin/main
+        compare_branch = _remote_default_branch(repo_dir, remote="origin")
     else:
         compare_branch = compare_branch.strip()
         if compare_branch and ("/" not in compare_branch) and (compare_branch not in ("HEAD",)):
@@ -265,20 +257,23 @@ def warn_git_status(
         compare_issues.append(msg)
         compare_branch = None
 
-    # Collect log lines first (so separator matches the longest line)
-    info_lines: List[str] = []
+    # Prepare log lines first (so separator matches the longest line)
+    info_lines: List[str] = [
+        f"[git-check] Current branch: {st.branch}",
+        f"[git-check] HEAD: {st.head_sha[:8]} — {st.head_subject}",
+    ]
     detail_blocks: List[str] = []  # incoming/outgoing details (YELLOW)
 
-    info_lines.append(f"[git-check] Current branch: {st.branch}")
-    info_lines.append(f"[git-check] HEAD: {st.head_sha[:8]} — {st.head_subject}")
+    behind: Optional[int] = None
+    ahead: Optional[int] = None
 
-    # Compare HEAD vs compare_branch
     if compare_branch:
         ahead, behind = _ahead_behind(repo_dir, "HEAD", compare_branch)
 
         if behind == 0 and ahead == 0:
             info_lines.append(f"[git-check] Up to date with {compare_branch}")
         else:
+            # BEHIND => WARNING (triggers output when git_always_show=False)
             if behind > 0:
                 msg = f"Behind {compare_branch} by {behind} commit(s). (You need to pull/rebase)"
                 issues.append(msg)
@@ -295,11 +290,11 @@ def warn_git_status(
                             _yellow("[git-check] Merge/PR commits among incoming:\n" + "\n".join(merges))
                         )
 
+            # AHEAD => INFO only (does NOT trigger output when git_always_show=False)
             if ahead > 0:
-                msg = f"Ahead of {compare_branch} by {ahead} commit(s). (You have local commits not in {compare_branch})"
-                issues.append(msg)
-                compare_issues.append(msg)
-
+                info_lines.append(
+                    f"[git-check] Ahead of {compare_branch} by {ahead} commit(s). (Local commits not in {compare_branch})"
+                )
                 outgoing = _log_oneline(repo_dir, f"{compare_branch}..HEAD", show_n)
                 if outgoing:
                     detail_blocks.append(
@@ -314,16 +309,11 @@ def warn_git_status(
     all_for_len: List[str] = []
     all_for_len.extend(info_lines)
     all_for_len.extend(detail_blocks)
-
     if issues:
         all_for_len.append("[git-check][WARNING]")
         all_for_len.extend([f"  - {m}" for m in issues])
-        if compare_branch:
+        if compare_branch and behind and behind > 0:
             all_for_len.append("  Hint: update with: git pull --rebase  (or git pull)")
-        if st.dirty:
-            all_for_len.append("  Hint: see local changes: git status")
-        if st.unmerged_files:
-            all_for_len.append("  Hint: resolve conflicts then continue merge/rebase")
 
     sep = "#" * max(1, _max_line_len(all_for_len))
 
@@ -334,26 +324,22 @@ def warn_git_status(
     for line in info_lines:
         log.info(line)
 
-    # ✅ Put RED warning first (before Incoming/Outgoing)
+    # WARNING summary first (RED)
     if issues:
         log.warning(_red("[git-check][WARNING]"))
         for m in issues:
             log.warning(_red(f"  - {m}"))
 
-    # ✅ Then show Incoming/Outgoing in YELLOW
+    # Details after (YELLOW)
     for blk in detail_blocks:
         log.warning(blk)
 
-    # Hints (YELLOW)
-    if issues:
-        if compare_branch:
-            log.warning(_yellow("  Hint: update with: git pull --rebase  (or git pull)"))
-        if st.dirty:
-            log.warning(_yellow("  Hint: see local changes: git status"))
-        if st.unmerged_files:
-            log.warning(_yellow("  Hint: resolve conflicts then continue merge/rebase"))
-    else:
+    # Hints (YELLOW) — only meaningful for BEHIND
+    if compare_branch and behind and behind > 0:
+        log.warning(_yellow("  Hint: update with: git pull --rebase  (or git pull)"))
+    elif not issues:
         log.info("[git-check] OK (no warnings).")
 
     # Ending separator
     log.info(sep)
+
