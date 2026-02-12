@@ -68,6 +68,7 @@ def gx_mapping_reconstruction(config: base_config.Config):
     subject.save_files()
     subject.save_config_as_json()
     subject.move_output_files()
+    subject.check_git_version()
     logging.info("Complete")
 
 
@@ -96,6 +97,7 @@ def gx_mapping_readin(config: base_config.Config):
     subject.save_files()
     subject.save_config_as_json()
     subject.move_output_files()
+    subject.check_git_version()
     logging.info("Complete")
 
 
