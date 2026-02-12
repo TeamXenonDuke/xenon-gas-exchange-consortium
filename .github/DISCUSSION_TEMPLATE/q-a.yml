@@ -1,0 +1,24 @@
+title: "[Q&A]: "
+labels:
+  - question
+body:
+  - type: textarea
+    attributes:
+      label: What are you trying to do?
+      description: Describe your goal clearly.
+    validations:
+      required: true
+
+  - type: textarea
+    attributes:
+      label: What have you tried?
+      description: Include relevant details, code, or links.
+    validations:
+      required: false
+
+  - type: textarea
+    attributes:
+      label: Additional context
+      description: Any other relevant information.
+    validations:
+      required: false
