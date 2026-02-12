@@ -496,119 +496,27 @@ def get_gx_data(twix_obj: mapvbvd._attrdict.AttrDict) -> Dict[str, Any]:
         2. gas phase FIDs in shape (number of projections, number of points in ray).
         3. number of fids in each phase, used for trajectory calculation. Note:
             this may not always be equal to the shape in 1 and 2.
-        4. number of FIDs to skip from the beginning. This may be due to a noise frame.
-        5. number of FIDs to skip from the end. This may be due to calibration.
-        6. gradient delay x in microseconds.
-        7. gradient delay y in microseconds.
-        8. gradient delay z in microseconds.
-        9. raw fids in shape (number of projections, number of points in ray).
+        4. raw fids in shape (number of projections, number of points in ray).
     """
     raw_fids = np.transpose(twix_obj.image.unsorted().astype(np.cdouble))
-    flip_angle_dissolved = get_flipangle_dissolved(twix_obj)
-    # get the scan date
-    scan_date = get_scan_date(twix_obj=twix_obj)
-    YYYY, MM, DD = scan_date.split("-")
-    scan_datetime = datetime.datetime(int(YYYY), int(MM), int(DD))
-    # check the flip angle and scan date to get the data
-    if flip_angle_dissolved == 12:
-        if raw_fids.shape[0] == 4200:
-            logging.info("Reading in fast dixon data on Siemens Prisma.")
-            data_gas = raw_fids[0::2, :]
-            data_dis = raw_fids[1::2, :]
-            n_frames = data_dis.shape[0]
-            n_skip_start = 0
-            n_skip_end = 0
-        elif raw_fids.shape[0] == 4230:
-            logging.info("Reading in fast dixon data on Siemens Prisma.")
-            data_gas = raw_fids[:-30][0::2, :]
-            data_dis = raw_fids[:-30][1::2, :]
-            n_frames = data_dis.shape[0]
-            n_skip_start = 0
-            n_skip_end = 0
-        elif raw_fids.shape[0] // 100 == 42:
-            logging.info("Reading in fast dixon data on Siemens Prisma.")
-            num_spectra = raw_fids.shape[0] % 100
-            data_gas = raw_fids[:-num_spectra][0::2, :]
-            data_dis = raw_fids[:-num_spectra][1::2, :]
-            n_frames = data_dis.shape[0]
-            n_skip_start = 0
-            n_skip_end = 0
-        else:
-            raise ValueError("Cannot get data from 'fast' dixon twix object.")
-    elif flip_angle_dissolved == 15:
-        if raw_fids.shape[0] == 2430:
-            logging.info("Reading in medium dixon data on Siemens Prisma.")
-            data_gas = raw_fids[:-30][0::2, :]
-            data_dis = raw_fids[:-30][1::2, :]
-            n_frames = data_dis.shape[0]
-            n_skip_start = 0
-            n_skip_end = 0
-        elif raw_fids.shape[0] // 100 == 24:
-            logging.info("Reading in medium dixon data on Siemens Prisma.")
-            num_spectra = raw_fids.shape[0] % 100
-            data_gas = raw_fids[:-num_spectra][0::2, :]
-            data_dis = raw_fids[:-num_spectra][1::2, :]
-            n_frames = data_dis.shape[0]
-            n_skip_start = 0
-            n_skip_end = 0
-        else:
-            raise ValueError("Cannot get data from 'medium' dixon twix object.")
-    elif flip_angle_dissolved == 20:
-        if raw_fids.shape[0] == 2030:
-            logging.info("Reading in 'normal' dixon data on Siemens Prisma w/ bonus.")
-            data_gas = raw_fids[:-30][0::2, :]
-            data_dis = raw_fids[:-30][1::2, :]
-            n_frames = data_dis.shape[0]
-            n_skip_start = 0
-            n_skip_end = 0
-        elif raw_fids.shape[0] == 2002:
-            if scan_datetime > datetime.datetime(2017, 12, 31):
-                logging.info("Reading in 'normal' dixon data on Siemens Trio.")
-                data_gas = raw_fids[:-2][2::2, :]
-                data_dis = raw_fids[:-2][3::2, :]
-                n_frames = 1001
-                n_skip_start = 1
-                n_skip_end = 1
-            else:
-                logging.info("Reading in 'normal' dixon data on Siemens Trio.")
-                data_gas = raw_fids[:-2][2::2, :]
-                data_dis = raw_fids[:-2][3::2, :]
-                n_frames = 1001
-                n_skip_start = 1
-                n_skip_end = 1
-        elif raw_fids.shape[0] == 2032:
-            logging.info("Reading in normal dixon on Siemens Trio w/ bonus spectra.")
-            data_gas = raw_fids[:-32][2::2, :]
-            data_dis = raw_fids[:-32][3::2, :]
-            n_frames = 1016
-            n_skip_start = 1
-            n_skip_end = 16
-        elif raw_fids.shape[0] == 2000:
+    try:
+        if raw_fids.shape[0] == 2000:
             logging.info("Reading in normal dixon on Siemens Trio 2007 or 2008.")
             data_gas = raw_fids[0::2, :] * np.exp(1j * np.pi / 2)
             data_dis = raw_fids[1::2, :] * np.exp(1j * np.pi / 2)
             n_frames = 1000
-            n_skip_start = 0
-            n_skip_end = 0
-        elif raw_fids.shape[0] // 100 == 20:
-            logging.info("Reading in normal dixon on Siemens Trio w/ bonus spectra.")
+        else:
+            logging.info("Reading in dixon.")
             num_spectra = raw_fids.shape[0] % 100
             data_gas = raw_fids[:-num_spectra][0::2, :]
             data_dis = raw_fids[:-num_spectra][1::2, :]
             n_frames = data_dis.shape[0]
-            n_skip_start = 0
-            n_skip_end = 0
-        else:
-            raise ValueError("Cannot get data from normal dixon twix object.")
-    else:
+    except:
         raise ValueError("Cannot get data from twix object.")
-
     return {
         constants.IOFields.FIDS_GAS: data_gas,
         constants.IOFields.FIDS_DIS: data_dis,
         constants.IOFields.N_FRAMES: n_frames,
-        constants.IOFields.N_SKIP_START: n_skip_start,
-        constants.IOFields.N_SKIP_END: n_skip_end,
         constants.IOFields.FIDS: raw_fids,
     }
 
