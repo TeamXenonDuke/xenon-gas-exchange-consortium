@@ -505,6 +505,12 @@ def get_gx_data(twix_obj: mapvbvd._attrdict.AttrDict) -> Dict[str, Any]:
             data_gas = raw_fids[0::2, :] * np.exp(1j * np.pi / 2)
             data_dis = raw_fids[1::2, :] * np.exp(1j * np.pi / 2)
             n_frames = 1000
+        elif raw_fids.shape[0] == 2002 or raw_fids.shape[0] == 2032:
+            logging.info("Reading in normal dixon on Siemens Trio.")
+            num_spectra = raw_fids.shape[0] % 100
+            data_gas = raw_fids[:-num_spectra][2::2, :]
+            data_dis = raw_fids[:-num_spectra][3::2, :]
+            n_frames = raw_fids.shape[0] / 2
         else:
             logging.info("Reading in dixon.")
             num_spectra = raw_fids.shape[0] % 100
