@@ -68,6 +68,11 @@ class Config(config_dict.ConfigDict):
         self.phase_gas_acq_diss = "None" #degree
         self.area_gas_acq_diss = "None"
 
+        # Additional options for Dixon TE90 correction
+        self.te90 = "None"              # TE90 from bonus spectra [msec]
+        self.rbc_freq = "None"          # RBC frequency from bonus spectra [Hz]
+        self.membrane_freq = "None"     # Membrane frequency from bonus spectra [Hz]
+
         # Loading the paramater to base_config
         self.processes = Process()
         self.recon = Recon()
@@ -121,6 +126,7 @@ class Recon(object):
         self.remove_contamination = False
         self.remove_noisy_projections = False
         self.gas_contamination_correction = False
+        self.te90_correction = False
         self.traj_type = constants.TrajType.HALTONSPIRAL
 
 

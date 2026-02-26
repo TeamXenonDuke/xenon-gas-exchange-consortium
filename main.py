@@ -55,6 +55,7 @@ def gx_mapping_reconstruction(config: base_config.Config):
     subject.biasfield_correction()
     subject.gas_binning()
     subject.dixon_decomposition()
+    subject.te90_correction()
     subject.hb_correction()
     subject.vol_correction()
     subject.dissolved_analysis()

@@ -600,6 +600,22 @@ class Subject(object):
             mask=self.mask_vent,
             rbc_m_ratio=self.rbc_m_ratio,
         )
+    
+    def te90_correction(self):
+        """Perform TE90 correction to the dissolved-phase images."""
+        if self.config.recon.te90_correction:
+            logging.info("Performing TE90 correction")
+            self.image_rbc, self.image_membrane = img_utils.te90_correction(
+                image_rbc = self.image_rbc,
+                image_membrane = self.image_membrane,
+                te90 = self.config.te90,
+                te_acq = self.dict_dis[constants.IOFields.TE90],
+                rbc_freq = self.config.rbc_freq,
+                membrane_freq = self.config.membrane_freq,
+                rbc_m_ratio = self.rbc_m_ratio
+            )
+        else:
+            logging.info("Skipping TE90 correction")
 
     def hb_correction(self):
         """Apply hemoglobin correction."""
