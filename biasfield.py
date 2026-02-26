@@ -2,6 +2,7 @@
 
 Currently supports N4ITK bias field correction.
 """
+
 import os
 from typing import Tuple
 
@@ -86,7 +87,9 @@ def calculate_biasfield_rf(
     return image_biasfield, image_biasfield_smoothed
 
 
-def correct_biasfield_n4itk(image: np.ndarray, mask: np.ndarray) -> Tuple[np.ndarray, np.ndarray]:
+def correct_biasfield_n4itk(
+    image: np.ndarray, mask: np.ndarray
+) -> Tuple[np.ndarray, np.ndarray]:
     """Apply N4ITK bias field correction with multiple iterations as in Matlab script.
 
     Args:
@@ -103,7 +106,7 @@ def correct_biasfield_n4itk(image: np.ndarray, mask: np.ndarray) -> Tuple[np.nda
     pathBiasField = os.path.join(tmp_path, "biasfield.nii")
 
     pathN4 = os.path.join(bin_path, "N4BiasFieldCorrection")
-    
+
     # Save the input image and mask as NIfTI files
     nii_image = nib.Nifti1Image(np.abs(image), np.eye(4))
     nii_mask = nib.Nifti1Image(mask.astype(float), np.eye(4))
@@ -121,13 +124,12 @@ def correct_biasfield_n4itk(image: np.ndarray, mask: np.ndarray) -> Tuple[np.nda
         f"-o ['{pathOutput}','{pathBiasField}']\""
     )
 
-    print('cmd = ')
+    print("cmd = ")
     print(cmd)
     os.system(cmd)
     bias_field = nib.load(pathBiasField).get_fdata()
     stack_bias_field.append(bias_field)
     all_bias_field *= bias_field
-    
 
     # Binomial Correction
     cmd = (
@@ -157,7 +159,7 @@ def correct_biasfield_n4itk(image: np.ndarray, mask: np.ndarray) -> Tuple[np.nda
     # AP Correction
     cmd = (
         f"bash -c \"'{pathN4}' -d 3 -i '{pathOutput}' -s 1 -w '{pathMask}' "
-        f'-c [25,0] -b [1x1x14,3] -t [0.5,0.01,100] '
+        f"-c [25,0] -b [1x1x14,3] -t [0.5,0.01,100] "
         f"-o ['{pathOutput}','{pathBiasField}']\""
     )
     os.system(cmd)
@@ -169,7 +171,7 @@ def correct_biasfield_n4itk(image: np.ndarray, mask: np.ndarray) -> Tuple[np.nda
     # RL Correction
     cmd = (
         f"bash -c \"'{pathN4}' -d 3 -i '{pathOutput}' -s 1 -w '{pathMask}' "
-        f'-c [25,0] -b [1x14x1,3] -t [0.5,0.01,100] '
+        f"-c [25,0] -b [1x14x1,3] -t [0.5,0.01,100] "
         f"-o ['{pathOutput}','{pathBiasField}']\""
     )
     os.system(cmd)
@@ -181,7 +183,7 @@ def correct_biasfield_n4itk(image: np.ndarray, mask: np.ndarray) -> Tuple[np.nda
     # HF Correction
     cmd = (
         f"bash -c \"'{pathN4}' -d 3 -i '{pathOutput}' -s 1 -w '{pathMask}' "
-        f'-c [25,0] -b [14x1x1,3] -t [0.5,0.01,100] '
+        f"-c [25,0] -b [14x1x1,3] -t [0.5,0.01,100] "
         f"-o ['{pathOutput}','{pathBiasField}']\""
     )
     os.system(cmd)
@@ -193,7 +195,7 @@ def correct_biasfield_n4itk(image: np.ndarray, mask: np.ndarray) -> Tuple[np.nda
     # Complete Correction
     cmd = (
         f"bash -c \"'{pathN4}' -d 3 -i '{pathOutput}' -s 1 -w '{pathMask}' "
-        f'-c [50,0] -b [4x4x4,3] -t [0.25,0.01,100] '
+        f"-c [50,0] -b [4x4x4,3] -t [0.25,0.01,100] "
         f"-o ['{pathOutput}','{pathBiasField}']\""
     )
     os.system(cmd)
@@ -207,7 +209,10 @@ def correct_biasfield_n4itk(image: np.ndarray, mask: np.ndarray) -> Tuple[np.nda
     stack_bias_field = np.stack(stack_bias_field, axis=-1)
 
     # Optionally save the final corrected image and bias field
-    nib.save(nib.Nifti1Image(bias_corrected_image, np.eye(4)), os.path.join(tmp_path, "FinalCorrectedImage.nii"))
+    nib.save(
+        nib.Nifti1Image(bias_corrected_image, np.eye(4)),
+        os.path.join(tmp_path, "FinalCorrectedImage.nii"),
+    )
     np.save(os.path.join(tmp_path, "FinalBiasField.npy"), all_bias_field)
 
     # Clean up temporary files

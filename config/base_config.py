@@ -7,6 +7,7 @@ from ml_collections import config_dict
 
 # parent directory
 sys.path.append("..")
+from config import config_utils
 
 from utils import constants
 
@@ -50,14 +51,18 @@ class Config(config_dict.ConfigDict):
         self.bias_key = constants.BiasfieldKey.N4ITK.value
         self.hb_correction_key = constants.HbCorrectionKey.NONE.value
         self.hb = "NA"
-        self.vol_correction_key = constants.VolCorrectionKey.NONE.value 
+        self.vol_correction_key = constants.VolCorrectionKey.NONE.value
         self.corrected_lung_volume = "NA"
         self.dicom_proton_dir = ""
         self.multi_echo = False
-        self.registration_key = constants.RegistrationKey.SKIP.value
         self.manual_reg_filepath = ""
         self.processes = Process()
         self.recon = Recon()
+        self.params = Params()
+        self.correction = Correction()
+        self.params.threshold_oscillation = config_utils.get_thresholds(
+            self.recon.recon_key
+        )
 
 
 class Recon(object):
@@ -95,10 +100,12 @@ class Recon(object):
         self.matrix_size = 128
 
         # Additional options
-        self.recon_proton = True
-        self.recon_key = constants.ReconKey.ROBERTSON.value
+        self.recon_proton = False
+        self.recon_key = constants.ReconKey.PLUMMER.value
         self.kernel_sharpness_lr = 0.14
         self.kernel_sharpness_hr = 0.32
+        self.key_radius = 9
+        self.key_radius_pct = 0.3
         # Set initial n_skip_start value as NaN, or user input an expected value
         self.n_skip_start = np.nan
         self.n_skip_end = 0
@@ -121,6 +128,41 @@ class Process(object):
         """Initialize the process parameters."""
         self.gx_mapping_recon = True
         self.gx_mapping_readin = False
+        self.oscillation_mapping_recon = True
+        self.oscillation_mapping_readin = False
+
+
+class Correction(object):
+    """Define the capillary blood volume correction process.
+
+    Attributes:
+        vc_correction: bool, whether to perform blood volume correction.
+        subject_age: int, age of subject
+        subject_sex: int, 1 if female or 2 if male
+        subject_height: float subject height in cm
+    """
+
+    def __init__(self):
+        """Initialize process parameters"""
+        self.vc_correction = False
+        self.age = 0
+        self.sex = 0
+        self.height = 0.0
+
+
+class Params(object):
+    """Define important parameters.
+
+    Attributes:
+        threshold_oscillation: np.ndarray, the oscillation amplitude thresholds for
+            binning
+        threshold_rbc: np.ndarray, the RBC thresholds for binning
+    """
+
+    def __init__(self):
+        """Initialize the reconstruction parameters."""
+        self.threshold_oscillation = None
+        self.threshold_rbc = np.array([0.066, 0.250, 0.453, 0.675, 0.956]) / 2.0
 
 
 def get_config() -> config_dict.ConfigDict:

@@ -350,6 +350,35 @@ def fit_sine(data: np.ndarray) -> np.ndarray:
     return func(x, *popt)
 
 
+def osc_fit_sine(
+    y: np.ndarray, x: np.ndarray, n: int = 1
+) -> Tuple[np.ndarray, np.ndarray]:
+    """Fit the data to a sum of n sine waves.
+
+    Args:
+        y (np.ndarray): Data to fit. Shape (n,).
+        x (np.ndarray): x data. Shape (n,).
+        n (int): Number of sine waves to fit to. Defaults to 1.
+    Returns:
+        Tuple of the fitted data of same shape as input data and the fit parameters.
+    """
+
+    def func(x, *args):
+        return args[0] * np.sin(args[1] * x + args[2])
+
+    p0 = _sinnstart(x, y, n)
+    bounds = _sinbounds(n)
+    popt, _ = optimize.curve_fit(
+        func,
+        x,
+        y,
+        p0=p0,
+        bounds=bounds,
+    )
+    print("Optimal Parameters:", popt)
+    return func(x, *popt), popt
+
+
 def detrend(data: np.ndarray) -> np.ndarray:
     """Remove bi-exponential trend along axis from data.
 
@@ -376,7 +405,7 @@ def detrend(data: np.ndarray) -> np.ndarray:
         xtol=1e-6,
         max_nfev=600,
     )
-    return data - func(x, *popt)
+    return (data - func(x, *popt)) / func(x, *popt)
 
 
 def find_peaks(data: np.ndarray, distance: int = 5) -> np.ndarray:
@@ -431,6 +460,59 @@ def awgn(sig: np.ndarray, SNR: float) -> np.ndarray:
             np.random.randn(len(sig)) + 1j * np.random.randn(len(sig))
         )
     return sig + noise
+
+
+def find_high_low_indices(
+    data: np.ndarray,
+    peak_distance: int,
+    distance_threshold: float = 0.2,
+    same_length: bool = True,
+    method: str = constants.BinningMethods.PEAKS,
+) -> Tuple[np.ndarray, np.ndarray]:
+    """Find indices of high and low signal bins.
+
+    Args:
+        data (np.ndarray): RBC 1-D data of shape (n_projections,)
+        peak_distance (int): distance between peaks in number of points.
+        distance_threshold (float): threshold for neighbouring peaks. Defaults to 0.2.
+            Value must be between 0 and 1 with 0 being taking only the found peaks and 1
+            being taking all points between the peaks.
+        same_length (bool): whether to force high and low bins are of the same length.
+
+    Returns:
+        Tuple of indices of high and low signal bins respectively.
+    """
+    high_indices = np.array([])
+    low_indices = np.array([])
+
+    if method == constants.BinningMethods.PEAKS:
+        high_peaks = find_peaks(data=data, distance=int(0.6 * peak_distance))
+        low_peaks = find_peaks(data=-data, distance=int(0.6 * peak_distance))
+
+        left = np.ceil(peak_distance * distance_threshold / 2).astype(int)
+        right = left + 1
+        for peak in high_peaks:
+            high_indices = np.append(high_indices, np.arange(peak - left, peak + right))
+        for peak in low_peaks:
+            low_indices = np.append(low_indices, np.arange(peak - left, peak + right))
+    elif method == constants.BinningMethods.THRESHOLD_SIMPLE:
+        data_norm = (data - np.mean(data)) / np.std(data)
+        high_indices = np.argwhere(data_norm > 0.7).flatten()
+        low_indices = np.argwhere(data_norm < -0.7).flatten()
+    else:
+        raise ValueError(f"Method {method} not implemented.")
+
+    # remove indices that are below zero and above length of the data
+    high_indices = np.delete(high_indices, np.argwhere(high_indices < 0))
+    low_indices = np.delete(low_indices, np.argwhere(low_indices < 0))
+    high_indices = np.delete(high_indices, np.argwhere(high_indices >= len(data)))
+    low_indices = np.delete(low_indices, np.argwhere(low_indices >= len(data)))
+    if same_length:
+        if len(high_indices) > len(low_indices):
+            high_indices = high_indices[: len(low_indices)]
+        elif len(low_indices) > len(high_indices):
+            low_indices = low_indices[: len(high_indices)]
+    return np.sort(high_indices).astype(int), np.sort(low_indices).astype(int)
 
 
 def get_hb_correction(hb: float) -> Tuple[float, float]:

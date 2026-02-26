@@ -4,6 +4,7 @@ import glob
 import logging
 import os
 from typing import Any, Dict
+from scipy.io import loadmat
 
 import nibabel as nib
 import numpy as np
@@ -266,6 +267,9 @@ class Subject(object):
                 self.traj_scaling_factor = (
                     0.903  # cincinnati requires a unique scaling factor
                 )
+        logging.info(self.traj_scaling_factor)
+        logging.info(self.data_gas.shape[1])
+        logging.info(np.max(self.traj_dissolved))
 
         # Calculate the number of frames to skip at the beginning by dissolved flip angle
         if np.isnan(self.config.recon.n_skip_start):
@@ -283,7 +287,7 @@ class Subject(object):
         self.data_gas, self.traj_gas = pp.truncate_data_and_traj(
             self.data_gas,
             self.traj_gas,
-            n_skip_start=0,
+            n_skip_start=int(self.config.recon.n_skip_start),
             n_skip_end=int(self.config.recon.n_skip_end),
         )
 
@@ -395,6 +399,30 @@ class Subject(object):
             )
             orientation = self.dict_dis[constants.IOFields.ORIENTATION]
             system_vendor = self.dict_dis[constants.IOFields.SYSTEM_VENDOR]
+            self.image_gas_highreso = img_utils.interp(
+                self.image_gas_highreso,
+                self.config.recon.matrix_size // self.config.recon.recon_size,
+            )
+            self.image_gas_highsnr = img_utils.interp(
+                self.image_gas_highsnr,
+                self.config.recon.matrix_size // self.config.recon.recon_size,
+            )
+            self.image_gas_highsnr = img_utils.flip_and_rotate_image(
+                self.image_gas_highsnr,
+                orientation=orientation,
+                system_vendor=system_vendor,
+            )
+            self.image_gas_highreso = img_utils.flip_and_rotate_image(
+                self.image_gas_highreso,
+                orientation=orientation,
+                system_vendor=system_vendor,
+            )
+            io_utils.export_nii(
+                np.abs(self.image_gas_highsnr), "tmp/image_gas_highsnr.nii"
+            )
+            io_utils.export_nii(
+                np.abs(self.image_gas_highreso), "tmp/image_gas_highreso.nii"
+            )
         elif self.config.recon.recon_key == constants.ReconKey.PLUMMER.value:
             norm_data = np.linalg.norm(self.data_gas)
             self.data_gas /= norm_data
@@ -413,40 +441,28 @@ class Subject(object):
                 )
                 * norm_data
             )
-
+            self.image_gas_highreso = img_utils.interp(
+                self.image_gas,
+                self.config.recon.matrix_size // self.config.recon.recon_size,
+            )
+            self.image_gas_highsnr = img_utils.interp(
+                self.image_gas,
+                self.config.recon.matrix_size // self.config.recon.recon_size,
+            )
+            # self.image_gas_highreso = self.image_gas
+            # self.image_gas_highsnr = self.image_gas
             self.data_gas *= norm_data
-            io_utils.export_nii(np.abs(self.image_gas), "tmp/nii/image_gas.nii")
+            io_utils.export_nii(np.abs(self.image_gas), "tmp/image_gas.nii")
         else:
             raise ValueError(
                 f"Unknown reconstruction key: {self.config.recon.recon_key}"
             )
 
-        self.image_gas_highreso = img_utils.interp(
-            self.image_gas_highreso,
-            self.config.recon.matrix_size // self.config.recon.recon_size,
-        )
-        self.image_gas_highsnr = img_utils.interp(
-            self.image_gas_highsnr,
-            self.config.recon.matrix_size // self.config.recon.recon_size,
-        )
-        self.image_gas_highsnr = img_utils.flip_and_rotate_image(
-            self.image_gas_highsnr,
-            orientation=orientation,
-            system_vendor=system_vendor,
-        )
-        self.image_gas_highreso = img_utils.flip_and_rotate_image(
-            self.image_gas_highreso,
-            orientation=orientation,
-            system_vendor=system_vendor,
-        )
-        io_utils.export_nii(np.abs(self.image_gas_highsnr), "tmp/image_gas_highsnr.nii")
-        io_utils.export_nii(
-            np.abs(self.image_gas_highreso), "tmp/image_gas_highreso.nii"
-        )
-
     def reconstruction_dissolved(self):
         """Reconstruct the dissolved phase image."""
         if self.config.recon.recon_key == constants.ReconKey.ROBERTSON.value:
+            orientation = self.dict_dis[constants.IOFields.ORIENTATION]
+            system_vendor = self.dict_dis[constants.IOFields.SYSTEM_VENDOR]
             self.image_dissolved = reconstruction.reconstruct(
                 data=(recon_utils.flatten_data(self.data_dissolved)),
                 traj=recon_utils.flatten_traj(self.traj_dissolved),
@@ -454,8 +470,29 @@ class Subject(object):
                 kernel_extent=9 * float(self.config.recon.kernel_sharpness_lr),
                 image_size=int(self.config.recon.recon_size),
             )
-            orientation = self.dict_dis[constants.IOFields.ORIENTATION]
-            system_vendor = self.dict_dis[constants.IOFields.SYSTEM_VENDOR]
+            self.data_dissolved_norm = pp.normalize_data(
+                data=self.data_dissolved, normalization=np.abs(self.data_gas[:, 0])
+            )
+            self.image_dissolved_norm = reconstruction.reconstruct(
+                data=(recon_utils.flatten_data(self.data_dissolved_norm)),
+                traj=recon_utils.flatten_traj(self.traj_dissolved),
+                kernel_sharpness=float(self.config.recon.kernel_sharpness_lr),
+                kernel_extent=9 * float(self.config.recon.kernel_sharpness_lr),
+            )
+            self.image_dissolved_norm = img_utils.flip_and_rotate_image(
+                self.image_dissolved_norm,
+                orientation=orientation,
+                system_vendor=system_vendor,
+            )
+            self.image_dissolved = img_utils.interp(
+                self.image_dissolved,
+                self.config.recon.matrix_size // self.config.recon.recon_size,
+            )
+            self.image_dissolved = img_utils.flip_and_rotate_image(
+                self.image_dissolved,
+                orientation=orientation,
+                system_vendor=system_vendor,
+            )
         elif self.config.recon.recon_key == constants.ReconKey.PLUMMER.value:
             norm_data = np.linalg.norm(self.data_dissolved)
             self.data_dissolved /= norm_data
@@ -471,24 +508,19 @@ class Subject(object):
                 overgrid_factor=1,
                 k=decay_factor,
             )
+            self.image_dissolved_norm = img_utils.interp(
+                self.image_dissolved_norm,
+                self.config.recon.matrix_size // self.config.recon.recon_size,
+            )
             self.data_dissolved *= norm_data
             self.image_dissolved_norm *= norm_data
             self.image_dissolved = self.image_dissolved_norm
+            logging.info("#####")
+            logging.info(self.image_dissolved.shape)
 
-            io_utils.export_nii(
-                np.abs(self.image_dissolved), "tmp/nii/image_dissolved.nii"
-            )
+            io_utils.export_nii(np.abs(self.image_dissolved), "tmp/image_dissolved.nii")
         else:
             raise ValueError(f"Unknown reconstruction key")
-        self.image_dissolved = img_utils.interp(
-            self.image_dissolved,
-            self.config.recon.matrix_size // self.config.recon.recon_size,
-        )
-        self.image_dissolved = img_utils.flip_and_rotate_image(
-            self.image_dissolved,
-            orientation=orientation,
-            system_vendor=system_vendor,
-        )
 
     def segmentation(self):
         """Segment the thoracic cavity."""
@@ -590,6 +622,8 @@ class Subject(object):
 
     def gas_binning(self):
         """Bin gas images to colormap bins."""
+        logging.info(self.image_gas_cor.shape)
+        logging.info(self.mask.shape)
         self.image_gas_binned = binning.linear_bin(
             image=img_utils.normalize(self.image_gas_cor, self.mask),
             mask=self.mask,
@@ -700,12 +734,42 @@ class Subject(object):
             self.image_dissolved_high *= norm_data
             self.image_dissolved_low *= norm_data
 
+            self.image_dissolved_high = img_utils.interp(
+                self.image_dissolved_high,
+                self.config.recon.matrix_size // self.config.recon.recon_size,
+            )
+
+            self.image_dissolved_low = img_utils.interp(
+                self.image_dissolved_low,
+                self.config.recon.matrix_size // self.config.recon.recon_size,
+            )
+
     def dixon_decomposition(self):
         """Perform Dixon decomposition on the dissolved-phase images."""
         rbc_m_ratio = (
             -self.rbc_m_ratio
             if self.config.recon.recon_key == constants.ReconKey.PLUMMER.value
             else self.rbc_m_ratio
+        )
+        self.image_rbc, self.image_membrane = img_utils.dixon_decomposition(
+            image_gas=self.image_gas_highsnr,
+            image_dissolved=self.image_dissolved,
+            mask=self.mask_vent,
+            rbc_m_ratio=self.rbc_m_ratio,
+        )
+
+    def osc_dixon_decomposition(self):
+        """Perform Dixon decomposition on the dissolved-phase images."""
+        rbc_m_ratio = (
+            -self.rbc_m_ratio
+            if self.config.recon.recon_key == constants.ReconKey.PLUMMER.value
+            else self.rbc_m_ratio
+        )
+        self.image_rbc, self.image_membrane = img_utils.dixon_decomposition(
+            image_gas=self.image_gas_highsnr,
+            image_dissolved=self.image_dissolved,
+            mask=self.mask_vent,
+            rbc_m_ratio=self.rbc_m_ratio,
         )
         rbc_m_ratio_high = (
             -self.rbc_m_ratio_high
@@ -717,31 +781,25 @@ class Subject(object):
             if self.config.recon.recon_key == constants.ReconKey.PLUMMER.value
             else self.rbc_m_ratio_low
         )
-        self.image_rbc, self.image_membrane = img_utils.dixon_decomposition(
-            image_gas=self.image_gas_highsnr,
-            image_dissolved=self.image_dissolved,
-            mask=self.mask_vent,
-            rbc_m_ratio=self.rbc_m_ratio,
-        )
         self.image_rbc_high, _ = img_utils.dixon_decomposition(
-            image_gas=self.image_gas,
+            image_gas=self.image_gas_highsnr,
             image_dissolved=self.image_dissolved_high,
-            mask=self.mask,
+            mask=self.mask_vent,
             rbc_m_ratio=rbc_m_ratio_high,
         )
         self.image_rbc_low, _ = img_utils.dixon_decomposition(
-            image_gas=self.image_gas,
+            image_gas=self.image_gas_highsnr,
             image_dissolved=self.image_dissolved_low,
-            mask=self.mask,
+            mask=self.mask_vent,
             rbc_m_ratio=rbc_m_ratio_low,
         )
         if self.config.recon.recon_key == constants.ReconKey.PLUMMER.value:
             self.image_rbc_norm = self.image_rbc
         else:
             self.image_rbc_norm = img_utils.dixon_decomposition(
-                image_gas=self.image_gas,
+                image_gas=self.image_gas_highsnr,
                 image_dissolved=self.image_dissolved_norm,
-                mask=self.mask,
+                mask=self.mask_vent,
                 rbc_m_ratio=rbc_m_ratio,
             )[0]
 
@@ -815,12 +873,28 @@ class Subject(object):
         self.image_rbc2gas = img_utils.divide_images(
             image1=self.image_rbc,
             image2=np.abs(self.image_gas_highsnr),
-            mask=self.mask_vent,
+            mask=self.mask,  # _vent,
         )
         self.image_membrane2gas = img_utils.divide_images(
             image1=self.image_membrane,
             image2=np.abs(self.image_gas_highsnr),
             mask=self.mask_vent,
+        )
+
+        # Sup added:loading the mat file from gx pipeline
+
+        mat = loadmat(
+            "/mnt/d/xenon-gas-exchange-consortium/data/008-020/008-020/008-020_s1_osc.mat"
+        )
+
+        self.image_rbc2gas = mat["image_rbc2gas"]
+
+        self.image_rbc2gas = self.image_rbc2gas * 100
+
+        io_utils.export_nii(
+            np.abs(self.image_rbc2gas),
+            "tmp/rbc2gasGX.nii",
+            self.dict_dis[constants.IOFields.FOV],
         )
         if self.config.recon.recon_key == constants.ReconKey.ROBERTSON.value:
             # Plummer recon already includes T2* correction
@@ -868,12 +942,30 @@ class Subject(object):
 
         self.mask_rbc = np.logical_and(self.mask, self.image_rbc > image_noise)
         # self.mask_rbc = self.mask
-        self.image_rbc_osc = img_utils.calculate_rbc_oscillation(
-            self.image_rbc_high,
-            self.image_rbc_low,
-            self.image_rbc_norm,
-            self.mask_rbc,
-        )
+        if self.config.correction.vc_correction:
+            age = self.config.correction.age
+            sex = self.config.correction.sex
+            height = self.config.correction.height
+            result = img_utils.calculate_corrected_rbc_oscillation(
+                self.image_rbc_high,
+                self.image_rbc_low,
+                self.image_rbc_norm,
+                self.image_rbc2gas,
+                self.mask_rbc,
+                age,
+                sex,
+                height,
+            )
+            self.relative_vc_map = result[0]
+            self.correction_map = result[1]
+            self.image_rbc_osc = result[2]
+        else:
+            self.image_rbc_osc = img_utils.calculate_rbc_oscillation(
+                self.image_rbc_high,
+                self.image_rbc_low,
+                self.image_rbc_norm,
+                self.mask_rbc,
+            )
 
     def oscillation_binning(self):
         """Bin oscillation image to colormap bins."""
@@ -921,6 +1013,116 @@ class Subject(object):
                 img_utils.normalize(np.abs(self.image_gas_cor), self.mask), self.mask
             ),
             constants.StatsIOFields.RBC_SNR: metrics.snr(self.image_rbc, self.mask)[0],
+            constants.StatsIOFields.N_POINTS: self.data_gas.shape[1],
+            constants.StatsIOFields.RBC_DEFECT_PCT: metrics.bin_percentage(
+                self.image_rbc2gas_binned, np.array([1]), self.mask
+            ),
+            constants.StatsIOFields.RBC_LOW_PCT: metrics.bin_percentage(
+                self.image_rbc2gas_binned, np.array([2]), self.mask
+            ),
+            constants.StatsIOFields.RBC_HIGH_PCT: metrics.bin_percentage(
+                self.image_rbc2gas_binned, np.array([5, 6]), self.mask
+            ),
+            constants.StatsIOFields.RBC_MEAN: metrics.mean(
+                self.image_rbc2gas, self.mask_vent
+            ),
+            constants.StatsIOFields.RBC_MEDIAN: metrics.median(
+                self.image_rbc2gas, self.mask_vent
+            ),
+            constants.StatsIOFields.RBC_STDDEV: metrics.std(
+                self.image_rbc2gas, self.mask_vent
+            ),
+            constants.StatsIOFields.MEMBRANE_SNR: metrics.snr(
+                self.image_membrane, self.mask
+            )[0],
+            constants.StatsIOFields.MEMBRANE_DEFECT_PCT: metrics.bin_percentage(
+                self.image_membrane2gas_binned, np.array([1]), self.mask
+            ),
+            constants.StatsIOFields.MEMBRANE_LOW_PCT: metrics.bin_percentage(
+                self.image_membrane2gas_binned, np.array([2]), self.mask
+            ),
+            constants.StatsIOFields.MEMBRANE_HIGH_PCT: metrics.bin_percentage(
+                self.image_membrane2gas_binned, np.array([6, 7, 8]), self.mask
+            ),
+            constants.StatsIOFields.MEMBRANE_MEAN: metrics.mean(
+                self.image_membrane2gas, self.mask_vent
+            ),
+            constants.StatsIOFields.MEMBRANE_MEDIAN: metrics.median(
+                self.image_membrane2gas, self.mask_vent
+            ),
+            constants.StatsIOFields.MEMBRANE_STDDEV: metrics.std(
+                self.image_membrane2gas, self.mask_vent
+            ),
+            constants.StatsIOFields.ALVEOLAR_VOLUME: metrics.alveolar_volume(
+                self.image_gas_binned, self.mask, self.dict_dis[constants.IOFields.FOV]
+            ),
+            constants.StatsIOFields.KCO_EST: metrics.kco(
+                self.image_membrane2gas,
+                self.image_rbc2gas,
+                self.mask_vent,
+                self.reference_data["reference_fit_membrane"][1],
+                self.reference_data["reference_fit_rbc"][1],
+            ),
+            constants.StatsIOFields.DLCO_EST: metrics.dlco(
+                self.image_gas_binned,
+                self.image_membrane2gas,
+                self.image_rbc2gas,
+                self.mask,
+                self.mask_vent,
+                self.dict_dis[constants.IOFields.FOV],
+                self.reference_data["reference_fit_membrane"][1],
+                self.reference_data["reference_fit_rbc"][1],
+            ),
+            constants.StatsIOFields.RDP_BA: round(
+                metrics.rdp_ba(
+                    self.image_rbc2gas_binned,
+                    self.mask,
+                ),
+                1,
+            ),
+        }
+
+    def get_osc_statistics(self) -> Dict[str, Any]:
+        """Calculate image statistics.
+
+        Returns:
+            dict_stats: Dictionary of statistics for reporting
+        """
+        self.dict_stats = {
+            constants.IOFields.SUBJECT_ID: self.config.subject_id,
+            constants.IOFields.SCAN_DATE: self.dict_dis[constants.IOFields.SCAN_DATE],
+            constants.IOFields.PROCESS_DATE: metrics.process_date(),
+            constants.IOFields.AGE: self.config.correction.age,
+            constants.IOFields.SEX: self.config.correction.sex,
+            constants.IOFields.HEIGHT: self.config.correction.height,
+            constants.StatsIOFields.INFLATION: metrics.inflation_volume(
+                self.mask, self.dict_dis[constants.IOFields.FOV]
+            ),
+            constants.StatsIOFields.RBC_M_RATIO: self.rbc_m_ratio,
+            constants.StatsIOFields.VENT_SNR: metrics.snr(
+                np.abs(self.image_gas_highreso), self.mask
+            )[1],
+            constants.StatsIOFields.VENT_DEFECT_PCT: metrics.bin_percentage(
+                self.image_gas_binned, np.array([1]), self.mask
+            ),
+            constants.StatsIOFields.VENT_LOW_PCT: metrics.bin_percentage(
+                self.image_gas_binned, np.array([2]), self.mask
+            ),
+            constants.StatsIOFields.VENT_HIGH_PCT: metrics.bin_percentage(
+                self.image_gas_binned, np.array([5, 6]), self.mask
+            ),
+            constants.StatsIOFields.VENT_MEAN: metrics.mean(
+                img_utils.normalize(np.abs(self.image_gas_cor), self.mask), self.mask
+            ),
+            constants.StatsIOFields.VENT_MEDIAN: metrics.median(
+                img_utils.normalize(np.abs(self.image_gas_cor), self.mask), self.mask
+            ),
+            constants.StatsIOFields.VENT_STDDEV: metrics.std(
+                img_utils.normalize(np.abs(self.image_gas_cor), self.mask), self.mask
+            ),
+            constants.StatsIOFields.RBC_SNR: float(
+                metrics.snr(self.image_rbc, self.mask)[0]
+            ),
             constants.StatsIOFields.SNR_RBC_HIGH: metrics.snr(
                 self.image_rbc_high, self.mask
             )[0],
@@ -939,8 +1141,8 @@ class Subject(object):
             constants.StatsIOFields.PCT_OSC_HIGH: metrics.bin_percentage(
                 self.image_rbc_osc_binned, np.array([6, 7, 8])
             ),
-            constants.StatsIOFields.PCT_OSC_MEAN: metrics.mean_oscillation_percentage(
-                self.image_rbc_osc, self.mask_rbc
+            constants.StatsIOFields.PCT_OSC_MEAN: float(
+                metrics.mean_oscillation_percentage(self.image_rbc_osc, self.mask_rbc)
             ),
             constants.StatsIOFields.PCT_OSC_DEFECTLOW: metrics.bin_percentage(
                 self.image_rbc_osc_binned, np.array([1, 2])
@@ -1009,13 +1211,13 @@ class Subject(object):
                 self.reference_data["reference_fit_membrane"][1],
                 self.reference_data["reference_fit_rbc"][1],
             ),
-            constants.StatsIOFields.RDP_BA: round(
-                metrics.rdp_ba(
-                    self.image_rbc2gas_binned,
-                    self.mask,
-                ),
-                1,
-            ),
+            # constants.StatsIOFields.RDP_BA: round(
+            #     metrics.rdp_ba(
+            #         self.image_rbc2gas_binned,
+            #         self.mask,
+            #     ),
+            #     1,
+            # ),
         }
 
         if isinstance(self.config.patient_frc, (int, float)):
@@ -1313,7 +1515,7 @@ class Subject(object):
         """Export image figures."""
         index_start, index_skip = plot.get_plot_indices(self.mask)
         plot.plot_montage_grey(
-            image=np.abs(self.image_gas),
+            image=np.abs(self.image_gas_highreso),
             path="tmp/png/montage_ven.png",
             index_start=index_start,
             index_skip=index_skip,
@@ -1360,6 +1562,19 @@ class Subject(object):
             high=self.high_indices,
             low=self.low_indices,
         )
+        if self.config.correction.vc_correction:
+            plot.plot_montage_grey(
+                image=np.abs(self.relative_vc_map),
+                path="tmp/png/relative_vc_map.png",
+                index_start=index_start,
+                index_skip=index_skip,
+            )
+            plot.plot_montage_grey(
+                image=np.abs(self.correction_map),
+                path="tmp/png/correction_map.png",
+                index_start=index_start,
+                index_skip=index_skip,
+            )
 
     def generate_pdf(self):
         """Generate HTML and PDF files."""
@@ -1407,6 +1622,13 @@ class Subject(object):
             "report_clinical_osc_imaging_{}.pdf".format(self.config.subject_id),
         )
         report.clinical_osc_imaging(self.dict_stats, path=path)
+
+        if self.config.correction.vc_correction:
+            path = os.path.join(
+                self.config.data_dir,
+                "report_osc_imaging_correction_{}.pdf".format(self.config.subject_id),
+            )
+            report.osc_imaging_correction(self.dict_stats, path=path)
 
     def save_subject_to_mat(self):
         """Save the instance variables into a mat file."""
@@ -1493,14 +1715,86 @@ class Subject(object):
             ),
             "tmp/gas_rgb.nii",
         )
+
+    def save_osc_files(self):
+        """Save select images to nifti files and instance variable to mat."""
+        proton_reg = img_utils.normalize(
+            np.abs(self.image_proton),
+            self.mask,
+            method=constants.NormalizationMethods.PERCENTILE,
+        )
+        io_utils.export_nii(
+            self.image_rbc2gas_binned,
+            "tmp/rbc_binned.nii",
+            self.dict_dis[constants.IOFields.FOV],
+        )
+        io_utils.export_nii(
+            np.abs(self.image_rbc),
+            "tmp/rbc.nii",
+            self.dict_dis[constants.IOFields.FOV],
+        )
+        io_utils.export_nii(
+            np.abs(self.image_membrane),
+            "tmp/membrane.nii",
+            self.dict_dis[constants.IOFields.FOV],
+        )
+        io_utils.export_nii(
+            np.abs(self.image_membrane2gas),
+            "tmp/membrane2gas.nii",
+            self.dict_dis[constants.IOFields.FOV],
+        )
+        io_utils.export_nii(
+            self.mask.astype(float),
+            "tmp/mask_reg.nii",
+            self.dict_dis[constants.IOFields.FOV],
+        )
+        io_utils.export_nii(
+            np.abs(self.image_dissolved),
+            "tmp/dissolved.nii",
+            self.dict_dis[constants.IOFields.FOV],
+        )
+        if self.config.recon.recon_proton:
+            io_utils.export_nii(
+                np.abs(self.image_proton),
+                "tmp/proton.nii",
+                self.dict_dis[constants.IOFields.FOV],
+            )
+            io_utils.export_nii(
+                np.abs(self.image_proton_reg),
+                "tmp/proton_reg.nii",
+                self.dict_dis[constants.IOFields.FOV],
+            ),
+        io_utils.export_nii_4d(
+            plot.map_and_overlay_to_rgb(
+                self.image_rbc2gas_binned, proton_reg, constants.CMAP.RBC_BIN2COLOR
+            ),
+            "tmp/rbc2gas_rgb.nii",
+        )
+        io_utils.export_nii_4d(
+            plot.map_and_overlay_to_rgb(
+                self.image_membrane2gas_binned,
+                proton_reg,
+                constants.CMAP.MEMBRANE_BIN2COLOR,
+            ),
+            "tmp/membrane2gas_rgb.nii",
+        )
+        io_utils.export_nii_4d(
+            plot.map_and_overlay_to_rgb(
+                self.image_gas_binned,
+                proton_reg,
+                constants.CMAP.VENT_BIN2COLOR,
+            ),
+            "tmp/gas_rgb.nii",
+        )
         io_utils.export_nii_4d(
             plot.map_grey_to_rgb(
                 self.image_rbc_osc_binned, constants.CMAP.RBC_OSC_BIN2COLOR
             ),
-            "tmp/nii/osc_binned_color.nii",
+            "tmp/osc_binned_color.nii",
         )
-        io_utils.export_nii(self.image_rbc_osc_binned, "tmp/nii/osc_binned.nii")
-        io_utils.export_nii(self.image_rbc_osc * self.mask, "tmp/nii/osc.nii")
+
+    #  io_utils.export_nii(self.relative_vc_map, "tmp/nii/relative_vc_map.nii")
+    # io_utils.export_nii(self.correction_map, "tmp/nii/correction_map.nii")
 
     def save_config_as_json(self):
         """Save subject config .py file as json."""
@@ -1526,5 +1820,26 @@ class Subject(object):
         )
         # move files
         subfolder = os.path.join(self.config.data_dir, "gx")
+        os.makedirs(subfolder, exist_ok=True)
+        io_utils.move_files(output_files, subfolder)
+
+    def osc_move_output_files(self):
+        """Move output files into dedicated directory."""
+        # define files to move
+        output_files = (
+            "tmp/{}_config_gx_imaging.json".format(self.config.subject_id),
+            "tmp/{}.mat".format(self.config.subject_id),
+            "tmp/{}_report.pdf".format(self.config.subject_id),
+            "tmp/{}_stats.csv".format(self.config.subject_id),
+            "tmp/gas_rgb.nii",
+            "tmp/mask_reg.nii",
+            "tmp/membrane2gas_rgb.nii",
+            "tmp/proton_reg.nii",
+            "tmp/rbc2gas_rgb.nii",
+            "tmp/osc_binned.nii",
+            "tmp/osc.nii",
+        )
+        # move files
+        subfolder = os.path.join(self.config.data_dir, "osc")
         os.makedirs(subfolder, exist_ok=True)
         io_utils.move_files(output_files, subfolder)

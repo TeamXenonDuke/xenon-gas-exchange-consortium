@@ -16,6 +16,16 @@ KCO_ALPHA = 11.2  # membrane
 KCO_BETA = 14.6  # RBC
 VA_ALPHA = 1.43
 
+# for oscillation correction
+VA_ALPHA = 1.43
+KCO_ALPHA_MUNKHOLM = 22.3  # membrane
+KCO_BETA_MUNKHOLM = 8  # RBC
+VA_ALPHA_MUNKHOLM = 1.46
+RBC_REF = 0.471  # normalized to gas
+THETA_INV_FEMALE = 1.863  # mL_blood min mmHg / mL_CO
+THETA_INV_MALE = 1.71  # mL_blood min mmHg / mL_CO
+VOXEL_SIZE = 29.791e-6  # in Liters
+
 NONE = "None"
 
 
@@ -23,14 +33,10 @@ class IOFields(object):
     """General IOFields constants."""
 
     AGE = "age"
-    SEX = "sex"
-    HEIGHT = "height"
     BANDWIDTH = "bandwidth"
-    USER_LUNG_VOLUME_VALUE = "user_lung_volume_value"
     BIASFIELD_KEY = "biasfield_key"
     BONUS_SPECTRA_LABELS = "bonus_spectra_labels"
     CONTRAST_LABELS = "contrast_labels"
-    SAMPLE_TIME = "sample_time"
     FA_DIS = "fa_dis"
     FA_GAS = "fa_gas"
     FIDS = "fids"
@@ -47,6 +53,7 @@ class IOFields(object):
     GRAD_DELAY_Z = "grad_delay_z"
     HB_CORRECTION_KEY = "hb_correction_key"
     HB = "hb"
+    HEIGHT = "height"
     INSTITUTION = "institution"
     RBC_HB_CORRECTION_FACTOR = "rbc_hb_correction_factor"
     MEMBRANE_HB_CORRECTION_FACTOR = "membrane_hb_correction_factor"
@@ -62,12 +69,15 @@ class IOFields(object):
     PROCESS_DATE = "process_date"
     PROTOCOL_NAME = "protocol_name"
     RAMP_TIME = "ramp_time"
+    RBC_HB_CORRECTION_FACTOR = "rbc_hb_correction_factor"
     REFERENCE_DATA_KEY = "reference_data_key"
     REGISTRATION_KEY = "registration_key"
     REMOVEOS = "removeos"
     REMOVE_NOISE = "remove_noise"
+    SAMPLE_TIME = "sample_time"
     SCAN_DATE = "scan_date"
     SEGMENTATION_KEY = "segmentation_key"
+    SEX = "sex"
     SHAPE_FIDS = "shape_fids"
     SHAPE_IMAGE = "shape_image"
     SLICE_THICKNESS = "slice_thickness"
@@ -80,6 +90,7 @@ class IOFields(object):
     TR_DIS = "tr_dis"
     TRAJ = "traj"
     SYSTEM_VENDOR = "system_vendor"
+    USER_LUNG_VOLUME_VALUE = "user_lung_volume_value"
     VOL_CORRECTION_KEY = "vol_correction_key"
     VOL_CORRECTION_FACTOR_MEMBRANE = "vol_correction_factor_membrane"
     VOL_CORRECTION_FACTOR_RBC = "vol_correction_factor_rbc"

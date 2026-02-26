@@ -512,3 +512,53 @@ def rdp_ba(
     top = total_mean[0] + total_mean[1] + total_mean[3] + total_mean[4]
     b_t = (bottom - top / 2) / 2 * 100
     return b_t
+
+
+def relative_vc_map(
+    age: int,
+    sex: int,
+    height: float,
+    rbc_img: np.ndarray,
+    mask: np.ndarray,
+):
+    """Get a map of the voxel-wise relative capillary blood volume.
+
+    Args:
+        subject_age: int. Age of the subject
+        subject_sex: int. 1 if female, 2 if male
+        subject_height: float. Height of subject in cm
+        rbc_img: np.ndarray. RBC image normalized to gas image
+        mask: np.ndarray. Mask of non-VDP region.
+    """
+    va = constants.VA_ALPHA_MUNKHOLM * constants.VOXEL_SIZE
+
+    if sex == 1:
+        predicted = (-13.8 + (0.527 * height) - (0.00421 * (age**2))) / (
+            np.count_nonzero(mask)
+        )
+        print(predicted)
+        print(np.count_nonzero(mask))
+        estimated = (
+            va
+            * constants.KCO_BETA_MUNKHOLM
+            * constants.THETA_INV_FEMALE
+            * np.divide(np.abs(rbc_img), constants.RBC_REF)
+        )
+        print(np.sum(estimated))
+        return np.divide(estimated, predicted)
+    elif sex == 2:
+        predicted = (-23.8 + (0.645 * height) - (0.00547 * (age**2))) / (
+            np.count_nonzero(mask)
+        )
+        print(predicted)
+        print(np.count_nonzero(mask))
+        estimated = (
+            va
+            * constants.KCO_BETA_MUNKHOLM
+            * constants.THETA_INV_MALE
+            * np.divide(np.abs(rbc_img), constants.RBC_REF)
+        )
+        print(np.sum(estimated))
+        return np.divide(estimated, predicted)
+    else:
+        return 0.0

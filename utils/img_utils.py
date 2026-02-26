@@ -10,14 +10,14 @@ from typing import Any, List, Optional, Tuple
 
 import matplotlib
 
-matplotlib.use("TkAgg")
+matplotlib.use("Agg")
 import numpy as np
 import skimage
 from scipy import ndimage
 
 import pdb
 
-from utils import constants, io_utils
+from utils import constants, io_utils, metrics
 
 
 def remove_small_objects(mask: np.ndarray, scale: float = 0.1):
@@ -194,7 +194,7 @@ def divide_images(
     return out
 
 
-def smooth_image(image: np.ndarray, kernel: int = 11) -> np.ndarray:
+def smooth_image(image: np.ndarray, kernel: int = 3) -> np.ndarray:
     """Smooth the image using a blurring kernel.
 
     Args:
@@ -400,3 +400,74 @@ def crop_center(image: np.ndarray, image_size: int) -> np.ndarray:
     start = image.shape[0] // 2 - image_size // 2
     end = start + image_size
     return image[start:end, start:end, start:end]
+
+
+def calculate_corrected_rbc_oscillation(
+    image_high: np.ndarray,
+    image_low: np.ndarray,
+    image_total: np.ndarray,
+    rbc2gas: np.ndarray,
+    mask: np.ndarray,
+    age: int,
+    sex: int,
+    height: float,
+    method: str = constants.Methods.SMOOTH,
+) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
+    """Calculate RBC oscillations corrected for relative capillary blood volume.
+
+    Args:
+        image_high (np.ndarray): high rbc image.
+        image_low (np.ndarray): low rbc image.
+        image_total (np.ndarray): total image.
+        rbc2gas (np.ndarray): RBC image normalized to gas signal
+        mask(np.ndarray): booleaan mask of the lung. Must be the same size as the images.
+        method (str): method to use for calculating oscillation.
+    Returns:
+        Map of relative capillary blood volume, map of oscillation correction factor,
+        and RBC oscillation image in percentage.
+    """
+    image_total = image_total.copy()
+    image_total[mask == 0] = np.max(image_total[mask > 0])
+
+    relative_vc_map = metrics.relative_vc_map(
+        age,
+        sex,
+        height,
+        rbc2gas,
+        mask,
+    )
+
+    correction_map = np.divide(10.49, ((np.divide(3.73, relative_vc_map)) + 6.76))
+
+    if method == constants.Methods.ELEMENTWISE:
+        return (
+            relative_vc_map,
+            correction_map,
+            np.multiply(
+                correction_map, (100 * np.subtract(image_high, image_low) / image_total)
+            ),
+        )
+    elif method == constants.Methods.MEAN:
+        return (
+            relative_vc_map,
+            correction_map,
+            np.multiply(
+                correction_map,
+                (
+                    100
+                    * np.subtract(image_high, image_low)
+                    / np.abs(np.mean(image_total[mask > 0]))
+                ),
+            ),
+        )
+    elif method == constants.Methods.SMOOTH:
+        return (
+            relative_vc_map,
+            correction_map,
+            np.multiply(
+                correction_map,
+                (100 * np.subtract(image_high, image_low) / smooth_image(image_total)),
+            ),
+        )
+    else:
+        raise ValueError("Invalid method: {}.".format(method))

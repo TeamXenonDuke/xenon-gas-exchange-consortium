@@ -3,6 +3,8 @@
 import os
 import sys
 from typing import Any, Dict
+import logging
+import numbers
 
 import numpy as np
 import pdfkit
@@ -65,8 +67,20 @@ def format_dict(dict_stats: Dict[str, Any]) -> Dict[str, Any]:
     # list of variables to round to 1 decimal places
     list_round_1 = [
         constants.StatsIOFields.MEMBRANE_SNR,
-        constants.StatsIOFields.RBC_SNR,
         constants.StatsIOFields.VENT_SNR,
+        constants.StatsIOFields.PCT_OSC_DEFECT,
+        constants.StatsIOFields.PCT_OSC_LOW,
+        constants.StatsIOFields.PCT_OSC_HIGH,
+        constants.StatsIOFields.PCT_OSC_MEAN,
+        constants.StatsIOFields.PCT_OSC_DEFECTLOW,
+        constants.StatsIOFields.PCT_OSC_NEGATIVE,
+    ]
+    # list of variables to round to 2 decimal places
+    list_round_2 = [
+        constants.StatsIOFields.RBC_SNR,
+        constants.StatsIOFields.SNR_RBC_HIGH,
+        constants.StatsIOFields.SNR_RBC_LOW,
+        constants.StatsIOFields.SNR_DISSOLVED,
     ]
     # list of variables to round to 3 decimal places
     list_round_3 = [constants.StatsIOFields.RBC_M_RATIO]
@@ -81,25 +95,27 @@ def format_dict(dict_stats: Dict[str, Any]) -> Dict[str, Any]:
     ]
 
     for key in dict_stats.keys():
-        if isinstance(dict_stats[key], float) and key in list_round_0:
+        if isinstance(dict_stats[key], numbers.Real) and key in list_round_0:
             dict_stats[key] = int(np.round(dict_stats[key], 0))
-        elif isinstance(dict_stats[key], float) and key in list_round_1:
+        elif isinstance(dict_stats[key], numbers.Real) and key in list_round_1:
             dict_stats[key] = np.round(dict_stats[key], 1)
-        elif isinstance(dict_stats[key], float) and key in list_round_3:
-            dict_stats[key] = np.round(dict_stats[key], 3)
-        elif isinstance(dict_stats[key], float) and key in list_mult_100:
-            dict_stats[key] = np.round(dict_stats[key] * 100, 2)
-        elif isinstance(dict_stats[key], float) and (
-            key not in list_round_3
-            or key not in list_round_0
-            or key not in list_mult_100
-        ):
+        elif isinstance(dict_stats[key], numbers.Real) and key in list_round_2:
             dict_stats[key] = np.round(dict_stats[key], 2)
+        elif isinstance(dict_stats[key], numbers.Real) and key in list_round_3:
+            dict_stats[key] = np.round(dict_stats[key], 3)
+        elif isinstance(dict_stats[key], numbers.Real) and key in list_mult_100:
+            dict_stats[key] = np.round(dict_stats[key] * 100, 2)
+        # elif isinstance(dict_stats[key], numbers.Real) and (
+        #    key not in list_round_3
+        #    or key not in list_round_0
+        #    or key not in list_mult_100
+        # ):
+        #    dict_stats[key] = np.round(dict_stats[key], 2)
 
     return dict_stats
 
 
-def clinical_osc_imaging(stats_dict: dict[str, Any], path: str):
+def clinical_osc_imaging(dict_stats: dict[str, Any], path: str):
     """Make clinical report.
 
     First converts dictionary to html format. Then saves to path.
@@ -107,7 +123,7 @@ def clinical_osc_imaging(stats_dict: dict[str, Any], path: str):
         stats_dict (Dict[str, Any]): dictionary of statistics
         path (str): path to save report
     """
-    stats_dict = format_dict(stats_dict)
+    stats_dict = format_dict(dict_stats)
     current_path = os.path.dirname(__file__)
     path_clinical = os.path.abspath(
         os.path.join(
@@ -115,6 +131,32 @@ def clinical_osc_imaging(stats_dict: dict[str, Any], path: str):
         )
     )
     path_html = os.path.join("tmp", "clinical_osc_imaging.html")
+    # write report to html
+    with open(path_clinical, "r") as f:
+        file = f.read()
+        rendered = file.format(**stats_dict)
+    with open(path_html, "w") as o:
+        o.write(rendered)
+    # write clinical report to pdf
+    pdfkit.from_file(path_html, path, options=PDF_OPTIONS)
+
+
+def osc_imaging_correction(dict_stats: dict[str, Any], path: str):
+    """Make clinical report.
+
+    First converts dictionary to html format. Then saves to path.
+    Args:
+        stats_dict (Dict[str, Any]): dictionary of statistics
+        path (str): path to save report
+    """
+    stats_dict = format_dict(dict_stats)
+    current_path = os.path.dirname(__file__)
+    path_clinical = os.path.abspath(
+        os.path.join(
+            current_path, os.pardir, "assets", "html", "osc_imaging_correction.html"
+        )
+    )
+    path_html = os.path.join("tmp", "osc_imaging_correction.html")
     # write report to html
     with open(path_clinical, "r") as f:
         file = f.read()
@@ -157,7 +199,9 @@ def grayscale(dict_stats: Dict[str, Any], path: str):
         dict_stats (Dict[str, Any]): dictionary of statistics
         path (str): path to save report
     """
-    dict_stats = format_dict(dict_stats)
+    dict_stats = format_dict(
+        dict_stats
+    )  ## Using format dict will not work here -- it only accounts for GX variables
     current_path = os.path.dirname(__file__)
     path_clinical = os.path.abspath(
         os.path.join(current_path, os.pardir, "assets", "html", "grayscale.html")

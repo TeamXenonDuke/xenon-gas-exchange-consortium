@@ -77,7 +77,7 @@ def bin_rbc_oscillations(
         plt.title("Bandpassed RBC k0")
         plt.savefig("tmp/bandpassedk0.png")
 
-        k0_sine_fit_data, _ = signal_utils.fit_sine(
+        k0_sine_fit_data, _ = signal_utils.osc_fit_sine(
             data_rbc_k0_proc, np.linspace(0, 15, data_rbc_k0_proc.size)
         )
 
