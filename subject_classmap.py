@@ -811,6 +811,10 @@ class Subject(object):
                 self.image_rbc2gas_binned,
                 self.mask,
             ), 1),
+            constants.IOFields.AGE: self.dict_dis[constants.IOFields.AGE],
+            constants.IOFields.SEX: self.dict_dis[constants.IOFields.SEX],
+            constants.IOFields.HEIGHT: self.dict_dis[constants.IOFields.HEIGHT],
+            constants.IOFields.WEIGHT: self.dict_dis[constants.IOFields.WEIGHT],
         }
         
         if isinstance(self.config.patient_frc, (int, float)):
@@ -955,6 +959,10 @@ class Subject(object):
             constants.IOFields.TE90: 1e6 * self.dict_dis[constants.IOFields.TE90],
             constants.IOFields.TR_DIS: 1e3 * self.dict_dis[constants.IOFields.TR],
             constants.IOFields.USER_LUNG_VOLUME_VALUE:self.user_lung_volume_value,
+            constants.IOFields.AGE: self.dict_dis[constants.IOFields.AGE],
+            constants.IOFields.SEX: self.dict_dis[constants.IOFields.SEX],
+            constants.IOFields.HEIGHT: self.dict_dis[constants.IOFields.HEIGHT],
+            constants.IOFields.WEIGHT: self.dict_dis[constants.IOFields.WEIGHT],
         }
         return self.dict_info
 

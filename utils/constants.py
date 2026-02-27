@@ -24,6 +24,7 @@ class IOFields(object):
     AGE = "age"
     SEX = "sex"
     HEIGHT = "height"
+    WEIGHT = "weight"
     BANDWIDTH = "bandwidth"
     USER_LUNG_VOLUME_VALUE ="user_lung_volume_value"
     BIASFIELD_KEY = "biasfield_key"

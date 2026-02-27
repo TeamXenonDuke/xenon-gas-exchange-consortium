@@ -74,6 +74,25 @@ def get_patient_height(twix_obj: mapvbvd._attrdict.AttrDict) -> float:
 
     raise ValueError("Could not find height from twix object")
 
+def get_patient_weight(twix_obj: mapvbvd._attrdict.AttrDict) -> float:
+    """
+    Get the patient's weight in centimeters.
+
+    Args:
+        twix_obj: Twix object returned from the mapVBVD function.
+
+    Returns:
+        Patient weight as a float (in kg).
+
+    Raises:
+        ValueError: If weight information is not found in the twix object.
+    """
+    try:
+        return twix_obj.hdr.Meas.flUsedPatientWeight
+    except:
+        return np.nan
+
+    raise ValueError("Could not find weight from twix object")
 
 def get_scan_date(twix_obj: mapvbvd._attrdict.AttrDict) -> str:
     """Get the scan date in MM-DD-YYYY format.

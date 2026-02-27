@@ -290,6 +290,7 @@ def read_dis_twix(path: str, config: Optional[ml_collections.ConfigDict] = None)
         constants.IOFields.AGE: twix_utils.get_patient_age(twix_obj),
         constants.IOFields.SEX: twix_utils.get_patient_sex(twix_obj),
         constants.IOFields.HEIGHT: twix_utils.get_patient_height(twix_obj),
+        constants.IOFields.WEIGHT: twix_utils.get_patient_weight(twix_obj),
         constants.IOFields.SAMPLE_TIME: twix_utils.get_sample_time(twix_obj),
         constants.IOFields.FA_DIS: twix_utils.get_flipangle_dissolved(twix_obj),
         constants.IOFields.FA_GAS: twix_utils.get_flipangle_gas(twix_obj),
