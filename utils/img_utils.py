@@ -437,3 +437,36 @@ def approximate_image_with_bspline(
     os.system(cmd)
     # read in the output
     return io_utils.import_nii(pathOutput)
+
+def phantom_mask() -> np.ndarray:
+    """Create a 128x128x128 fallback phantom mask.
+
+    The mask contains two symmetric rectangular prisms. In each axial slice,
+    each rectangle is 90 voxels tall (vertical) and 30 voxels wide (horizontal).
+    The rectangles are extruded along z from slice 50 to 77.
+    """
+    mask = np.zeros((128, 128, 128), dtype=np.uint8)
+
+    # Rectangle size in each axial slice
+    rect_height = 90   # vertical
+    rect_width = 30    # horizontal
+
+    # Center vertically
+    row_start = (128 - rect_height) // 2   # 19
+    row_end = row_start + rect_height      # 109
+
+    # Two symmetric rectangles placed left and right
+    left_col_start = 18
+    left_col_end = left_col_start + rect_width    # 48
+
+    right_col_start = 80
+    right_col_end = right_col_start + rect_width  # 110
+
+    # Extrusion in z
+    z_start = 50
+    z_end = 78  # end-exclusive, so slices 50..77
+
+    mask[row_start:row_end, left_col_start:left_col_end, z_start:z_end] = 1
+    mask[row_start:row_end, right_col_start:right_col_end, z_start:z_end] = 1
+
+    return mask
