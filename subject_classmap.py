@@ -108,7 +108,11 @@ class Subject(object):
         self.reference_data = {}
         self.user_lung_volume_value = ""
         self.vol_correction_factor_rbc = "NA"
-        self.vol_correction_factor_membrane ="NA"        
+        self.vol_correction_factor_membrane ="NA"
+        self.frc = ""
+        self.va = ""
+        self.kco = ""
+        self.dlco = ""        
 
     def read_twix_files(self):
         """Read in twix files to dictionary.
@@ -815,7 +819,31 @@ class Subject(object):
             constants.IOFields.SEX: self.dict_dis[constants.IOFields.SEX],
             constants.IOFields.HEIGHT: self.dict_dis[constants.IOFields.HEIGHT],
             constants.IOFields.WEIGHT: self.dict_dis[constants.IOFields.WEIGHT],
-        }
+
+            constants.IOFields.GLI_FRC: metrics.GLI_volume(
+            self.dict_dis[constants.IOFields.AGE],
+            self.dict_dis[constants.IOFields.SEX],
+            self.dict_dis[constants.IOFields.HEIGHT],
+            volume_type="frc"),
+            
+            constants.IOFields.GLI_VA: metrics.GLI_volume(
+            self.dict_dis[constants.IOFields.AGE],
+            self.dict_dis[constants.IOFields.SEX],
+            self.dict_dis[constants.IOFields.HEIGHT],
+            volume_type="va"),
+
+            constants.IOFields.GLI_KCO: metrics.GLI_volume(
+            self.dict_dis[constants.IOFields.AGE],
+            self.dict_dis[constants.IOFields.SEX],
+            self.dict_dis[constants.IOFields.HEIGHT],
+            volume_type="kco"),
+
+            constants.IOFields.GLI_DLCO: metrics.GLI_volume(
+            self.dict_dis[constants.IOFields.AGE],
+            self.dict_dis[constants.IOFields.SEX],
+            self.dict_dis[constants.IOFields.HEIGHT],
+            volume_type="dlco"),    
+            }        
         
         if isinstance(self.config.patient_frc, (int, float)):
             FRC_Volume = float(self.config.patient_frc)
@@ -963,6 +991,26 @@ class Subject(object):
             constants.IOFields.SEX: self.dict_dis[constants.IOFields.SEX],
             constants.IOFields.HEIGHT: self.dict_dis[constants.IOFields.HEIGHT],
             constants.IOFields.WEIGHT: self.dict_dis[constants.IOFields.WEIGHT],
+            constants.IOFields.GLI_FRC: metrics.GLI_volume(
+            self.dict_dis[constants.IOFields.AGE],
+            self.dict_dis[constants.IOFields.SEX],
+            self.dict_dis[constants.IOFields.HEIGHT],
+            volume_type="frc"),
+            constants.IOFields.GLI_VA: metrics.GLI_volume(
+            self.dict_dis[constants.IOFields.AGE],
+            self.dict_dis[constants.IOFields.SEX],
+            self.dict_dis[constants.IOFields.HEIGHT],
+            volume_type="va"),
+            constants.IOFields.GLI_KCO: metrics.GLI_volume(
+            self.dict_dis[constants.IOFields.AGE],
+            self.dict_dis[constants.IOFields.SEX],
+            self.dict_dis[constants.IOFields.HEIGHT],
+            volume_type="kco"),
+            constants.IOFields.GLI_DLCO: metrics.GLI_volume(
+            self.dict_dis[constants.IOFields.AGE],
+            self.dict_dis[constants.IOFields.SEX],
+            self.dict_dis[constants.IOFields.HEIGHT],
+            volume_type="dlco"),   
         }
         return self.dict_info
 

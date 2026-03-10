@@ -1,7 +1,7 @@
 /* RESET + BASE STYLES for all reports
    Ensures consistent sizing, margins, and fonts across WeasyPrint */
 @page {
-  size: 850pt 425pt;
+  size: 850pt 470pt;
   margin: 0;
 }
 

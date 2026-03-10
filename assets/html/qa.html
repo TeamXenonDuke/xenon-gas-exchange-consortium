@@ -51,12 +51,35 @@
           height="170px"
         />
       </div>
-      <div class="predict-values">
-        <p>
-          Estimated KCO:{kco_est} ---- VA:{alveolar_volume} ---- DLCO:{dlco_est} ---- RDP_BA:{rdp_ba}%
-        </p>
-      </div>
     </div>
+    <div class="table-container1">
+      <table>
+        <tr class="title">
+          <th> </th>
+          <th>FRC (L)</th>
+          <th>VA (L)</th>
+          <th>KCO (mL/min/mmHg/L)</th>
+          <th>DLCO (mL/min/mmHg)</th>
+          <th>RDP_BA (%)</th>
+        </tr>
+        <tr class="basic">
+          <td>Xe est.</td>
+          <td style="text-align:center;">-</td>
+          <td>{alveolar_volume}</td>
+          <td>{kco_est}</td>
+          <td>{dlco_est}</td>
+          <td>{rdp_ba}</td>
+        </tr>
+        <tr class="basic">
+          <td>GLI est.</td>
+          <td>{gli_frc}</td>
+          <td>{gli_va}</td>
+          <td>{gli_kco}</td>
+          <td>{gli_dlco}</td>
+          <td style="text-align:center;">-</td>
+        </tr>
+      </table>
+    </div>   
     <div class="table-container">
       <table>
         <tr class="title">

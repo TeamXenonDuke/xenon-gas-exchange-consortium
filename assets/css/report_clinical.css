@@ -72,7 +72,7 @@ body {
   width: 20px;
 }
 .space {
-  height: 35px;
+  height: 25px;
 }
 .hist-label {
   position: absolute;
@@ -88,18 +88,26 @@ body {
   margin: 0;
   padding: 0;
 }
-.predict-values {
-  position: relative;
-  bottom: 5px;
-  left: 0px;
-  text-align: center;
-  color: white;
-  background: black;
+.table-container1 {
+  width: 1105px;
+  height: 50px;
+  font-size: 12pt;
+  color: black;
+  margin-top: 5px;
 }
- 
+.table-container1 table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.table-container1 th,
+.table-container1 td {
+  border: 1px solid white;
+  padding: 4px;
+}
 .table-container {
   width: 240px;
-  height: 480px;
+  height: 170px;
   font-size: 12pt;
   float: left;
   background-color: #353131;
@@ -115,7 +123,7 @@ td,
 th {
   border: 2.04px solid #353131;
   font-weight: normal;
-  text-align: left;
+  text-align: center;
   padding: 4px;
   padding-top: 8px;
   padding-bottom: 10px;
