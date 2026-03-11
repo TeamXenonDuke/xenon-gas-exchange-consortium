@@ -466,11 +466,21 @@ class Subject(object):
             )
 
         if self.config.segmentation_key == constants.SegmentationKey.CNN_VENT.value:
-            logging.info("Performing neural network segmentation.")
-            self.mask = segmentation.predict(self.image_gas_highreso).astype(bool)
+            logging.info("Performing ventilation neural network segmentation.")
+            self.mask = segmentation.predict(self.image_gas_highreso, constants.ImageType.VENT.value).astype(bool)
 
             # Build include-trachea mask automatically (unless user provided one)
             self.mask_include_trachea = get_or_make_mask_include_trachea()
+
+        elif self.config.segmentation_key == constants.SegmentationKey.CNN_PROTON.value:
+            if self.config.recon.recon_proton:
+                logging.info("Performing proton neural network segmentation.")
+                self.mask = segmentation.predict(self.image_proton, constants.ImageType.UTE.value).astype(bool)
+
+                # Build include-trachea mask automatically (unless user provided one)
+                self.mask_include_trachea = get_or_make_mask_include_trachea()
+            else:
+                logging.error("Proton reconstruction is set to False. Proton segmentation cannot be performed.")
 
         elif self.config.segmentation_key == constants.SegmentationKey.SKIP.value:
             self.mask = np.ones_like(self.image_gas_highreso, dtype=bool)
@@ -495,11 +505,21 @@ class Subject(object):
 
         Uses ANTs registration to register the proton image to the xenon image.
         """
+
         if self.config.registration_key == constants.RegistrationKey.MASK2GAS.value:
-            logging.info("Run registration algorithm, vent is fixed, mask is moving")
-            self.mask, self.image_proton_reg = np.abs(
+            logging.info("Run registration algorithm, vent is fixed, proton mask is moving")
+
+            if self.config.segmentation_key in [constants.SegmentationKey.CNN_PROTON.value, constants.SegmentationKey.MANUAL_PROTON.value]:
+                self.mask_proton = self.mask
+            else:
+                if self.config.recon.recon_proton:
+                    self.mask_proton = segmentation.predict(self.image_proton, constants.ImageType.UTE.value).astype(bool)
+                else:
+                    logging.error("Proton reconstruction is disabled. Cannot perform proton mask-to-gas registration.")
+
+            mask, self.image_proton_reg = np.abs(
                 registration.register_ants(
-                    abs(self.image_gas_highreso), self.mask, self.image_proton
+                    abs(self.image_gas_highreso), self.mask_proton, self.image_proton
                 )
             )
         elif self.config.registration_key == constants.RegistrationKey.PROTON2GAS.value:
@@ -509,13 +529,7 @@ class Subject(object):
                     abs(self.image_gas_highreso), self.image_proton, self.mask
                 )
             )
-            if (
-                self.config.segmentation_key
-                == constants.SegmentationKey.CNN_PROTON.value
-                or self.config.segmentation_key
-                == constants.SegmentationKey.MANUAL_PROTON.value
-            ):
-                self.mask = mask
+
         elif self.config.registration_key == constants.RegistrationKey.MANUAL.value:
             # Load a file specified by the user
             try:
@@ -530,6 +544,21 @@ class Subject(object):
             self.image_proton_reg = self.image_proton
         else:
             raise ValueError("Invalid registration key.")
+
+
+        # Use the registered mask when the segmentation comes from a proton image
+        # and registration to gas space was performed.   
+
+        if (
+            self.config.segmentation_key
+            in [
+                constants.SegmentationKey.CNN_PROTON.value,
+                constants.SegmentationKey.MANUAL_PROTON.value,
+            ]
+            and self.config.registration_key != constants.RegistrationKey.SKIP.value
+            ):
+            mask = np.around(mask)
+            self.mask = mask
 
         def convert_and_threshold_mask(mask):
             """
@@ -967,7 +996,7 @@ class Subject(object):
         """Export image figures."""
         index_start, index_skip = plot.get_plot_indices(self.mask)
         proton_reg = img_utils.normalize(
-            np.abs(self.image_proton),
+            np.abs(self.image_proton_reg),
             self.mask,
             bag_volume=self.config.bag_volume,
             method=constants.NormalizationMethods.PERCENTILE,

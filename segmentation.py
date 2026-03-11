@@ -42,19 +42,21 @@ def predict(
     else:
         raise ValueError("Segmentation Image size should be 128 x 128 x n")
 
+    model = vnet(input_size=(128, 128, 128, 1))
+
     if image_type == constants.ImageType.VENT.value:
-        model = vnet(input_size=(128, 128, 128, 1))
         weights_dir_current = "./models/weights/model_ANATOMY_VEN.h5"
+    elif image_type == constants.ImageType.UTE.value:
+        weights_dir_current = "./models/weights/model_ANATOMY_UTE.h5"
     else:
         raise ValueError("image_type must be ute or vent")
 
     # Load model weights
     model.load_weights(weights_dir_current)
 
-    if image_type == constants.ImageType.VENT.value:
-        image = img_utils.standardize_image(image)
-    else:
-        raise ValueError("Image type must be ute or vent")
+    # Normalize input to 0-255, then subtract the mean and divide by the standard deviation
+    image = img_utils.standardize_image(image)
+
     # Model Prediction
     image = image[None, ...]
     image = image[..., None]
