@@ -47,7 +47,7 @@ def predict(
     if image_type == constants.ImageType.VENT.value:
         weights_dir_current = "./models/weights/model_ANATOMY_VEN.h5"
     elif image_type == constants.ImageType.UTE.value:
-        weights_dir_current = "./models/weights/model_ANATOMY_UTE_fixed.h5"
+        weights_dir_current = "./models/weights/model_ANATOMY_UTE.h5"
     else:
         raise ValueError("image_type must be ute or vent")
 
