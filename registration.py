@@ -110,7 +110,7 @@ def register_ants(
     # call the command to apply transformation to image_transform
     os.system(cmd_applyTransform)
     try:
-        moving2_reg = np.around(np.array(nib.load(pathOutputmoving2).get_fdata()))
+        moving2_reg = np.array(nib.load(pathOutputmoving2).get_fdata())
     except FileNotFoundError:
         raise Exception(
             "registration failed, could not find antsRegistration executable"
