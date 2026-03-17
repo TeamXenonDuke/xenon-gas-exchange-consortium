@@ -28,28 +28,48 @@
           <p>Mean:{vent_mean}&plusmn;{vent_stddev}</p>
         </div>
       </div>
+      <div class="hist-tile" align="left">
+        <img src="../tmp/hist_membrane.png" style="width: 100%" />
+        <div class="hist-label">
+          <p>SNR:{membrane_snr}</p>
+          <p>Mean:{membrane_mean}&plusmn;{membrane_stddev}</p>
+        </div>
+      </div>
+      <div class="hist-tile" align="left">
+        <img src="../tmp/hist_rbc.png" style="width: 100%" />
+        <div class="hist-label">
+          <p>SNR:{rbc_snr}</p>
+          <p>Mean:{rbc_mean}&plusmn;{rbc_stddev}</p>
+        </div>
       </div>
     </div>
     <div class="map-container">
       <div class="map-tile">
         <img
           style="border: 10px solid black"
-          src="../tmp/montage_vent_qa.png"
+          src="../tmp/montage_vent_cor.png"
           width="680"
           height="170px"
         />
         <img
           style="border: 10px solid black"
-          src="../tmp/montage_dissolved_qa.png"
+          src="../tmp/montage_membrane.png"
           width="680"
           height="170px"
         />
         <img
           style="border: 10px solid black"
-          src="../tmp/montage_proton_qa.png"
+          src="../tmp/montage_rbc.png"
           width="680"
           height="170px"
         />
+      </div>
+      <div class="colorbar-tile">
+        <img src=../assets/img/colorbin_short.png height=150px>
+        <div class="space"></div>
+        <img src=../assets/img/colorbin_long.png height=200px>
+        <div class="space"></div>
+        <img src=../assets/img/colorbin_short.png height=150px>
       </div>
       <div class="predict-values">
         <p>

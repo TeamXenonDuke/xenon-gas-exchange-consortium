@@ -598,7 +598,7 @@ def export_subject_mat(subject: object, path: str):
         subject: subject instance
         path: str file path of mat file
     """
-    sio.savemat(path, vars(subject))
+    sio.savemat(path, vars(subject), long_field_names=True)
 
 
 def export_np(arr: np.ndarray, path: str):
@@ -666,3 +666,7 @@ def move_files(source_paths: list, destination_path: str) -> None:
         fname = os.path.basename(path)
         if os.path.isfile(path):
             shutil.move(path, os.path.join(destination_path, fname))
+
+def check_real_number(input_data):
+    input_data = np.asarray(input_data).squeeze()    # allow scalar or 1-element array
+    return input_data.shape == () and np.isreal(input_data) and np.isfinite(input_data)

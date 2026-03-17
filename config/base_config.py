@@ -10,6 +10,7 @@ sys.path.append("..")
 
 from utils import constants
 
+import os
 
 class Config(config_dict.ConfigDict):
     """Base config file.
@@ -43,6 +44,12 @@ class Config(config_dict.ConfigDict):
         self.bag_volume = "None"
         self.segmentation_key = constants.SegmentationKey.CNN_VENT.value
         self.manual_seg_filepath = ""
+        # default 99th percentile rescaling method
+        self.vent_normalization_method = constants.NormalizationMethods.PERCENTILE_MASKED
+        # auto-generate if filepath missing or file not found
+        self.auto_make_trachea_plus_lung_mask = True
+        # where to write it if auto-generated
+        self.trachea_plus_lung_mask_output_dir = self.data_dir
 
         # Additional options
         self.reference_data_key = constants.ReferenceDataKey.DUKE_REFERENCE.value
@@ -56,8 +63,16 @@ class Config(config_dict.ConfigDict):
         self.multi_echo = False
         self.registration_key = constants.RegistrationKey.SKIP.value
         self.manual_reg_filepath = ""
+
+        # Additional options for contamination correction
+        self.phase_gas_acq_diss = "None" #degree
+        self.area_gas_acq_diss = "None"
+
+        # Loading the paramater to base_config
         self.processes = Process()
         self.recon = Recon()
+        self.trachea_plus_lung_mask_filepath = "" # optional user override of big mask
+
 
 
 class Recon(object):
@@ -102,8 +117,10 @@ class Recon(object):
         # Set initial n_skip_start value as NaN, or user input an expected value
         self.n_skip_start = np.nan
         self.n_skip_end = 0
+        self.optimized_conta_phase = 49.9 #degree
         self.remove_contamination = False
         self.remove_noisy_projections = False
+        self.gas_contamination_correction = False
         self.traj_type = constants.TrajType.HALTONSPIRAL
 
 
