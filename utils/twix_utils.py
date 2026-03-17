@@ -510,7 +510,7 @@ def get_gx_data(twix_obj: mapvbvd._attrdict.AttrDict) -> Dict[str, Any]:
             num_spectra = raw_fids.shape[0] % 100
             data_gas = raw_fids[:-num_spectra][2::2, :]
             data_dis = raw_fids[:-num_spectra][3::2, :]
-            n_frames = raw_fids.shape[0] / 2
+            n_frames = raw_fids.shape[0] // 2
         else:
             logging.info("Reading in dixon.")
             num_spectra = raw_fids.shape[0] % 100
