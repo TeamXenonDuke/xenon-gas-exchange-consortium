@@ -843,6 +843,9 @@ class Subject(object):
             self.dict_dis[constants.IOFields.SEX],
             self.dict_dis[constants.IOFields.HEIGHT],
             volume_type="dlco"),    
+            constants.IOFields.RBCM_REF: metrics.rbcm_ref(
+            self.dict_dis[constants.IOFields.AGE],
+            self.dict_dis[constants.IOFields.SEX],)
             }        
         
         if isinstance(self.config.patient_frc, (int, float)):

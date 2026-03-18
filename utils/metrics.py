@@ -484,3 +484,10 @@ def rdp_ba(
     b_t = (bottom - top/2) / 2 * 100
     return b_t
     
+def rbcm_ref(age:int, sex:str)-> float:
+    sex_num = 0
+    if sex == "M":
+        sex_num == 1 
+    rbcm = 0.6476 - 0.00443 * age + 0.1202 * sex_num
+    return rbcm
+

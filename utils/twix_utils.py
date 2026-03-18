@@ -26,7 +26,7 @@ def get_patient_age(twix_obj: mapvbvd._attrdict.AttrDict) -> float:
         ValueError: If age information is not found in the twix object.
     """
     try:
-        return twix_obj.hdr.Meas.flPatientAge
+        return round(twix_obj.hdr.Meas.flPatientAge)
     except:
         return np.nan
 

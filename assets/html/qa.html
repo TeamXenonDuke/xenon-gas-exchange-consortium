@@ -16,40 +16,106 @@
     <title>Gas exchange Imaging Report</title>
   </head>
   <body>
-    <div class="title-container">
-      <h1 id="big-title">Summary of {subject_id}</h1>
-      <h5 id="date-title">scan: {scan_date}; processed: {process_date}</h5>
-    </div>
-    <div class="hist-container">
-      <div class="hist-tile" align="left">
-        <img src="../tmp/hist_vent.png" style="width: 100%" />
-        <div class="hist-label">
-          <p>SNR:{vent_snr}</p>
-          <p>Mean:{vent_mean}&plusmn;{vent_stddev}</p>
+    <div class="main-row"></div>
+      <div class="title-container">
+        <h1 id="big-title">Summary of {subject_id}</h1>
+        <h5 id="date-title">scan: {scan_date}; processed: {process_date}</h5>
+      </div>
+      <div class="hist-container">
+        <div class="hist-tile" align="left">
+          <img src="../tmp/hist_vent.png" style="width: 100%" />
+          <div class="hist-label">
+            <p>SNR:{vent_snr}</p>
+            <p>Mean:{vent_mean}&plusmn;{vent_stddev}</p>
+          </div>
+        </div>
         </div>
       </div>
+      <div class="map-container">
+        <div class="map-tile">
+          <img
+            style="border: 10px solid black"
+            src="../tmp/montage_vent_qa.png"
+            width="680"
+            height="170px"
+          />
+          <img
+            style="border: 10px solid black"
+            src="../tmp/montage_dissolved_qa.png"
+            width="680"
+            height="170px"
+          />
+          <img
+            style="border: 10px solid black"
+            src="../tmp/montage_proton_qa.png"
+            width="680"
+            height="170px"
+          />
+        </div>
       </div>
-    </div>
-    <div class="map-container">
-      <div class="map-tile">
-        <img
-          style="border: 10px solid black"
-          src="../tmp/montage_vent_qa.png"
-          width="680"
-          height="170px"
-        />
-        <img
-          style="border: 10px solid black"
-          src="../tmp/montage_dissolved_qa.png"
-          width="680"
-          height="170px"
-        />
-        <img
-          style="border: 10px solid black"
-          src="../tmp/montage_proton_qa.png"
-          width="680"
-          height="170px"
-        />
+      <div class="table-container">
+        <table>
+          <tr class="title">
+            <th>Subject</th>
+            <th>{subject_id}</th>
+            <th>Ref</th>
+          </tr>
+          <tr class="basic">
+            <td>RBC:M</td>
+            <td>{rbc_m_ratio}</td>
+            <td>{rbc_m_ratio_avg}&#177;{rbc_m_ratio_std}</td>
+          </tr>
+          <tr class="basic">
+            <td>Inflation</td>
+            <td>{inflation}L</td>
+            <td>{inflation_display}</td>
+          </tr>
+          <tr class="ven">
+            <td>Defect</td>
+            <td>{vent_defect_pct}%</td>
+            <td>{vent_defect_avg}%</td>
+          </tr>
+          <tr class="ven">
+            <td>Low</td>
+            <td>{vent_low_pct}%</td>
+            <td>{vent_low_avg}%</td>
+          </tr>
+          <tr class="ven">
+            <td>High</td>
+            <td>{vent_high_pct}%</td>
+            <td>{vent_high_avg}%</td>
+          </tr>
+          <tr class="membrane">
+            <td>Defect</td>
+            <td>{membrane_defect_pct}%</td>
+            <td>{membrane_defect_avg}%</td>
+          </tr>
+          <tr class="membrane">
+            <td>Low</td>
+            <td>{membrane_low_pct}%</td>
+            <td>{membrane_low_avg}%</td>
+          </tr>
+          <tr class="membrane">
+            <td>High</td>
+            <td>{membrane_high_pct}%</td>
+            <td>{membrane_high_avg}%</td>
+          </tr>
+          <tr class="rbc">
+            <td>Defect</td>
+            <td>{rbc_defect_pct}%</td>
+            <td>{rbc_defect_avg}%</td>
+          </tr>
+          <tr class="rbc">
+            <td>Low</td>
+            <td>{rbc_low_pct}%</td>
+            <td>{rbc_low_avg}%</td>
+          </tr>
+          <tr class="rbc">
+            <td>High</td>
+            <td>{rbc_high_pct}%</td>
+            <td>{rbc_high_avg}%</td>
+          </tr>
+        </table>
       </div>
     </div>
     <div class="table-container1">
@@ -80,69 +146,5 @@
         </tr>
       </table>
     </div>   
-    <div class="table-container">
-      <table>
-        <tr class="title">
-          <th>Subject</th>
-          <th>{subject_id}</th>
-          <th>Ref</th>
-        </tr>
-        <tr class="basic">
-          <td>RBC:M</td>
-          <td>{rbc_m_ratio}</td>
-          <td>{rbc_m_ratio_avg}&#177;{rbc_m_ratio_std}</td>
-        </tr>
-        <tr class="basic">
-          <td>Inflation</td>
-          <td>{inflation}L</td>
-          <td>{inflation_display}</td>
-        </tr>
-        <tr class="ven">
-          <td>Defect</td>
-          <td>{vent_defect_pct}%</td>
-          <td>{vent_defect_avg}%</td>
-        </tr>
-        <tr class="ven">
-          <td>Low</td>
-          <td>{vent_low_pct}%</td>
-          <td>{vent_low_avg}%</td>
-        </tr>
-        <tr class="ven">
-          <td>High</td>
-          <td>{vent_high_pct}%</td>
-          <td>{vent_high_avg}%</td>
-        </tr>
-        <tr class="membrane">
-          <td>Defect</td>
-          <td>{membrane_defect_pct}%</td>
-          <td>{membrane_defect_avg}%</td>
-        </tr>
-        <tr class="membrane">
-          <td>Low</td>
-          <td>{membrane_low_pct}%</td>
-          <td>{membrane_low_avg}%</td>
-        </tr>
-        <tr class="membrane">
-          <td>High</td>
-          <td>{membrane_high_pct}%</td>
-          <td>{membrane_high_avg}%</td>
-        </tr>
-        <tr class="rbc">
-          <td>Defect</td>
-          <td>{rbc_defect_pct}%</td>
-          <td>{rbc_defect_avg}%</td>
-        </tr>
-        <tr class="rbc">
-          <td>Low</td>
-          <td>{rbc_low_pct}%</td>
-          <td>{rbc_low_avg}%</td>
-        </tr>
-        <tr class="rbc">
-          <td>High</td>
-          <td>{rbc_high_pct}%</td>
-          <td>{rbc_high_avg}%</td>
-        </tr>
-      </table>
-    </div>
   </body>
 </html>
