@@ -511,6 +511,8 @@ def get_gx_data(twix_obj: mapvbvd._attrdict.AttrDict) -> Dict[str, Any]:
             data_gas = raw_fids[:-num_spectra][2::2, :]
             data_dis = raw_fids[:-num_spectra][3::2, :]
             n_frames = raw_fids.shape[0] // 2
+            n_skip_start = 1
+            n_skip_end = num_spectra // 2
         else:
             logging.info("Reading in dixon.")
             num_spectra = raw_fids.shape[0] % 100
@@ -520,10 +522,12 @@ def get_gx_data(twix_obj: mapvbvd._attrdict.AttrDict) -> Dict[str, Any]:
     except:
         raise ValueError("Cannot get data from twix object.")
     return {
+    	constants.IOFields.FIDS: raw_fids,
         constants.IOFields.FIDS_GAS: data_gas,
         constants.IOFields.FIDS_DIS: data_dis,
         constants.IOFields.N_FRAMES: n_frames,
-        constants.IOFields.FIDS: raw_fids,
+        constants.IOFields.N_SKIP_START: n_skip_start,
+        constants.IOFields.N_SKIP_END: n_skip_end,
     }
 
 
