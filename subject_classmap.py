@@ -490,6 +490,19 @@ class Subject(object):
         else:
             raise ValueError("Invalid segmentation key.")
 
+        # Fail-safe check: if the segmented thoracic cavity volume is implausibly small
+        # (< 0.5 L), assume mask generation failed and replace it with a phantom mask.
+        if metrics.inflation_volume(self.mask, self.dict_dis[constants.IOFields.FOV]) < 0.5:
+            if self.config.segmentation_key == constants.SegmentationKey.MANUAL_VENT.value:
+                logging.warning(
+                    "Mask volume is below fail-safe threshold, but a manual mask is being used, so no override was applied."
+                )
+            else:
+                logging.warning(
+                    "Mask volume is below fail-safe threshold. Using phantom mask instead."
+                )
+                self.mask = img_utils.phantom_mask()
+
     def registration(self):
         """Register moving image to target image.
 
