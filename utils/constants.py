@@ -90,6 +90,7 @@ class IOFields(object):
     CORRECTED_LUNG_VOLUME = "corrected_lung_volume"
     PREP_PULSES = "prep_pulses"
     RBCM_REF = "rbcm_ref"
+    RBCM_PERC = "rbcm_perc"
 
 class PrepPulses(enum.Enum):
     """Preparation pulse flags."""
