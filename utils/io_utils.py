@@ -448,7 +448,7 @@ def read_dis_mrd(path: str, multi_echo: bool) -> Dict[str, Any]:
         constants.IOFields.SEX: mrd_utils.get_patient_sex(header),
         constants.IOFields.HEIGHT: mrd_utils.get_patient_height(header),
         constants.IOFields.WEIGHT: mrd_utils.get_patient_weight(header),
-        constants.IOFields.BANDWIDTH: mrd_utils.get_patient_weight(header),
+        constants.IOFields.BANDWIDTH: np.nan,
         constants.IOFields.SAMPLE_TIME: mrd_utils.get_sample_time_gas_exchange(dataset),
         constants.IOFields.FA_DIS: mrd_utils.get_flipangle_dissolved(header),
         constants.IOFields.FA_GAS: mrd_utils.get_flipangle_gas(header),

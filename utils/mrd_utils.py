@@ -2,7 +2,7 @@
 import logging
 import sys
 from typing import Any, Dict
-from datetime import datetime
+from datetime import date
 import ismrmrd
 import numpy as np
 
@@ -22,10 +22,12 @@ def get_patient_age(header: ismrmrd.xsd.ismrmrdschema.ismrmrd.ismrmrdHeader) -> 
         ValueError: If age information is not found in the MRD header.
     """
     try:
-        dob = header.subjectInformation.patientBirthdate
-        scan = header.studyInformation.studyDate
-        dob = datetime.strptime(dob, "%Y-%m-%d").date()
-        scan = datetime.strptime(scan, "%Y-%m-%d").date()
+        dob_xml = header.subjectInformation.patientBirthdate
+        scan_xml = header.studyInformation.studyDate
+
+        # Convert XmlDate → Python date
+        dob = date(dob_xml.year, dob_xml.month, dob_xml.day)
+        scan = date(scan_xml.year, scan_xml.month, scan_xml.day)
 
         age = scan.year - dob.year - ((scan.month, scan.day) < (dob.month, dob.day))
         return age

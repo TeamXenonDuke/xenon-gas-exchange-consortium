@@ -848,7 +848,7 @@ class Subject(object):
             self.dict_dis[constants.IOFields.AGE],
             self.dict_dis[constants.IOFields.SEX],)
             }        
-        self.dict_stats[constants.IOFields.RBCM_PERC] = self.rbc_m_ratio/self.dict_stats[constants.IOFields.RBCM_REF]
+        self.dict_stats[constants.IOFields.RBCM_PERC] = round(100 * self.rbc_m_ratio/self.dict_stats[constants.IOFields.RBCM_REF])
         if isinstance(self.config.patient_frc, (int, float)):
             FRC_Volume = float(self.config.patient_frc)
             User_Volume_FRC = f"{FRC_Volume}L"
