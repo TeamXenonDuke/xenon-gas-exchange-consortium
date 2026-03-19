@@ -160,7 +160,7 @@ More information on consortium protocol for the proton UTE, 1-point Dixon, and c
 
 #### 3.1.2 Config file
 
-All subject information and processing parameters are specified in a subject-specific configuration file. Default configuration settings are defined in `config/base_config.py`, which can be duplicated and modified to be a subject-specific config file. The standard config parameters in the file must be filled per subject. The defaults in `base_config.py` are inhereted by subject-specific config files, unless overridden. 
+All subject information and processing parameters are specified in a subject-specific configuration file. Default configuration settings are defined in `config/base_config.py`, which can be duplicated and modified to be a subject-specific config file. The standard config parameters in the file must be filled per subject. Any absent variables in the subject-specific config file are inherited from `base_config.py`
 
 #### 3.1.3 Processing a subject
 
