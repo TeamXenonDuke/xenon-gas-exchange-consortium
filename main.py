@@ -1,6 +1,7 @@
 """Scripts to run gas exchange mapping pipeline."""
 
 import logging
+logging.getLogger("fontTools").setLevel(logging.WARNING)
 
 import numpy as np
 from absl import app, flags
