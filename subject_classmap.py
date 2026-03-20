@@ -815,35 +815,26 @@ class Subject(object):
                 self.image_rbc2gas_binned,
                 self.mask,
             ), 1),
-            constants.IOFields.AGE: self.dict_dis[constants.IOFields.AGE],
-            constants.IOFields.SEX: self.dict_dis[constants.IOFields.SEX],
-            constants.IOFields.HEIGHT: self.dict_dis[constants.IOFields.HEIGHT],
-            constants.IOFields.WEIGHT: self.dict_dis[constants.IOFields.WEIGHT],
-
             constants.IOFields.GLI_FRC: metrics.GLI_volume(
             self.dict_dis[constants.IOFields.AGE],
             self.dict_dis[constants.IOFields.SEX],
             self.dict_dis[constants.IOFields.HEIGHT],
-            volume_type="frc"),
-            
+            volume_type="frc"),            
             constants.IOFields.GLI_VA: metrics.GLI_volume(
             self.dict_dis[constants.IOFields.AGE],
             self.dict_dis[constants.IOFields.SEX],
             self.dict_dis[constants.IOFields.HEIGHT],
             volume_type="va"),
-
             constants.IOFields.GLI_KCO: metrics.GLI_volume(
             self.dict_dis[constants.IOFields.AGE],
             self.dict_dis[constants.IOFields.SEX],
             self.dict_dis[constants.IOFields.HEIGHT],
             volume_type="kco"),
-
             constants.IOFields.GLI_DLCO: metrics.GLI_volume(
             self.dict_dis[constants.IOFields.AGE],
             self.dict_dis[constants.IOFields.SEX],
             self.dict_dis[constants.IOFields.HEIGHT],
-            volume_type="dlco"),    
-            
+            volume_type="dlco"),               
             constants.IOFields.RBCM_REF: metrics.rbcm_ref(
             self.dict_dis[constants.IOFields.AGE],
             self.dict_dis[constants.IOFields.SEX],)
@@ -995,26 +986,6 @@ class Subject(object):
             constants.IOFields.SEX: self.dict_dis[constants.IOFields.SEX],
             constants.IOFields.HEIGHT: self.dict_dis[constants.IOFields.HEIGHT],
             constants.IOFields.WEIGHT: self.dict_dis[constants.IOFields.WEIGHT],
-            constants.IOFields.GLI_FRC: metrics.GLI_volume(
-            self.dict_dis[constants.IOFields.AGE],
-            self.dict_dis[constants.IOFields.SEX],
-            self.dict_dis[constants.IOFields.HEIGHT],
-            volume_type="frc"),
-            constants.IOFields.GLI_VA: metrics.GLI_volume(
-            self.dict_dis[constants.IOFields.AGE],
-            self.dict_dis[constants.IOFields.SEX],
-            self.dict_dis[constants.IOFields.HEIGHT],
-            volume_type="va"),
-            constants.IOFields.GLI_KCO: metrics.GLI_volume(
-            self.dict_dis[constants.IOFields.AGE],
-            self.dict_dis[constants.IOFields.SEX],
-            self.dict_dis[constants.IOFields.HEIGHT],
-            volume_type="kco"),
-            constants.IOFields.GLI_DLCO: metrics.GLI_volume(
-            self.dict_dis[constants.IOFields.AGE],
-            self.dict_dis[constants.IOFields.SEX],
-            self.dict_dis[constants.IOFields.HEIGHT],
-            volume_type="dlco"),   
         }
         return self.dict_info
 
