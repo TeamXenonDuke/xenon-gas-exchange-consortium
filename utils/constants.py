@@ -374,7 +374,7 @@ class NormalizationMethods(object):
     PERCENTILE = "percentile"  # Normalize by a given percentile of the entire image
     MEAN = "mean"  # Normalize by the mean intensity within the mask
     MEAN_ANCHOR = "mean_anchor" # MEAN_ANCHOR: normalize to unit-mean inside mask (like MEAN), then clip high outliers at the masked 99th percentile to stabilize scaling.
-
+    MEAN_ANCHOR_THRESHOLD = "mean_anchor_threshold"  # Use mean-anchor normalization, then apply thresholding instead of linear binning to separate ventilation-defect and healthy voxels.
 
 class CMAP(object):
     """Maps of binned values to color values."""

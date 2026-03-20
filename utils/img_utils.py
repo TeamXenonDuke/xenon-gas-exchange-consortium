@@ -265,6 +265,10 @@ def normalize(
         image_clip = np.percentile(image_n[mask], 99)
         image_n [image_n  > image_clip] = image_clip
         return image_n
+    elif method == constants.NormalizationMethods.MEAN_ANCHOR_THRESHOLD:
+        image_mean = np.mean(image[mask])
+        image_n = np.divide(np.multiply(image, mask), image_mean)
+        return image_n
     elif method == constants.NormalizationMethods.FRAC_VENT:
 
         if bag_volume is None or bag_volume in ("None", "NA", "") or pd.isna(bag_volume):

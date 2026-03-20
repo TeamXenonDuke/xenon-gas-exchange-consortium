@@ -492,6 +492,7 @@ def plot_histogram(
     outline: str = "data",                                  # "data" or "none"
     outline_style: Optional[dict] = None,                   # solid outline style
     healthy_style: Optional[dict] = None,                   # dashed healthy-ref style
+    refer_threshold: float = None,
 ):
     """
     Plot a publication-style histogram with:
@@ -513,6 +514,7 @@ def plot_histogram(
       band_colors (dict[int, list[float]] | None): Segment colors; keys 1..N (0 is background).
       outline ("data" | "none"): Solid outline of data histogram (default "data").
       outline_style/healthy_style (dict | None): Style overrides.
+      refer_threshold (float | None): Optional healthy-reference threshold displayed as a vertical dashed line.
 
     Notes:
     - Bars are probability-normalized (sum ≈ 1).
@@ -533,8 +535,16 @@ def plot_histogram(
     centers = 0.5 * (edges[:-1] + edges[1:])
     widths  = np.diff(edges)
 
-    # colored bars
-    bar_colors = _colors_for_bins(centers, thresholds, xlim, band_colors, default_color=_to_rgb(color))
+    if refer_threshold is not None:
+        ax.vlines(refer_threshold, ymin=0, ymax=0.1, colors='k', linestyles='--', linewidth=2)
+        bar_colors = [
+            (1.0, 0.0, 0.0) if c < refer_threshold else (0.0, 1.0, 0.0)
+            for c in centers
+        ]
+    else:
+        # colored bars
+        bar_colors = _colors_for_bins(centers, thresholds, xlim, band_colors, default_color=_to_rgb(color))
+
     ax.bar(centers, probs, width=widths, align="center",
            color=bar_colors, edgecolor="black", linewidth=1.0, zorder=2)
 
