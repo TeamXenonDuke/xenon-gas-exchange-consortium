@@ -619,13 +619,15 @@ class Subject(object):
                     else 'threshold_vent_mean_anchor'
                 ],
             )
+            self.mask_vent = np.logical_and(self.image_gas_binned > 1, self.mask)
+            gas_nifti_img = nib.Nifti1Image(self.image_gas_binned, affine=np.eye(4))
+            gas_nifti_img.to_filename('tmp/image_gas_binned.nii')
         elif self.config.vent_normalization_method == constants.NormalizationMethods.MEAN_ANCHOR_THRESHOLD:
             self.image_gas_binned = binning.threshold(
             image=self._normalize_vent(self.image_gas_cor),
             mask=self.mask,
             threshold= self.mean_anchor_threshold,
         )
-
             self.mask_vent = np.logical_and(self.image_gas_binned > 1, self.mask)
             gas_nifti_img = nib.Nifti1Image(self.image_gas_binned, affine=np.eye(4))
             gas_nifti_img.to_filename('tmp/image_gas_binned.nii')
