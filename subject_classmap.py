@@ -588,7 +588,11 @@ class Subject(object):
             self.image_gas_binned = binning.linear_bin(
                 image=self._normalize_vent(self.image_gas_cor),
                 mask=self.mask,
-                thresholds=self.reference_data['threshold_vent'],
+                thresholds=self.reference_data[
+                    'threshold_vent_nb'
+                    if self.config.bias_key == constants.BiasfieldKey.SKIP.value
+                    else 'threshold_vent'
+                ],
             )
             self.mask_vent = np.logical_and(self.image_gas_binned > 1, self.mask)
             gas_nifti_img = nib.Nifti1Image(self.image_gas_binned, affine=np.eye(4))
@@ -606,9 +610,13 @@ class Subject(object):
             gas_nifti_img.to_filename('tmp/image_gas_binned_frac_vent.nii')
         elif self.config.vent_normalization_method == constants.NormalizationMethods.MEAN_ANCHOR:
             self.image_gas_binned = binning.linear_bin(
-            image=self._normalize_vent(self.image_gas_cor),
-            mask=self.mask,
-            thresholds=self.reference_data['threshold_vent_mean_anchor'],
+                image=self._normalize_vent(self.image_gas_cor),
+                mask=self.mask,
+                thresholds=self.reference_data[
+                    'threshold_vent_mean_anchor_nb'
+                    if self.config.bias_key == constants.BiasfieldKey.SKIP.value
+                    else 'threshold_vent_mean_anchor'
+                ],
             )
             self.mask_vent = np.logical_and(self.image_gas_binned > 1, self.mask)
             gas_nifti_img = nib.Nifti1Image(self.image_gas_binned, affine=np.eye(4))
@@ -1335,7 +1343,10 @@ class Subject(object):
         if method == constants.NormalizationMethods.FRAC_VENT:
             return f.YTICKLABELS_FRAC_VENT
         elif method == constants.NormalizationMethods.MEAN_ANCHOR:
-            return f.YTICKLABELS_MEAN_ANCHOR  # define in constants if you want custom labels
+            if self.config.bias_key == constants.BiasfieldKey.SKIP.value:
+                    return f.YTICKLABELS_MEAN_ANCHOR_NB  # define in constants if you want custom labels
+            else:
+                    return f.YTICKLABELS_MEAN_ANCHOR  # define in constants if you want custom labels
         else:
             return f.YTICKLABELS
 
@@ -1356,7 +1367,10 @@ class Subject(object):
         if method == constants.NormalizationMethods.FRAC_VENT:
             return f.YLIM_FRAC_VENT
         elif method == constants.NormalizationMethods.MEAN_ANCHOR:
-            return f.YLIM_MEAN_ANCHOR  # define in constants if you want a custom range
+            if self.config.bias_key == constants.BiasfieldKey.SKIP.value:
+                return f.YLIM_MEAN_ANCHOR_NB  # define in constants if you want a custom range
+            else:
+                return f.YLIM_MEAN_ANCHOR  # define in constants if you want a custom range
         else:
             return f.YLIM
 
@@ -1369,7 +1383,10 @@ class Subject(object):
         method = self.config.vent_normalization_method
 
         if method == constants.NormalizationMethods.MEAN_ANCHOR:
-            return f.XLIM_MEAN_ANCHOR  # define in constants if you want a custom range
+            if self.config.bias_key == constants.BiasfieldKey.SKIP.value:
+                return f.XLIM_MEAN_ANCHOR_NB  # define in constants if you want a custom range
+            else:
+                return f.XLIM_MEAN_ANCHOR  # define in constants if you want a custom range
         else:
             return f.XLIM
 
@@ -1382,7 +1399,10 @@ class Subject(object):
         method = self.config.vent_normalization_method
 
         if method == constants.NormalizationMethods.MEAN_ANCHOR:
-            return f.XTICKS_MEAN_ANCHOR  # define in constants
+            if self.config.bias_key == constants.BiasfieldKey.SKIP.value:
+                return f.XTICKS_MEAN_ANCHOR_NB  # define in constants
+            else:
+                return f.XTICKS_MEAN_ANCHOR  # define in constants
         else:
             return f.XTICKS
 
@@ -1395,7 +1415,10 @@ class Subject(object):
         method = self.config.vent_normalization_method
 
         if method == constants.NormalizationMethods.MEAN_ANCHOR:
-            return f.XTICKLABELS_MEAN_ANCHOR  # define in constants
+            if self.config.bias_key == constants.BiasfieldKey.SKIP.value:
+                return f.XTICKLABELS_MEAN_ANCHOR_NB  # define in constants
+            else:
+                return f.XTICKLABELS_MEAN_ANCHOR  # define in constants
         else:
             return f.XTICKLABELS
 
@@ -1416,7 +1439,10 @@ class Subject(object):
         if method == constants.NormalizationMethods.FRAC_VENT:
             return f.YTICKS_FRAC_VENT
         elif method == constants.NormalizationMethods.MEAN_ANCHOR:
-            return f.YTICKS_MEAN_ANCHOR  # define in constants; clearer than f.MEAN_ANCHOR
+            if self.config.bias_key == constants.BiasfieldKey.SKIP.value:
+                return f.YTICKS_MEAN_ANCHOR_NB  # define in constants
+            else:
+                return f.YTICKS_MEAN_ANCHOR  # define in constants; clearer than f.MEAN_ANCHOR
         else:
             return f.YTICKS
 
@@ -1427,12 +1453,16 @@ class Subject(object):
         method = self.config.vent_normalization_method
 
         if method == constants.NormalizationMethods.PERCENTILE_MASKED:
+            if self.config.bias_key == constants.BiasfieldKey.SKIP.value:
+                return self.reference_data["threshold_vent_nb"]
             return self.reference_data["threshold_vent"]
 
         if method == constants.NormalizationMethods.FRAC_VENT:
             return self.reference_data["thresholds_fractional_ventilation"]
 
         if method == constants.NormalizationMethods.MEAN_ANCHOR:
+            if self.config.bias_key == constants.BiasfieldKey.SKIP.value:
+                return self.reference_data["threshold_vent_mean_anchor_nb"]
             return self.reference_data["threshold_vent_mean_anchor"]
 
         # fallback (safe default)
@@ -1446,9 +1476,13 @@ class Subject(object):
         method = self.config.vent_normalization_method
 
         if method == constants.NormalizationMethods.PERCENTILE_MASKED:
+            if self.config.bias_key == constants.BiasfieldKey.SKIP.value:
+                return self.reference_data["healthy_histogram_vent_nb_dir"]
             return self.reference_data["healthy_histogram_vent_dir"]
 
         if method == constants.NormalizationMethods.MEAN_ANCHOR:
+            if self.config.bias_key == constants.BiasfieldKey.SKIP.value:
+                return self.reference_data["healthy_histogram_vent_mean_anchor_nb_dir"]
             return self.reference_data["healthy_histogram_vent_mean_anchor_dir"]
 
         # default (e.g., FRAC_VENT)
