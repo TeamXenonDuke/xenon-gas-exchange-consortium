@@ -499,6 +499,8 @@ def get_gx_data(twix_obj: mapvbvd._attrdict.AttrDict) -> Dict[str, Any]:
         4. raw fids in shape (number of projections, number of points in ray).
     """
     raw_fids = np.transpose(twix_obj.image.unsorted().astype(np.cdouble))
+    n_skip_start = 0
+    n_skip_end = 0
     try:
         if raw_fids.shape[0] == 2000:
             logging.info("Reading in normal dixon on Siemens Trio 2007 or 2008.")
@@ -524,12 +526,11 @@ def get_gx_data(twix_obj: mapvbvd._attrdict.AttrDict) -> Dict[str, Any]:
     return {
     	constants.IOFields.FIDS: raw_fids,
         constants.IOFields.FIDS_GAS: data_gas,
-        constants.IOFields.FIDS_DIS: data_dis,
-        constants.IOFields.N_FRAMES: n_frames,
+    	constants.IOFields.FIDS_DIS: data_dis,
+    	constants.IOFields.N_FRAMES: n_frames,
         constants.IOFields.N_SKIP_START: n_skip_start,
         constants.IOFields.N_SKIP_END: n_skip_end,
     }
-
 
 def get_ute_data(twix_obj: mapvbvd._attrdict.AttrDict) -> Dict[str, Any]:
     """Get the UTE FIDs from twix object.
