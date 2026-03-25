@@ -625,7 +625,7 @@ class Subject(object):
             self.image_gas_binned = binning.threshold(
             image=self._normalize_vent(self.image_gas_cor),
             mask=self.mask,
-            threshold= constants.mean_anchor_threshold,
+            threshold= constants.MEAN_ANCHOR_THRESHOLD,
         )
             self.mask_vent = np.logical_and(self.image_gas_binned > 1, self.mask)
             gas_nifti_img = nib.Nifti1Image(self.image_gas_binned, affine=np.eye(4))
@@ -1094,7 +1094,7 @@ class Subject(object):
             thresholds = self._vent_hist_thresholds(),
             band_colors=constants.CMAP.VENT_BIN2COLOR,                    # per-segment bar colors (bin 0 ignored)
             outline="data",
-            refer_threshold = constants.mean_anchor_threshold if self.config.vent_normalization_method == constants.NormalizationMethods.MEAN_ANCHOR_THRESHOLD else None,
+            refer_threshold = constants.MEAN_ANCHOR_THRESHOLD if self.config.vent_normalization_method == constants.NormalizationMethods.MEAN_ANCHOR_THRESHOLD else None,
         )
         plot.plot_histogram(
             data=np.abs(self.image_rbc2gas)[np.array(self.mask_vent, dtype=bool)].flatten(),
