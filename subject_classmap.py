@@ -109,7 +109,6 @@ class Subject(object):
         self.user_lung_volume_value = ""
         self.vol_correction_factor_rbc = "NA"
         self.vol_correction_factor_membrane ="NA"
-        self.mean_anchor_threshold = 55.34 / 100.0, # The original paper used 60%, but 55.34% better matched the VDP obtained using linear binning in healthy subjects.       
 
     def read_twix_files(self):
         """Read in twix files to dictionary.
@@ -626,7 +625,7 @@ class Subject(object):
             self.image_gas_binned = binning.threshold(
             image=self._normalize_vent(self.image_gas_cor),
             mask=self.mask,
-            threshold= self.mean_anchor_threshold,
+            threshold= constants.mean_anchor_threshold,
         )
             self.mask_vent = np.logical_and(self.image_gas_binned > 1, self.mask)
             gas_nifti_img = nib.Nifti1Image(self.image_gas_binned, affine=np.eye(4))
@@ -1095,7 +1094,7 @@ class Subject(object):
             thresholds = self._vent_hist_thresholds(),
             band_colors=constants.CMAP.VENT_BIN2COLOR,                    # per-segment bar colors (bin 0 ignored)
             outline="data",
-            refer_threshold = self.mean_anchor_threshold if self.config.vent_normalization_method == constants.NormalizationMethods.MEAN_ANCHOR_THRESHOLD else None,
+            refer_threshold = constants.mean_anchor_threshold if self.config.vent_normalization_method == constants.NormalizationMethods.MEAN_ANCHOR_THRESHOLD else None,
         )
         plot.plot_histogram(
             data=np.abs(self.image_rbc2gas)[np.array(self.mask_vent, dtype=bool)].flatten(),
