@@ -26,6 +26,11 @@ def gx_mapping_reconstruction(config: base_config.Config):
         config (config_dict.ConfigDict): config dict
     """
     subject = Subject(config=config)
+    if config.vent_normalization_method not in ["PERCENTILE_MASKED", "FRAC_VENT", "MEAN_ANCHOR"]:
+        msg = (
+            "Wrong normalization method! You should choose: PERCENTILE_MASKED, FRAC_VENT, or MEAN_ANCHOR"
+        )
+        raise ValueError(msg)
     try:
         subject.read_twix_files()
     except:
@@ -78,6 +83,11 @@ def gx_mapping_readin(config: base_config.Config):
         config (config_dict.ConfigDict): config dict
     """
     subject = Subject(config=config)
+    if config.vent_normalization_method not in ["PERCENTILE_MASKED", "FRAC_VENT", "MEAN_ANCHOR"]:
+        msg = (
+            "Wrong normalization method! You should choose: PERCENTILE_MASKED, FRAC_VENT, or MEAN_ANCHOR"
+        )
+        raise ValueError(msg)
     subject.read_mat_file()
     if FLAGS.force_segmentation:
         subject.segmentation()
