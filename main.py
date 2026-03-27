@@ -83,9 +83,9 @@ def gx_mapping_readin(config: base_config.Config):
         config (config_dict.ConfigDict): config dict
     """
     subject = Subject(config=config)
-    if config.vent_normalization_method not in ["PERCENTILE_MASKED", "FRAC_VENT", "MEAN_ANCHOR"]:
+    if config.vent_normalization_method not in ["percentile_masked", "frac_vent", "mean_anchor"]:
         msg = (
-            "Wrong normalization method! You should choose: PERCENTILE_MASKED, FRAC_VENT, or MEAN_ANCHOR"
+            f"You choose a wrong normalization method: {config.vent_normalization_method}! It has to be: PERCENTILE_MASKED, FRAC_VENT, or MEAN_ANCHOR"
         )
         raise ValueError(msg)
     subject.read_mat_file()
