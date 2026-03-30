@@ -95,6 +95,7 @@ def gx_mapping_readin(config: base_config.Config):
         subject.segmentation()
     subject.gas_binning()
     subject.dixon_decomposition()
+    subject.te90_correction()
     subject.hb_correction()
     subject.vol_correction()    
     subject.dissolved_analysis()
