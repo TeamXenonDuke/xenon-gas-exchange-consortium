@@ -486,7 +486,7 @@ class Subject(object):
             self.mask = np.ones_like(self.image_gas_highreso, dtype=bool)
             self.mask_include_trachea = self.mask.copy()
 
-        elif self.config.segmentation_key == constants.SegmentationKey.MANUAL_VENT.value:
+        elif self.config.segmentation_key in [constants.SegmentationKey.MANUAL_VENT.value, constants.SegmentationKey.MANUAL_PROTON.value]:
             logging.info("Loading manual mask file specified by the user.")
             loaded_mask = np.squeeze(
                 np.array(nib.load(self.config.manual_seg_filepath).get_fdata())
