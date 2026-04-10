@@ -15,7 +15,7 @@ flags.DEFINE_string("image_moving2", "", "nii image file path")
 
 
 def register_ants(
-    image_static: np.ndarray, image_moving1: np.ndarray, image_moving2: np.ndarray
+    image_static: np.ndarray, image_moving1: np.ndarray, image_moving2: np.ndarray, registration_key: str = None,
 ) -> Tuple[np.ndarray, np.ndarray]:
     """Register images using ANTsPy.
 
@@ -36,24 +36,33 @@ def register_ants(
         if array.dtype == bool:
             return array.astype(np.float64)
         return array.astype(np.float64)
+    
+    def numpy_to_ants(array: np.ndarray) -> ants.ANTsImage:
+        """Convert numpy array to ANTsImage with neutral physical space metadata."""
+        return ants.from_numpy(
+            array.astype(np.float64),
+            origin = (0.0, 0.0, 0.0),
+            spacing = (1.0, 1.0, 1.0),
+            direction = np.eye(3))
+
     start_time = time.time()
     
     # Ensure float dtype (ANTsPy requires numeric)
-    image_static  = convert_to_float64(image_static)
+    image_static = convert_to_float64(image_static)
     image_moving1 = convert_to_float64(image_moving1)
     image_moving2 = convert_to_float64(image_moving2)
 
     # Convert numpy arrays --> ANTsImage
-    ants_static  = ants.from_numpy(image_static)
-    ants_moving1 = ants.from_numpy(image_moving1)
-    ants_moving2 = ants.from_numpy(image_moving2)
-
-    logging.info("*** Using ANTsPy to register images ...")
+    ants_static = numpy_to_ants(np.abs(image_static))
+    ants_moving1 = numpy_to_ants(np.abs(image_moving1))
+    ants_moving2 = numpy_to_ants(np.abs(image_moving2))
 
     # Registration of moving1 --> static
+    transform = ("TRSAA" if registration_key == "mask2gas" else "Rigid")
+    logging.info(f"*** Using ANTsPy ({transform}) to register images ...")
     registration = ants.registration(fixed = ants_static, moving = ants_moving1,
                                      aff_metric = 'mattes', syn_metric = 'mattes',
-                                     type_of_transform = "TRSAA", interpolator = "bSpline")
+                                     type_of_transform = transform, interpolator = "bSpline")
 
     moving1_reg = registration["warpedmovout"].numpy()
 
@@ -70,7 +79,7 @@ def register_ants(
 def main(argv):
     """ANTsPy registration command line."""
     register_ants(
-        image_static  = nib.load(FLAGS.image_static).get_fdata(),
+        image_static = nib.load(FLAGS.image_static).get_fdata(),
         image_moving1 = nib.load(FLAGS.image_moving1).get_fdata(),
         image_moving2 = nib.load(FLAGS.image_moving2).get_fdata(),
     )
