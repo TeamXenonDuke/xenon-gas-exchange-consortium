@@ -82,6 +82,7 @@ class IOFields(object):
     VOL_CORRECTION_KEY = "vol_correction_key"
     VOL_CORRECTION_FACTOR_MEMBRANE  = "vol_correction_factor_membrane"
     VOL_CORRECTION_FACTOR_RBC = "vol_correction_factor_rbc"
+    VENT_NORMALIZATION_METHOD = "vent_normalization_method"
     CORRECTED_LUNG_VOLUME = "corrected_lung_volume"
     PREP_PULSES = "prep_pulses"
 
@@ -361,12 +362,14 @@ class PDFOPTIONS(object):
 
 class NormalizationMethods(object):
     """Image normalization methods."""
+    # For increasing the image contrast
+    MAX = "max"  # Normalize by the global maximum intensity in the image (increase contrast, not currently used)
+    PERCENTILE = "percentile"  # Normalize by a given percentile of the entire image (increase proton contrast)
+    MEAN = "mean"  # Normalize by the mean intensity within the mask (deep learning segmetation)
 
-    MAX = "max"  # Normalize by the global maximum intensity in the image
+    # For histogram normalization
     PERCENTILE_MASKED = "percentile_masked"  # Normalize by a given percentile computed only within the mask
     FRAC_VENT = "frac_vent"  # Normalize to estimate fractional ventilation using bag volume and voxel size
-    PERCENTILE = "percentile"  # Normalize by a given percentile of the entire image
-    MEAN = "mean"  # Normalize by the mean intensity within the mask
     MEAN_ANCHOR = "mean_anchor" # MEAN_ANCHOR: normalize to unit-mean inside mask (like MEAN), then clip high outliers at the masked 99th percentile to stabilize scaling.
 
 

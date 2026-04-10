@@ -1003,6 +1003,7 @@ class Subject(object):
             constants.IOFields.TE90: 1e6 * self.dict_dis[constants.IOFields.TE90],
             constants.IOFields.TR_DIS: 1e3 * self.dict_dis[constants.IOFields.TR],
             constants.IOFields.USER_LUNG_VOLUME_VALUE:self.user_lung_volume_value,
+            constants.IOFields.VENT_NORMALIZATION_METHOD: self.config.vent_normalization_method
         }
         return self.dict_info
 
