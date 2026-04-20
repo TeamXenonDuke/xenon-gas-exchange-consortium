@@ -3,7 +3,7 @@
 import os
 import sys
 import nibabel as nb
-import logging 
+import logging
 import cv2
 
 sys.path.append("..")
@@ -64,6 +64,7 @@ def rotate_axial_to_coronal(image: np.ndarray) -> np.ndarray:
     imag = ndimage.rotate(ndimage.rotate(np.imag(image), 90, (1, 2)), 270)
     return real + 1j * imag
 
+
 def rotate_sagittal_to_coronal(image: np.ndarray) -> np.ndarray:
     """Rotate sagittal image to coronal.
 
@@ -78,9 +79,11 @@ def rotate_sagittal_to_coronal(image: np.ndarray) -> np.ndarray:
     imag = ndimage.rotate(ndimage.rotate(np.imag(image), 90, (1, 2)), 180)
     return real + 1j * imag
 
+
 def flip_and_rotate_image(
-    image: np.ndarray, orientation: str = constants.Orientation.CORONAL,
-    system_vendor: str = constants.SystemVendor.SIEMENS
+    image: np.ndarray,
+    orientation: str = constants.Orientation.CORONAL,
+    system_vendor: str = constants.SystemVendor.SIEMENS,
 ) -> np.ndarray:
     """Flip and rotate image based on orientation.
 
@@ -90,7 +93,7 @@ def flip_and_rotate_image(
     Returns:
         Flipped and rotated image.
     """
-    
+
     # Siemens vendor code block
     if system_vendor.lower() == constants.SystemVendor.SIEMENS.value.lower():
         if orientation == constants.Orientation.CORONAL:
@@ -110,8 +113,10 @@ def flip_and_rotate_image(
         elif orientation == constants.Orientation.NONE:
             return image
         else:
-            raise ValueError("Orientation not currently supported: {}.".format(orientation))
-    
+            raise ValueError(
+                "Orientation not currently supported: {}.".format(orientation)
+            )
+
     # Philips vendor code block
     elif system_vendor.lower() == constants.SystemVendor.PHILIPS.value.lower():
         if orientation == constants.Orientation.CORONAL:
@@ -121,28 +126,34 @@ def flip_and_rotate_image(
         elif orientation == constants.Orientation.NONE:
             return image
         else:
-            raise ValueError("Orientation not currently supported: {}.".format(orientation))
-    
-    # GE vendor code block 
+            raise ValueError(
+                "Orientation not currently supported: {}.".format(orientation)
+            )
+
+    # GE vendor code block
     elif system_vendor.lower() == constants.SystemVendor.GE.value.lower():
         if orientation == constants.Orientation.CORONAL:
+
             def complex_rot_axial_iowa(x):
                 from scipy.ndimage import rotate
+
                 real = rotate(np.real(x), 180, (1, 2))
                 imag = rotate(np.imag(x), 180, (1, 2))
                 return real + 1j * imag
+
             def complex_align(x):
                 return np.flip(np.flip(np.flip(np.transpose(x, (2, 1, 0)), 0), 1), 2)
 
             image = complex_rot_axial_iowa(complex_align(image))
-            image= np.flip(image, axis=0)
+            image = np.flip(image, axis=0)
             return image
         elif orientation == constants.Orientation.NONE:
             return image
         else:
-            raise ValueError("Orientation not currently supported: {}.".format(orientation))
-    
-    
+            raise ValueError(
+                "Orientation not currently supported: {}.".format(orientation)
+            )
+
     else:
         raise ValueError("Invalid system_vendor: {}.".format(system_vendor))
 
@@ -230,7 +241,7 @@ def normalize(
     mask: np.ndarray = np.array([0.0]),
     method: str = constants.NormalizationMethods.PERCENTILE_MASKED,  # default method = PERCENTILE_MASKED
     percentile: float = 99.0,
-    bag_volume: float = None # Add bag_volume as a parameter with a default value
+    bag_volume: float = None,  # Add bag_volume as a parameter with a default value
 ) -> np.ndarray:
     """Normalize the image to be between [0, 1.0].
 
@@ -263,11 +274,15 @@ def normalize(
         image_mean = np.mean(image[mask])
         image_n = np.divide(np.multiply(image, mask), image_mean)
         image_clip = np.percentile(image_n[mask], 99)
-        image_n [image_n  > image_clip] = image_clip
+        image_n[image_n > image_clip] = image_clip
         return image_n
     elif method == constants.NormalizationMethods.FRAC_VENT:
 
-        if bag_volume is None or bag_volume in ("None", "NA", "") or pd.isna(bag_volume):
+        if (
+            bag_volume is None
+            or bag_volume in ("None", "NA", "")
+            or pd.isna(bag_volume)
+        ):
             raise ValueError(
                 "FRAC_VENT normalization requires bag_volume to be numeric (liters). "
                 f"Got bag_volume={bag_volume!r}. "
@@ -283,20 +298,20 @@ def normalize(
 
             bag_volume = float(bag_volume)
         bag_volume = bag_volume * 1000  # convert L to mL
-        tcv_gas_vol = bag_volume - 10 #new estimate in mL
-        voxel_side = .3125  # cm
+        tcv_gas_vol = bag_volume - 10  # new estimate in mL
+        voxel_side = 0.3125  # cm
         voxel_vol = voxel_side**3  # cm^3 = ml
-        vent_img_mask = image.copy() 
+        vent_img_mask = image.copy()
         print("vent_img_mask shape:", vent_img_mask.shape)
         print("mask shape:", mask.shape)
         vent_img_mask[mask == 0] = 0.0
-        print('image' + str(np.sum(image)))
-        print('vent image mask' + str(np.sum(vent_img_mask)))
+        print("image" + str(np.sum(image)))
+        print("vent image mask" + str(np.sum(vent_img_mask)))
         signal_total = np.sum(vent_img_mask)
         sig_vol_rat = tcv_gas_vol / signal_total
         frac_vent = (image * sig_vol_rat) / voxel_vol
         nifti_img = nb.Nifti1Image(frac_vent, affine=np.eye(4))
-        nifti_img.to_filename('tmp/frac_vent_output.nii')
+        nifti_img.to_filename("tmp/frac_vent_output.nii")
         frac_vent_mask = frac_vent[mask == 1]
         flat_array = frac_vent_mask.flatten()
         mean = np.mean(flat_array)
@@ -438,6 +453,7 @@ def approximate_image_with_bspline(
     # read in the output
     return io_utils.import_nii(pathOutput)
 
+
 def phantom_mask() -> np.ndarray:
     """Create a 128x128x128 fallback phantom mask.
 
@@ -448,16 +464,16 @@ def phantom_mask() -> np.ndarray:
     mask = np.zeros((128, 128, 128), dtype=np.uint8)
 
     # Rectangle size in each axial slice
-    rect_height = 90   # vertical
-    rect_width = 30    # horizontal
+    rect_height = 90  # vertical
+    rect_width = 30  # horizontal
 
     # Center vertically
-    row_start = (128 - rect_height) // 2   # 19
-    row_end = row_start + rect_height      # 109
+    row_start = (128 - rect_height) // 2  # 19
+    row_end = row_start + rect_height  # 109
 
     # Two symmetric rectangles placed left and right
     left_col_start = 18
-    left_col_end = left_col_start + rect_width    # 48
+    left_col_end = left_col_start + rect_width  # 48
 
     right_col_start = 80
     right_col_end = right_col_start + rect_width  # 110
@@ -470,3 +486,19 @@ def phantom_mask() -> np.ndarray:
     mask[row_start:row_end, right_col_start:right_col_end, z_start:z_end] = 1
 
     return mask
+
+
+def crop_center(image: np.ndarray, image_size: int) -> np.ndarray:
+    """Crop the image to the center.
+
+    Args:
+        image (np.ndarray): 3D image to crop
+        image_size (int): size of the image to crop to.
+    Returns:
+        Cropped image.
+    """
+    if image.shape[0] < image_size:
+        raise ValueError("Image size must be smaller than the image size to crop to.")
+    start = image.shape[0] // 2 - image_size // 2
+    end = start + image_size
+    return image[start:end, start:end, start:end]

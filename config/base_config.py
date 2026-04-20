@@ -12,6 +12,7 @@ from utils import constants
 
 import os
 
+
 class Config(config_dict.ConfigDict):
     """Base config file.
 
@@ -45,7 +46,9 @@ class Config(config_dict.ConfigDict):
         self.segmentation_key = constants.SegmentationKey.CNN_VENT.value
         self.manual_seg_filepath = ""
         # Choose NormalizationMethod from PERCENTILE_MASKED, FRAC_VENT, MEAN_ANCHOR (PERCENTILE_MASKED is default)!
-        self.vent_normalization_method = constants.NormalizationMethods.PERCENTILE_MASKED
+        self.vent_normalization_method = (
+            constants.NormalizationMethods.PERCENTILE_MASKED
+        )
         # auto-generate if filepath missing or file not found
         self.auto_make_trachea_plus_lung_mask = True
         # where to write it if auto-generated
@@ -57,7 +60,7 @@ class Config(config_dict.ConfigDict):
         self.bias_key = constants.BiasfieldKey.N4ITK.value
         self.hb_correction_key = constants.HbCorrectionKey.NONE.value
         self.hb = "NA"
-        self.vol_correction_key = constants.VolCorrectionKey.NONE.value 
+        self.vol_correction_key = constants.VolCorrectionKey.NONE.value
         self.corrected_lung_volume = "NA"
         self.dicom_proton_dir = ""
         self.multi_echo = False
@@ -65,19 +68,18 @@ class Config(config_dict.ConfigDict):
         self.manual_reg_filepath = ""
 
         # Additional options for contamination correction
-        self.phase_gas_acq_diss = "None" #degree
+        self.phase_gas_acq_diss = "None"  # degree
         self.area_gas_acq_diss = "None"
 
         # Git/version check options (optional)
         self.git_compare_branch = "origin/main"  # Compare HEAD to this ref (None -> auto origin/HEAD -> origin/main).
-        self.git_always_show = False            # If True log every run; if False log only when compare-branch warnings exist.
-
+        self.git_always_show = False  # If True log every run; if False log only when compare-branch warnings exist.
 
         # Loading the paramater to base_config
         self.processes = Process()
         self.recon = Recon()
-        self.trachea_plus_lung_mask_filepath = "" # optional user override of big mask
-
+        self.trachea_plus_lung_mask_filepath = ""  # optional user override of big mask
+        self.osc_recon = OscillationRecon()
 
 
 class Recon(object):
@@ -122,11 +124,30 @@ class Recon(object):
         # Set initial n_skip_start value as NaN, or user input an expected value
         self.n_skip_start = np.nan
         self.n_skip_end = 0
-        self.optimized_conta_phase = 49.9 #degree
+        self.optimized_conta_phase = 49.9  # degree
         self.remove_contamination = False
         self.remove_noisy_projections = False
         self.gas_contamination_correction = False
         self.traj_type = constants.TrajType.HALTONSPIRAL
+
+
+class OscillationRecon(object):
+    def __init__(self):
+        """Initialize the reconstruction parameters."""
+        self.oscillation_analysis = False
+
+        # Keyhole Radius
+        self.key_radius = 9
+        self.key_radius_pct = 0.3
+        # Recon Type
+        # Gridded (Robertson)
+        # Gridded Sliding Window (PilgrimMorris - not yet implemented)
+        # Compressed Sensing (Plummer)
+        # Compressed Sensing Sliding Window (PMP - not yet implemented)
+        self.osc_recon_key = constants.ReconKey.PLUMMER.value
+
+        # Correction for relative capillary blood volume
+        self.vc_correction = False
 
 
 class Process(object):
