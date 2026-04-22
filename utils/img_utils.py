@@ -213,7 +213,7 @@ def divide_images(
     return out
 
 
-def smooth_image(image: np.ndarray, kernel: int = 11) -> np.ndarray:
+def smooth_image(image: np.ndarray, kernel: int = 3) -> np.ndarray:
     """Smooth the image using a blurring kernel.
 
     Args:

@@ -670,4 +670,4 @@ class ReferenceDistribution(object):
         },
     }
     # plummer data only so far -- need to fix this to include robertson too
-    THRESHOLD_OSC_IMAGING = np.array([-0.38, 1.73, 4.41, 7.85, 12.31, 18.16, 25.93])
+    THRESHOLD_OSC_IMAGING = np.array([-6.4, 0.22, 7.10, 14.23, 21.623])

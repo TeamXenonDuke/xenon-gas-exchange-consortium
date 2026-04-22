@@ -3,6 +3,7 @@
 import os
 import sys
 from typing import Any, Dict
+import numbers
 
 import numpy as np
 from weasyprint import HTML

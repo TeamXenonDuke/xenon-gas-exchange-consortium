@@ -316,7 +316,7 @@ class Subject(object):
         self.data_gas, self.traj_gas = pp.truncate_data_and_traj(
             self.data_gas,
             self.traj_gas,
-            n_skip_start=0,
+            n_skip_start=int(self.config.recon.n_skip_start),
             n_skip_end=int(self.config.recon.n_skip_end),
         )
 
@@ -522,6 +522,7 @@ class Subject(object):
                 orientation=orientation,
                 system_vendor=system_vendor,
             )
+            io_utils.export_nii(np.abs(self.image_dissolved), "tmp/image_dissolved.nii")
         elif self.config.recon.recon_key == constants.ReconKey.PLUMMER.value:
             norm_data = np.linalg.norm(self.data_dissolved)
             self.data_dissolved /= norm_data
@@ -544,6 +545,7 @@ class Subject(object):
             self.data_dissolved *= norm_data
             self.image_dissolved_norm *= norm_data
             self.image_dissolved = self.image_dissolved_norm
+            io_utils.export_nii(np.abs(self.image_dissolved), "tmp/image_dissolved.nii")
         else:
             raise ValueError(f"Unknown reconstruction key")
 
@@ -1114,7 +1116,9 @@ class Subject(object):
             constants.StatsIOFields.VENT_STDDEV: metrics.std(
                 self._normalize_vent(np.abs(self.image_gas_cor)), self.mask
             ),
-            constants.StatsIOFields.RBC_SNR: metrics.snr(self.image_rbc, self.mask)[0],
+            constants.StatsIOFields.RBC_SNR: float(
+                metrics.snr(self.image_rbc, self.mask)[0]
+            ),
             constants.StatsIOFields.RBC_DEFECT_PCT: metrics.bin_percentage(
                 self.image_rbc2gas_binned, np.array([1]), self.mask
             ),
@@ -1124,18 +1128,18 @@ class Subject(object):
             constants.StatsIOFields.RBC_HIGH_PCT: metrics.bin_percentage(
                 self.image_rbc2gas_binned, np.array([6]), self.mask
             ),
-            constants.StatsIOFields.RBC_MEAN: metrics.mean(
-                self.image_rbc2gas, self.mask_vent
+            constants.StatsIOFields.RBC_MEAN: float(
+                metrics.mean(self.image_rbc2gas, self.mask_vent)
             ),
-            constants.StatsIOFields.RBC_MEDIAN: metrics.median(
-                self.image_rbc2gas, self.mask_vent
+            constants.StatsIOFields.RBC_MEDIAN: float(
+                metrics.median(self.image_rbc2gas, self.mask_vent)
             ),
-            constants.StatsIOFields.RBC_STDDEV: metrics.std(
-                self.image_rbc2gas, self.mask_vent
+            constants.StatsIOFields.RBC_STDDEV: float(
+                metrics.std(self.image_rbc2gas, self.mask_vent)
             ),
-            constants.StatsIOFields.MEMBRANE_SNR: metrics.snr(
-                self.image_membrane, self.mask
-            )[0],
+            constants.StatsIOFields.MEMBRANE_SNR: float(
+                metrics.snr(self.image_membrane, self.mask)[0]
+            ),
             constants.StatsIOFields.MEMBRANE_DEFECT_PCT: metrics.bin_percentage(
                 self.image_membrane2gas_binned, np.array([1]), self.mask
             ),
@@ -1145,14 +1149,14 @@ class Subject(object):
             constants.StatsIOFields.MEMBRANE_HIGH_PCT: metrics.bin_percentage(
                 self.image_membrane2gas_binned, np.array([6, 7, 8]), self.mask
             ),
-            constants.StatsIOFields.MEMBRANE_MEAN: metrics.mean(
-                self.image_membrane2gas, self.mask_vent
+            constants.StatsIOFields.MEMBRANE_MEAN: float(
+                metrics.mean(self.image_membrane2gas, self.mask_vent)
             ),
-            constants.StatsIOFields.MEMBRANE_MEDIAN: metrics.median(
-                self.image_membrane2gas, self.mask_vent
+            constants.StatsIOFields.MEMBRANE_MEDIAN: float(
+                metrics.median(self.image_membrane2gas, self.mask_vent)
             ),
-            constants.StatsIOFields.MEMBRANE_STDDEV: metrics.std(
-                self.image_membrane2gas, self.mask_vent
+            constants.StatsIOFields.MEMBRANE_STDDEV: float(
+                metrics.std(self.image_membrane2gas, self.mask_vent)
             ),
             constants.StatsIOFields.ALVEOLAR_VOLUME: metrics.alveolar_volume(
                 self.image_gas_binned, self.mask, self.dict_dis[constants.IOFields.FOV]
@@ -1288,15 +1292,15 @@ class Subject(object):
                         self.image_rbc_osc, self.mask_rbc
                     ),
                     constants.StatsIOFields.KEY_RADIUS: self.key_radius,
-                    constants.StatsIOFields.RBC_HIGH_SNR: metrics.snr(
-                        self.image_rbc_high, self.mask
-                    )[0],
-                    constants.StatsIOFields.RBC_LOW_SNR: metrics.snr(
-                        self.image_rbc_low, self.mask
-                    )[0],
-                    constants.StatsIOFields.DISSOLVED_SNR: metrics.snr(
-                        np.abs(self.image_dissolved), self.mask
-                    )[1],
+                    constants.StatsIOFields.RBC_HIGH_SNR: float(
+                        metrics.snr(self.image_rbc_high, self.mask)[0]
+                    ),
+                    constants.StatsIOFields.RBC_LOW_SNR: float(
+                        metrics.snr(self.image_rbc_low, self.mask)[0]
+                    ),
+                    constants.StatsIOFields.DISSOLVED_SNR: float(
+                        metrics.snr(np.abs(self.image_dissolved), self.mask)[1]
+                    ),
                 }
             )
 
@@ -1543,7 +1547,7 @@ class Subject(object):
                     self.image_rbc_osc_binned,
                     constants.CMAP.RBC_BIN2COLOR,  # RBC_OSC_BIN2COLOR
                 ),
-                path="tmp/montage_rbc_rgb.png",
+                path="tmp/montage_osc_binned.png",
                 index_start=index_start,
                 index_skip=index_skip,
             )
