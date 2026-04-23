@@ -218,7 +218,7 @@ def smooth_image(image: np.ndarray, kernel: int = 3) -> np.ndarray:
 
     Args:
         image (np.ndarray): 3D image to smooth.
-        kernel (int, optional): size of the kernel. Defaults to 11.
+        kernel (int, optional): size of the kernel. Defaults to 3.
     """
     kernel = np.ones((kernel, kernel, kernel)) / (kernel**3)  # type: ignore
     return ndimage.convolve(image, kernel, mode="constant")
