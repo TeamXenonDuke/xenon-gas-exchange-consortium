@@ -16,6 +16,13 @@ KCO_ALPHA = 22.6  # membrane coefficient
 KCO_BETA = 7.42  # RBC coefficient
 VA_ALPHA = 1.58
 
+KCO_ALPHA_MUNKHOLM = 22.3  # membrane
+KCO_BETA_MUNKHOLM = 8  # RBC
+VA_ALPHA_MUNKHOLM = 1.46
+THETA_INV_FEMALE = 1.863  # mL_blood min mmHg / mL_CO
+THETA_INV_MALE = 1.71  # mL_blood min mmHg / mL_CO
+VOXEL_SIZE = 29.791e-6  # in Liters
+
 NONE = "None"
 
 
@@ -306,6 +313,13 @@ class StatsIOFields(object):
     OSC_MEAN = "osc_mean"
     OSC_NEGATIVE_PCT = "osc_negative"
     KEY_RADIUS = "key_radius"
+
+    OSC_DEFECT_PCT_CORR = "osc_defect_corr"
+    OSC_LOW_PCT_CORR = "osc_low_corr"
+    OSC_DEFECTLOW_PCT_CORR = "osc_defectlow_corr"
+    OSC_HIGH_PCT_CORR = "osc_high_corr"
+    OSC_MEAN_CORR = "osc_mean_corr"
+    OSC_NEGATIVE_PCT_CORR = "osc_negative_corr"
 
 
 class VENTHISTOGRAMFields(object):

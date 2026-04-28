@@ -301,7 +301,9 @@ def dlco(
         rbc_mean: float. The mean RBC in healthy subjects.
     """
 
-    kco_v = kco(image_membrane, image_rbc, mask_vent, frequency, membrane_mean, rbc_mean)
+    kco_v = kco(
+        image_membrane, image_rbc, mask_vent, frequency, membrane_mean, rbc_mean
+    )
     va_v = alveolar_volume(image_gas, mask, fov)
     dlco_v = kco_v * va_v
     return dlco_v
@@ -319,7 +321,9 @@ def alveolar_volume(image: np.ndarray, mask: np.ndarray, fov: float) -> float:
         Alveolar volume in L.
     """
     kv = constants.VA_ALPHA
-    vv = inflation_volume(mask, fov) * (1.0 - bin_percentage(image, np.asarray([1]), mask) / 100)
+    vv = inflation_volume(mask, fov) * (
+        1.0 - bin_percentage(image, np.asarray([1]), mask) / 100
+    )
     va = kv * vv
     return va
 
@@ -344,17 +348,19 @@ def kco(
         KCO_ALPHA: membrane coefficient
         KCO_BETA: rbc coefficient
     """
-    if 206<= frequency <= 210:
-        mem = mean(image_membrane, mask)*0.918
-        rbc = mean(image_rbc, mask)*1.031
-    else: 
+    if 206 <= frequency <= 210:
+        mem = mean(image_membrane, mask) * 0.918
+        rbc = mean(image_rbc, mask) * 1.031
+    else:
         mem = mean(image_membrane, mask)
         rbc = mean(image_rbc, mask)
 
-    membrane_rel = mem / membrane_mean # relative mean membrane
-    rbc_rel = rbc / rbc_mean # relative mean RBC
+    membrane_rel = mem / membrane_mean  # relative mean membrane
+    rbc_rel = rbc / rbc_mean  # relative mean RBC
     membrane_rel = 1.0 / membrane_rel if membrane_rel > 1 else membrane_rel
-    kco_v = 1 / (1 / (constants.KCO_ALPHA * membrane_rel) + 1 / (constants.KCO_BETA * rbc_rel))
+    kco_v = 1 / (
+        1 / (constants.KCO_ALPHA * membrane_rel) + 1 / (constants.KCO_BETA * rbc_rel)
+    )
     return kco_v
 
 
@@ -499,21 +505,52 @@ def rdp_ba(
     return b_t
 
 
-def mean_oscillation_percentage(image: np.ndarray, mask: np.ndarray) -> float:
-    """Get the mean oscillation percentage of the image.
+def relative_vc_map(
+    age: int,
+    sex: int,
+    height: float,
+    rbc_img: np.ndarray,
+    rbc_ref: float,
+    mask: np.ndarray,
+    inflation: float,
+    vdp: float,
+):
+    """Get a map of the voxel-wise relative capillary blood volume.
 
     Args:
-        image: np.ndarray. The oscillation image.
-        mask: np.ndarray. mask of the region of interest.
+        subject_age: int. Age of the subject
+        subject_sex: int. 1 if female, 2 if male
+        subject_height: float. Height of subject in cm
+        rbc_img: np.ndarray. RBC image normalized to gas image
+        mask: np.ndarray. Mask of non-VDP region.
     """
-    return np.mean(image[mask])
+    va = constants.VA_ALPHA_MUNKHOLM * constants.VOXEL_SIZE
 
-
-def negative_osc_percentage(image: np.ndarray, mask: np.ndarray) -> float:
-    """Get the percentage voxels of image inside mask that are negative.
-
-    Args:
-        image: np.ndarray. The oscillation image.
-        mask: np.ndarray. mask of the region of interest.
-    """
-    return 100 * np.sum(image[mask] < 0) / np.sum(mask)
+    if sex == 1:
+        predicted = (-13.8 + (0.527 * height) - (0.00421 * (age**2))) / (
+            np.count_nonzero(mask)
+        )
+        print(predicted * np.count_nonzero(mask))
+        print(np.count_nonzero(mask))
+        estimated = (
+            va
+            * constants.KCO_BETA_MUNKHOLM
+            * constants.THETA_INV_FEMALE
+            * np.divide(100 * np.abs(rbc_img), rbc_ref)
+        )
+        return np.divide(estimated, predicted)
+    elif sex == 2:
+        predicted = (-23.8 + (0.645 * height) - (0.00547 * (age**2))) / (
+            np.count_nonzero(mask)
+        )
+        print(np.sum(predicted))
+        print(np.count_nonzero(mask))
+        estimated = (
+            va
+            * constants.KCO_BETA_MUNKHOLM
+            * constants.THETA_INV_MALE
+            * np.divide(100 * np.abs(rbc_img), rbc_ref)
+        )
+        return np.divide(estimated, predicted)
+    else:
+        return 0.0

@@ -19,7 +19,7 @@ import pandas as pd
 
 import pdb
 
-from utils import constants, io_utils
+from utils import constants, io_utils, metrics
 
 
 def remove_small_objects(mask: np.ndarray, scale: float = 0.1):
@@ -420,6 +420,63 @@ def calculate_rbc_oscillation(
         return 100 * np.subtract(image_high, image_low) / smooth_image(image_total)
     else:
         raise ValueError("Invalid method: {}.".format(method))
+
+
+def calculate_corrected_rbc_oscillation(
+    image_high: np.ndarray,
+    image_low: np.ndarray,
+    image_total: np.ndarray,
+    rbc2gas: np.ndarray,
+    rbc_ref: float,
+    mask: np.ndarray,
+    age: int,
+    sex: int,
+    height: float,
+    inflation: float,
+    vdp: float,
+    method: str = constants.Methods.SMOOTH,
+) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
+    """Calculate RBC oscillations corrected for relative capillary blood volume.
+
+    Args:
+        image_high (np.ndarray): high rbc image.
+        image_low (np.ndarray): low rbc image.
+        image_total (np.ndarray): total image.
+        rbc2gas (np.ndarray): RBC image normalized to gas signal
+        mask(np.ndarray): booleaan mask of the lung. Must be the same size as the images.
+        method (str): method to use for calculating oscillation.
+    Returns:
+        Map of relative capillary blood volume, map of oscillation correction factor,
+        and RBC oscillation image in percentage.
+    """
+    image_total = image_total.copy()
+    image_total[mask == 0] = np.max(image_total[mask > 0])
+
+    roi = image_total[mask]
+    print("Step 2 - ROI finite:", np.sum(np.isfinite(roi)), "/", roi.size)
+
+    relative_vc_map = metrics.relative_vc_map(
+        age,
+        sex,
+        height,
+        rbc2gas,
+        rbc_ref,
+        mask,
+        inflation,
+        vdp,
+    )
+    correction_map = np.divide(10.49, ((np.divide(3.73, relative_vc_map)) + 6.76))
+    raw_oscillations = calculate_rbc_oscillation(
+        image_high, image_low, image_total, mask, method
+    )
+    corrected_oscillations = (
+        np.multiply(
+            correction_map, (raw_oscillations - np.min(raw_oscillations) - 0.01)
+        )
+        + np.min(raw_oscillations)
+        + 0.01
+    )
+    return (relative_vc_map, correction_map, corrected_oscillations)
 
 
 def approximate_image_with_bspline(

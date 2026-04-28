@@ -205,7 +205,7 @@ scripts/**
 scripts/.gitkeep
 
 # recon/cs
-recon/cs/**
+#recon/cs/**
 
 # logs
 *.log

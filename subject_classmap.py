@@ -104,6 +104,10 @@ class Subject(object):
         self.image_rbc_low = np.array([0.0])
         self.image_rbc_osc = np.array([0.0])
         self.image_rbc_osc_binned = np.array([0.0])
+        self.image_rbc_osc_corr = np.array([0.0])
+        self.image_rbc_osc_binned_corr = np.array([0.0])
+        self.relative_vc_map = np.array([0.0])
+        self.correction_map = np.array([0.0])
         self.key_radius = 0
         self.low_indices = np.array([0.0])
         self.high_indices = np.array([0.0])
@@ -512,6 +516,7 @@ class Subject(object):
                 traj=recon_utils.flatten_traj(self.traj_dissolved),
                 kernel_sharpness=float(self.config.recon.kernel_sharpness_lr),
                 kernel_extent=9 * float(self.config.recon.kernel_sharpness_lr),
+                image_size=int(self.config.recon.recon_size),
             )
             self.image_dissolved_norm = img_utils.interp(
                 self.image_dissolved_norm,
@@ -1069,6 +1074,28 @@ class Subject(object):
             self.mask_rbc,
         )
 
+        # analyze oscillations corrected for relative capillary blood volume
+        if self.config.osc_recon.vc_correction:
+            rbc_ref = self.reference_data["threshold_rbc"][2] * 100
+            corr_calc = img_utils.calculate_corrected_rbc_oscillation(
+                self.image_rbc_high,
+                self.image_rbc_low,
+                self.image_rbc_norm,
+                self.image_rbc2gas,
+                rbc_ref,
+                self.mask_rbc,
+                age,
+                sex,
+                height,
+                metrics.inflation_volume(
+                    self.mask, self.dict_dis[constants.IOFields.FOV]
+                ),
+                metrics.bin_percentage(self.image_gas_binned, np.array([1]), self.mask),
+            )
+            self.relative_vc_map = corr_calc[0]
+            self.correction_map = corr_calc[1]
+            self.image_rbc_osc_corr = corr_calc[2]
+
     def oscillation_binning(self):
         """Bin oscillation image to colormap bins."""
 
@@ -1079,6 +1106,18 @@ class Subject(object):
         )
         # set unanalyzed voxels to -1
         self.image_rbc_osc_binned[np.logical_and(self.mask, ~self.mask_rbc)] = -1
+
+        # bin corrected oscillation image
+        if self.config.osc_recon.vc_correction:
+            self.image_rbc_osc_binned_corr = binning.linear_bin(
+                image=self.image_rbc_osc_corr,
+                mask=self.mask,
+                thresholds=constants.ReferenceDistribution.THRESHOLD_OSC_IMAGING,
+            )
+            # set unanalyzed voxels to -1
+            self.image_rbc_osc_binned_corr[
+                np.logical_and(self.mask, ~self.mask_rbc)
+            ] = -1
 
     def get_statistics(self) -> Dict[str, Any]:
         """Calculate image statistics.
@@ -1284,11 +1323,9 @@ class Subject(object):
                         self.image_rbc_osc_binned, np.array([5, 6]), self.mask_rbc
                     ),
                     constants.StatsIOFields.OSC_MEAN: float(
-                        metrics.mean_oscillation_percentage(
-                            self.image_rbc_osc, self.mask_rbc
-                        )
+                        metrics.mean(self.image_rbc_osc, self.mask_rbc)
                     ),
-                    constants.StatsIOFields.OSC_NEGATIVE_PCT: metrics.negative_osc_percentage(
+                    constants.StatsIOFields.OSC_NEGATIVE_PCT: metrics.negative_percentage(
                         self.image_rbc_osc, self.mask_rbc
                     ),
                     constants.StatsIOFields.KEY_RADIUS: self.key_radius,
@@ -1303,6 +1340,33 @@ class Subject(object):
                     ),
                 }
             )
+            if self.config.osc_recon.vc_correction:
+                self.dict_stats.update(
+                    {
+                        constants.StatsIOFields.OSC_DEFECT_PCT_CORR: metrics.bin_percentage(
+                            self.image_rbc_osc_binned_corr, np.array([1]), self.mask_rbc
+                        ),
+                        constants.StatsIOFields.OSC_LOW_PCT_CORR: metrics.bin_percentage(
+                            self.image_rbc_osc_binned_corr, np.array([2]), self.mask_rbc
+                        ),
+                        constants.StatsIOFields.OSC_DEFECTLOW_PCT_CORR: metrics.bin_percentage(
+                            self.image_rbc_osc_binned_corr,
+                            np.array([1, 2]),
+                            self.mask_rbc,
+                        ),
+                        constants.StatsIOFields.OSC_HIGH_PCT_CORR: metrics.bin_percentage(
+                            self.image_rbc_osc_binned_corr,
+                            np.array([5, 6]),
+                            self.mask_rbc,
+                        ),
+                        constants.StatsIOFields.OSC_MEAN_CORR: float(
+                            metrics.mean(self.image_rbc_osc_corr, self.mask_rbc)
+                        ),
+                        constants.StatsIOFields.OSC_NEGATIVE_PCT_CORR: metrics.negative_percentage(
+                            self.image_rbc_osc_corr, self.mask_rbc
+                        ),
+                    }
+                )
 
         return self.dict_stats
 
@@ -1573,6 +1637,34 @@ class Subject(object):
                 high=self.high_indices,
                 low=self.low_indices,
             )
+            if self.config.osc_recon.vc_correction:
+                plot.plot_montage_grey(
+                    image=np.abs(self.relative_vc_map),
+                    path="tmp/montage_relative_vc.png",
+                    index_start=index_start,
+                    index_skip=index_skip,
+                    mask=self.mask_rbc,
+                )
+                plot.plot_montage_grey(
+                    image=np.abs(self.correction_map),
+                    path="tmp/montage_osc_correction_factor.png",
+                    index_start=index_start,
+                    index_skip=index_skip,
+                    mask=self.mask_rbc,
+                )
+                plot.plot_montage_color(
+                    image=plot.map_grey_to_rgb(
+                        self.image_rbc_osc_binned_corr,
+                        constants.CMAP.RBC_BIN2COLOR,  # RBC_OSC_BIN2COLOR
+                    ),
+                    path="tmp/montage_osc_binned_corr.png",
+                    index_start=index_start,
+                    index_skip=index_skip,
+                )
+                plot.plot_histogram_rbc_osc(
+                    data=self.image_rbc_osc_corr[self.mask_rbc],
+                    path="tmp/hist_rbc_osc_corr.png",
+                )
 
     def generate_pdf(self):
         """Generate HTML and PDF files."""
@@ -1609,11 +1701,26 @@ class Subject(object):
         path = "tmp/{}_report.pdf".format(self.config.subject_id)
         report.combine_pdfs(pdf_list, path)
 
+        # oscillation imaging report
         if self.config.osc_recon.oscillation_analysis:
-            path = os.path.join(
+            pdf_list = []
+
+            base_path = os.path.join(
                 "tmp/{}_report_osc_imaging.pdf".format(self.config.subject_id),
             )
-            report.clinical_osc_imaging(self.dict_stats, path=path)
+            report.clinical_osc_imaging(self.dict_stats, path=base_path)
+            pdf_list.append(base_path)
+
+            # report on correction for capillary blood volume
+            if self.config.osc_recon.vc_correction:
+                corr_path = os.path.join(
+                    "tmp/{}_osc_imaging_correction.pdf".format(self.config.subject_id),
+                )
+                report.clinical_osc_imaging_correction(self.dict_stats, path=corr_path)
+                pdf_list.append(corr_path)
+
+            final_path = base_path
+            report.combine_pdfs(pdf_list, final_path)
 
     def write_stats_to_csv(self):
         """Write statistics to file."""
@@ -1737,6 +1844,16 @@ class Subject(object):
                 "tmp/osc_binned_color.nii",
             )
             io_utils.export_nii(self.image_rbc_osc * self.mask_rbc, "tmp/osc.nii")
+            if self.config.osc_recon.vc_correction:
+                io_utils.export_nii_4d(
+                    plot.map_grey_to_rgb(
+                        self.image_rbc_osc_binned_corr, constants.CMAP.RBC_OSC_BIN2COLOR
+                    ),
+                    "tmp/osc_binned_color_corr.nii",
+                )
+                io_utils.export_nii(
+                    self.image_rbc_osc_corr * self.mask_rbc, "tmp/osc_corr.nii"
+                )
 
     def save_config_as_json(self):
         """Save subject config .py file as json."""
@@ -1766,6 +1883,11 @@ class Subject(object):
                 "tmp/nii/osc_binned_color.nii",
                 "tmp/nii/osc.nii",
             )
+            if self.config.osc_recon.vc_correction:
+                output_files = output_files + (
+                    "tmp/nii/osc_binned_color_corr.nii",
+                    "tmp/nii/osc_corr.nii",
+                )
 
         # move files
         subfolder = os.path.join(self.config.data_dir, "gx")

@@ -140,6 +140,7 @@ def inverse_boxcox(
     """
     return np.power(boxcox_lambda * data + 1, 1 / boxcox_lambda) - scale_factor
 
+
 def _movmean_conta(x: np.ndarray, n: int) -> np.ndarray:
     """Compute moving mean of x over n points.
 
@@ -150,9 +151,10 @@ def _movmean_conta(x: np.ndarray, n: int) -> np.ndarray:
     Returns:
         np.ndarray: moving mean of shape (n,)
     """
-    #return np.convolve(x, np.ones((n,)) / n, mode="same")
-    return convolve1d(x, np.ones((n,)) / n, mode='reflect')
-    
+    # return np.convolve(x, np.ones((n,)) / n, mode="same")
+    return convolve1d(x, np.ones((n,)) / n, mode="reflect")
+
+
 def remove_gasphase_contamination(
     data_dissolved: np.ndarray,
     data_gas: np.ndarray,
@@ -160,7 +162,7 @@ def remove_gasphase_contamination(
     freq_gas_acq_diss: float,
     phase_gas_acq_diss: float,
     area_gas_acq_diss: float,
-    optimized_conta_phase:float,
+    optimized_conta_phase: float,
     fa_gas: float,
 ) -> np.ndarray:
     """Remove gas phase contamination in dissolved k-space.
@@ -204,7 +206,9 @@ def remove_gasphase_contamination(
         contamination_kspace2 * scale_factor / np.cos(np.pi / 180 * fa_gas)
     )
     # step 4: applying emperical phase optimization
-    contamination_kspace3 = np.exp(1j * np.deg2rad(optimized_conta_phase)) * contamination_kspace3.copy()  
+    contamination_kspace3 = (
+        np.exp(1j * np.deg2rad(optimized_conta_phase)) * contamination_kspace3.copy()
+    )
 
     # step 5: return subtracted contamination
     return data_dissolved - contamination_kspace3
@@ -393,7 +397,7 @@ def osc_fit_sine(
         p0=p0,
         bounds=bounds,
     )
-    print("Optimal Parameters:", popt)
+    # print("Optimal Parameters:", popt)
     return func(x, *popt), popt
 
 

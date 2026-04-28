@@ -66,6 +66,12 @@ def format_dict(dict_stats: Dict[str, Any]) -> Dict[str, Any]:
         constants.StatsIOFields.RBC_HIGH_SNR,
         constants.StatsIOFields.RBC_LOW_SNR,
         constants.StatsIOFields.DISSOLVED_SNR,
+        constants.StatsIOFields.OSC_DEFECT_PCT_CORR,
+        constants.StatsIOFields.OSC_LOW_PCT_CORR,
+        constants.StatsIOFields.OSC_DEFECTLOW_PCT_CORR,
+        constants.StatsIOFields.OSC_HIGH_PCT_CORR,
+        constants.StatsIOFields.OSC_MEAN_CORR,
+        constants.StatsIOFields.OSC_NEGATIVE_PCT_CORR,
     ]
     # list of variables to round to 3 decimal places
     list_round_3 = [constants.StatsIOFields.RBC_M_RATIO]
@@ -284,6 +290,42 @@ def clinical_osc_imaging(dict_stats: dict[str, Any], path: str):
         )
     )
     path_html = os.path.join("tmp", "clinical_osc_imaging.html")
+    # write report to html
+    with open(path_clinical, "r") as f:
+        file = f.read()
+        rendered = file.format(**stats_dict)
+        rendered = rendered.replace("../assets/", "assets/").replace("../tmp/", "tmp/")
+    with open(path_html, "w") as o:
+        o.write(rendered)
+    # write clinical report to pdf
+    # Define project root explicitly
+    project_root = Path(__file__).resolve().parents[1]
+    # Read the rendered HTML as text
+    with open(path_html, "r", encoding="utf-8") as f:
+        html_content = f.read()
+    # Render PDF from HTML string, ensuring correct base for relative URLs
+    HTML(string=html_content, base_url=str(project_root)).write_pdf(
+        target=path,
+        dpi=300,
+    )
+
+
+def clinical_osc_imaging_correction(dict_stats: dict[str, Any], path: str):
+    """Make clinical report.
+
+    First converts dictionary to html format. Then saves to path.
+    Args:
+        stats_dict (Dict[str, Any]): dictionary of statistics
+        path (str): path to save report
+    """
+    stats_dict = format_dict(dict_stats)
+    current_path = os.path.dirname(__file__)
+    path_clinical = os.path.abspath(
+        os.path.join(
+            current_path, os.pardir, "assets", "html", "clinical_osc_imaging_corr.html"
+        )
+    )
+    path_html = os.path.join("tmp", "clinical_osc_imaging_corr.html")
     # write report to html
     with open(path_clinical, "r") as f:
         file = f.read()
