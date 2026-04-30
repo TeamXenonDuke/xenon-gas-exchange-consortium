@@ -27,6 +27,7 @@ from utils import (
     signal_utils,
     spect_utils,
     traj_utils,
+    git_utils,
     mask_include_trachea,
 )
 
@@ -470,17 +471,27 @@ class Subject(object):
             )
 
         if self.config.segmentation_key == constants.SegmentationKey.CNN_VENT.value:
-            logging.info("Performing neural network segmentation.")
-            self.mask = segmentation.predict(self.image_gas_highreso).astype(bool)
+            logging.info("Performing ventilation neural network segmentation.")
+            self.mask = segmentation.predict(self.image_gas_highreso, constants.ImageType.VENT.value).astype(bool)
 
             # Build include-trachea mask automatically (unless user provided one)
             self.mask_include_trachea = get_or_make_mask_include_trachea()
+
+        elif self.config.segmentation_key == constants.SegmentationKey.CNN_PROTON.value:
+            if self.config.recon.recon_proton:
+                logging.info("Performing proton neural network segmentation.")
+                self.mask = segmentation.predict(self.image_proton, constants.ImageType.UTE.value).astype(bool)
+
+                # Build include-trachea mask automatically (unless user provided one)
+                self.mask_include_trachea = get_or_make_mask_include_trachea()
+            else:
+                logging.error("Proton reconstruction is set to False. Proton segmentation cannot be performed.")
 
         elif self.config.segmentation_key == constants.SegmentationKey.SKIP.value:
             self.mask = np.ones_like(self.image_gas_highreso, dtype=bool)
             self.mask_include_trachea = self.mask.copy()
 
-        elif self.config.segmentation_key == constants.SegmentationKey.MANUAL_VENT.value:
+        elif self.config.segmentation_key in [constants.SegmentationKey.MANUAL_VENT.value, constants.SegmentationKey.MANUAL_PROTON.value]:
             logging.info("Loading manual mask file specified by the user.")
             loaded_mask = np.squeeze(
                 np.array(nib.load(self.config.manual_seg_filepath).get_fdata())
@@ -494,16 +505,39 @@ class Subject(object):
         else:
             raise ValueError("Invalid segmentation key.")
 
+        # Fail-safe check: if the segmented thoracic cavity volume is implausibly small
+        # (< 0.5 L), assume mask generation failed and replace it with a phantom mask.
+        if metrics.inflation_volume(self.mask, self.dict_dis[constants.IOFields.FOV]) < 0.5:
+            if self.config.segmentation_key == constants.SegmentationKey.MANUAL_VENT.value:
+                logging.warning(
+                    "Mask volume is below fail-safe threshold, but a manual mask is being used, so no override was applied."
+                )
+            else:
+                logging.warning(
+                    "Mask volume is below fail-safe threshold. Using phantom mask instead."
+                )
+                self.mask = img_utils.phantom_mask()
+
     def registration(self):
         """Register moving image to target image.
 
         Uses ANTs registration to register the proton image to the xenon image.
         """
+
         if self.config.registration_key == constants.RegistrationKey.MASK2GAS.value:
-            logging.info("Run registration algorithm, vent is fixed, mask is moving")
-            self.mask, self.image_proton_reg = np.abs(
+            logging.info("Run registration algorithm, vent is fixed, proton mask is moving")
+
+            if self.config.segmentation_key in [constants.SegmentationKey.CNN_PROTON.value, constants.SegmentationKey.MANUAL_PROTON.value]:
+                self.mask_proton = self.mask
+            else:
+                if self.config.recon.recon_proton:
+                    self.mask_proton = segmentation.predict(self.image_proton, constants.ImageType.UTE.value).astype(bool)
+                else:
+                    logging.error("Proton reconstruction is disabled. Cannot perform proton mask-to-gas registration.")
+
+            mask, self.image_proton_reg = np.abs(
                 registration.register_ants(
-                    abs(self.image_gas_highreso), self.mask, self.image_proton
+                    abs(self.image_gas_highreso), self.mask_proton, self.image_proton
                 )
             )
         elif self.config.registration_key == constants.RegistrationKey.PROTON2GAS.value:
@@ -513,13 +547,7 @@ class Subject(object):
                     abs(self.image_gas_highreso), self.image_proton, self.mask
                 )
             )
-            if (
-                self.config.segmentation_key
-                == constants.SegmentationKey.CNN_PROTON.value
-                or self.config.segmentation_key
-                == constants.SegmentationKey.MANUAL_PROTON.value
-            ):
-                self.mask = mask
+
         elif self.config.registration_key == constants.RegistrationKey.MANUAL.value:
             # Load a file specified by the user
             try:
@@ -534,6 +562,21 @@ class Subject(object):
             self.image_proton_reg = self.image_proton
         else:
             raise ValueError("Invalid registration key.")
+
+
+        # Use the registered mask when the segmentation comes from a proton image
+        # and registration to gas space was performed.   
+
+        if (
+            self.config.segmentation_key
+            in [
+                constants.SegmentationKey.CNN_PROTON.value,
+                constants.SegmentationKey.MANUAL_PROTON.value,
+            ]
+            and self.config.registration_key != constants.RegistrationKey.SKIP.value
+            ):
+            mask = np.around(mask)
+            self.mask = mask
 
         def convert_and_threshold_mask(mask):
             """
@@ -577,7 +620,7 @@ class Subject(object):
 
         if self.config.vent_normalization_method == constants.NormalizationMethods.PERCENTILE_MASKED:
             self.image_gas_binned = binning.linear_bin(
-                image=img_utils.normalize(self.image_gas_cor, self.mask, bag_volume=self.config.bag_volume, method=constants.NormalizationMethods.PERCENTILE_MASKED),
+                image=self._normalize_vent(self.image_gas_cor),
                 mask=self.mask,
                 thresholds=self.reference_data['threshold_vent'],
             )
@@ -587,17 +630,28 @@ class Subject(object):
 
         elif self.config.vent_normalization_method == constants.NormalizationMethods.FRAC_VENT:
             self.image_gas_binned = binning.linear_bin(
-            image=img_utils.normalize(self.image_gas_cor, self.mask_include_trachea, bag_volume=self.config.bag_volume, method=constants.NormalizationMethods.FRAC_VENT), #big mask here 
+            image=self._normalize_vent(self.image_gas_cor), #big mask here 
             mask=self.mask,
             thresholds=self.reference_data['thresholds_fractional_ventilation'],
-        )
+            )
             self.mask_vent = np.logical_and(self.image_gas_binned > 1, self.mask)
 
             gas_nifti_img = nib.Nifti1Image(self.image_gas_binned, affine=np.eye(4))
             gas_nifti_img.to_filename('tmp/image_gas_binned_frac_vent.nii')
+        elif self.config.vent_normalization_method == constants.NormalizationMethods.MEAN_ANCHOR:
+            self.image_gas_binned = binning.linear_bin(
+            image=self._normalize_vent(self.image_gas_cor),
+            mask=self.mask,
+            thresholds=self.reference_data['threshold_vent_mean_anchor'],
+            )
+            self.mask_vent = np.logical_and(self.image_gas_binned > 1, self.mask)
+            gas_nifti_img = nib.Nifti1Image(self.image_gas_binned, affine=np.eye(4))
+            gas_nifti_img.to_filename('tmp/image_gas_binned.nii')
+
 
     def dixon_decomposition(self):
         """Perform Dixon decomposition on the dissolved-phase images."""
+
         self.image_rbc, self.image_membrane = img_utils.dixon_decomposition(
             image_gas=self.image_gas_highsnr,
             image_dissolved=self.image_dissolved,
@@ -740,15 +794,9 @@ class Subject(object):
             constants.StatsIOFields.VENT_HIGH_PCT: metrics.bin_percentage(
                 self.image_gas_binned, np.array([6]), self.mask
             ),
-            constants.StatsIOFields.VENT_MEAN: metrics.mean(
-                img_utils.normalize(np.abs(self.image_gas_cor), self.mask_include_trachea if self.config.vent_normalization_method == constants.NormalizationMethods.FRAC_VENT else self.mask, 
-                bag_volume=self.config.bag_volume, method=self.config.vent_normalization_method), self.mask),
-            constants.StatsIOFields.VENT_MEDIAN: metrics.median(
-                img_utils.normalize(np.abs(self.image_gas_cor), self.mask_include_trachea if self.config.vent_normalization_method == constants.NormalizationMethods.FRAC_VENT else self.mask, 
-                bag_volume=self.config.bag_volume, method=self.config.vent_normalization_method), self.mask),
-            constants.StatsIOFields.VENT_STDDEV: metrics.std(
-                img_utils.normalize(np.abs(self.image_gas_cor), self.mask_include_trachea if self.config.vent_normalization_method == constants.NormalizationMethods.FRAC_VENT else self.mask, 
-                bag_volume=self.config.bag_volume, method=self.config.vent_normalization_method), self.mask),
+            constants.StatsIOFields.VENT_MEAN: metrics.mean(self._normalize_vent(np.abs(self.image_gas_cor)), self.mask),
+            constants.StatsIOFields.VENT_MEDIAN: metrics.median(self._normalize_vent(np.abs(self.image_gas_cor)), self.mask),
+            constants.StatsIOFields.VENT_STDDEV: metrics.std(self._normalize_vent(np.abs(self.image_gas_cor)), self.mask),
             constants.StatsIOFields.RBC_SNR: metrics.snr(self.image_rbc, self.mask)[0],
             constants.StatsIOFields.RBC_DEFECT_PCT: metrics.bin_percentage(
                 self.image_rbc2gas_binned, np.array([1]), self.mask
@@ -986,6 +1034,7 @@ class Subject(object):
             constants.IOFields.SEX: self.dict_dis[constants.IOFields.SEX],
             constants.IOFields.HEIGHT: self.dict_dis[constants.IOFields.HEIGHT],
             constants.IOFields.WEIGHT: self.dict_dis[constants.IOFields.WEIGHT],
+            constants.IOFields.VENT_NORMALIZATION_METHOD: self.config.vent_normalization_method
         }
         return self.dict_info
 
@@ -993,7 +1042,7 @@ class Subject(object):
         """Export image figures."""
         index_start, index_skip = plot.get_plot_indices(self.mask)
         proton_reg = img_utils.normalize(
-            np.abs(self.image_proton),
+            np.abs(self.image_proton_reg),
             self.mask,
             bag_volume=self.config.bag_volume,
             method=constants.NormalizationMethods.PERCENTILE,
@@ -1075,28 +1124,19 @@ class Subject(object):
             index_skip=index_skip,
         )
         plot.plot_histogram(
-            data = img_utils.normalize(np.abs(self.image_gas_cor), self.mask_include_trachea if self.config.vent_normalization_method == constants.NormalizationMethods.FRAC_VENT else self.mask, 
-                bag_volume=self.config.bag_volume, method=self.config.vent_normalization_method)[self.mask > 0],
+            data = self._normalize_vent(np.abs(self.image_gas_cor))[self.mask > 0],
             path="tmp/hist_vent.png",
             color=constants.VENTHISTOGRAMFields.COLOR,
-            xlim=constants.VENTHISTOGRAMFields.XLIM,
-            ylim=constants.VENTHISTOGRAMFields.YLIM_FRAC_VENT if self.config.vent_normalization_method == constants.NormalizationMethods.FRAC_VENT else constants.VENTHISTOGRAMFields.YLIM,
+            xlim=self._vent_hist_xlim(),
+            ylim=self._vent_hist_ylim(),
             num_bins=constants.VENTHISTOGRAMFields.NUMBINS,
-            refer_fit= (
-                self.reference_data["healthy_histogram_vent_dir"] 
-                if self.config.vent_normalization_method == constants.NormalizationMethods.PERCENTILE_MASKED
-                else self.reference_data["healthy_histogram_vent_frac_dir"],   # Gaussian tuple or profile path
-            )[0],
-            xticks=constants.VENTHISTOGRAMFields.XTICKS,
-            yticks=constants.VENTHISTOGRAMFields.YTICKS_FRAC_VENT if self.config.vent_normalization_method == constants.NormalizationMethods.FRAC_VENT else constants.VENTHISTOGRAMFields.YTICKS,
-            xticklabels=constants.VENTHISTOGRAMFields.XTICKLABELS,
-            yticklabels=constants.VENTHISTOGRAMFields.YTICKLABELS_FRAC_VENT if self.config.vent_normalization_method == constants.NormalizationMethods.FRAC_VENT else constants.VENTHISTOGRAMFields.YTICKLABELS,
+            refer_fit= self._vent_hist_reference_fit(),
+            xticks=self._vent_hist_xticks(),
+            yticks=self._vent_hist_yticks(),
+            xticklabels=self._vent_hist_xticklabels(),
+            yticklabels=self._vent_hist_yticklabels(),
             title=constants.VENTHISTOGRAMFields.TITLE,
-            thresholds = (
-                self.reference_data["threshold_vent"]
-                if self.config.vent_normalization_method == constants.NormalizationMethods.PERCENTILE_MASKED
-                else self.reference_data["thresholds_fractional_ventilation"]
-            ),
+            thresholds = self._vent_hist_thresholds(),
             band_colors=constants.CMAP.VENT_BIN2COLOR,                    # per-segment bar colors (bin 0 ignored)
             outline="data",
         )
@@ -1296,5 +1336,218 @@ class Subject(object):
         os.makedirs(subfolder, exist_ok=True)
         io_utils.move_files(output_files, subfolder)
 
+    def check_git_version(self) -> None:
+        """
+        Run a git “health check” for this repo and emit warnings if you are not in sync
+        with the target branch (default: origin/main).
 
+        What it checks
+        --------------
+        1) Remote sync vs compare_branch (here: origin/main)
+           - Warn if you are BEHIND (you need to pull/rebase)
+           - Warn if you are AHEAD  (you have local commits not pushed)
 
+        2) Local repo state (actionable problems)
+           - Dirty working tree (uncommitted and/or untracked files)
+           - Merge/rebase/cherry-pick in progress
+           - Unmerged conflict files
+
+        Behavior / Output
+        -----------------
+        - Runs `git fetch --all --prune` (best effort) so comparisons use fresh remote refs.
+          If offline, it falls back to cached refs.
+        - Shows up to `show_n` commit lines for:
+            * incoming commits (what would be pulled from compare_branch)
+            * outgoing commits (what would be pushed)
+        - always_show=False means it only logs if there is a compare-branch related warning
+          (behind/ahead compare_branch, or missing compare_branch). If you want the header
+          printed every run, set always_show=True.
+        """
+        # Run the repo status check in the current working directory ("."),
+        # which is typically the repo root when you run the pipeline from the cloned folder.
+        git_utils.warn_git_status(
+            repo_dir=".",
+            do_fetch=True,
+            show_n=8,
+            compare_branch=self.config.git_compare_branch,
+            git_always_show=self.config.git_always_show,
+        )
+
+    ####################################################################
+    # Helper methods for ventilation normalization / histogram settings#
+    ####################################################################
+
+    def _normalize_vent(self, img: np.ndarray) -> np.ndarray:
+        """
+        Normalize a ventilation image using the normalization method specified in config.
+
+        Purpose:
+        - Centralize the “which mask + which args” logic in one place so call sites stay clean.
+        - Avoid accidentally passing method-specific arguments (e.g., bag_volume) to methods
+          that do not use them.
+
+        Behavior:
+        - FRAC_VENT normalization:
+            * Uses the larger mask that includes trachea (mask_include_trachea) to compute
+              total signal / volume scaling.
+            * Requires bag_volume from config.
+        - All other normalization methods:
+            * Use the standard lung mask (mask).
+            * Do not receive bag_volume.
+        """
+        method = self.config.vent_normalization_method
+
+        # Select the mask used to COMPUTE the normalization factor.
+        # FRAC_VENT often needs the “include trachea” mask because it relies on total signal.
+        # Other methods typically normalize within the lung-only mask.
+        if method == constants.NormalizationMethods.FRAC_VENT:
+            norm_mask = self.mask_include_trachea
+        else:
+            norm_mask = self.mask
+
+        # Call the shared normalize() utility.
+        # Only FRAC_VENT needs bag_volume; passing it to other methods can cause errors/confusion.
+        if method == constants.NormalizationMethods.FRAC_VENT:
+            return img_utils.normalize(
+                img,
+                mask=norm_mask,
+                method=method,
+                bag_volume=self.config.bag_volume,
+            )
+
+        return img_utils.normalize(img, mask=norm_mask, method=method)
+
+    def _vent_hist_yticklabels(self):
+        """
+        Choose the y-axis tick *labels* for the ventilation histogram based on the
+        current ventilation normalization method.
+
+        Why:
+        - Different normalization methods change the scale/meaning of the histogram,
+          so we may want different label text (e.g., FRAC_VENT uses a different scale).
+        - Default behavior: use the standard ventilation histogram labels.
+        """
+        f = constants.VENTHISTOGRAMFields
+        method = self.config.vent_normalization_method
+
+        if method == constants.NormalizationMethods.FRAC_VENT:
+            return f.YTICKLABELS_FRAC_VENT
+        elif method == constants.NormalizationMethods.MEAN_ANCHOR:
+            return f.YTICKLABELS_MEAN_ANCHOR  # define in constants if you want custom labels
+        else:
+            return f.YTICKLABELS
+
+    def _vent_hist_ylim(self):
+        """
+        Choose the y-axis limits (ylim) for the ventilation histogram based on the
+        current ventilation normalization method.
+
+        Why:
+        - FRAC_VENT (and optionally MEAN_ANCHOR) can produce histograms on a different
+          numeric range than the default normalization, so using a method-specific ylim
+          keeps the plot readable and consistent.
+        - Default behavior: use the standard ventilation histogram y-limits.
+        """
+        f = constants.VENTHISTOGRAMFields
+        method = self.config.vent_normalization_method
+
+        if method == constants.NormalizationMethods.FRAC_VENT:
+            return f.YLIM_FRAC_VENT
+        elif method == constants.NormalizationMethods.MEAN_ANCHOR:
+            return f.YLIM_MEAN_ANCHOR  # define in constants if you want a custom range
+        else:
+            return f.YLIM
+
+    def _vent_hist_xlim(self):
+        """
+        Choose the x-axis limits (xlim) for the ventilation histogram based on the
+        current ventilation normalization method.
+        """
+        f = constants.VENTHISTOGRAMFields
+        method = self.config.vent_normalization_method
+
+        if method == constants.NormalizationMethods.MEAN_ANCHOR:
+            return f.XLIM_MEAN_ANCHOR  # define in constants if you want a custom range
+        else:
+            return f.XLIM
+
+    def _vent_hist_xticks(self):
+        """
+        Choose the x-axis tick positions (xticks) for the ventilation histogram.
+        Only MEAN_ANCHOR uses a different tick set; all other methods use defaults.
+        """
+        f = constants.VENTHISTOGRAMFields
+        method = self.config.vent_normalization_method
+
+        if method == constants.NormalizationMethods.MEAN_ANCHOR:
+            return f.XTICKS_MEAN_ANCHOR  # define in constants
+        else:
+            return f.XTICKS
+
+    def _vent_hist_xticklabels(self):
+        """
+        Choose the x-axis tick labels (xticklabels) for the ventilation histogram.
+        Only MEAN_ANCHOR uses different labels; all other methods use defaults.
+        """
+        f = constants.VENTHISTOGRAMFields
+        method = self.config.vent_normalization_method
+
+        if method == constants.NormalizationMethods.MEAN_ANCHOR:
+            return f.XTICKLABELS_MEAN_ANCHOR  # define in constants
+        else:
+            return f.XTICKLABELS
+
+    def _vent_hist_yticks(self):
+        """
+        Choose the y-axis tick *positions* for the ventilation histogram based on the
+        current ventilation normalization method.
+
+        Important:
+        - The returned value MUST be a list/array of tick locations (not a scalar).
+        - Use method-specific ticks when the histogram scale differs (FRAC_VENT, and
+          optionally MEAN_ANCHOR).
+        - Default behavior: use the standard ventilation histogram tick positions.
+        """
+        f = constants.VENTHISTOGRAMFields
+        method = self.config.vent_normalization_method
+
+        if method == constants.NormalizationMethods.FRAC_VENT:
+            return f.YTICKS_FRAC_VENT
+        elif method == constants.NormalizationMethods.MEAN_ANCHOR:
+            return f.YTICKS_MEAN_ANCHOR  # define in constants; clearer than f.MEAN_ANCHOR
+        else:
+            return f.YTICKS
+
+    def _vent_hist_thresholds(self):
+        """
+        Return the bin thresholds for the current normalization method.
+        """
+        method = self.config.vent_normalization_method
+
+        if method == constants.NormalizationMethods.PERCENTILE_MASKED:
+            return self.reference_data["threshold_vent"]
+
+        if method == constants.NormalizationMethods.FRAC_VENT:
+            return self.reference_data["thresholds_fractional_ventilation"]
+
+        if method == constants.NormalizationMethods.MEAN_ANCHOR:
+            return self.reference_data["threshold_vent_mean_anchor"]
+
+        # fallback (safe default)
+        return self.reference_data["threshold_vent"]
+
+    def _vent_hist_reference_fit(self):
+        """
+        Return the reference histogram fit/profile (the [0] element) for the current
+        ventilation normalization method.
+        """
+        method = self.config.vent_normalization_method
+
+        if method == constants.NormalizationMethods.PERCENTILE_MASKED:
+            return self.reference_data["healthy_histogram_vent_dir"]
+
+        if method == constants.NormalizationMethods.MEAN_ANCHOR:
+            return self.reference_data["healthy_histogram_vent_mean_anchor_dir"]
+
+        # default (e.g., FRAC_VENT)
+        return self.reference_data["healthy_histogram_vent_frac_dir"]

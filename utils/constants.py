@@ -87,6 +87,7 @@ class IOFields(object):
     VOL_CORRECTION_KEY = "vol_correction_key"
     VOL_CORRECTION_FACTOR_MEMBRANE  = "vol_correction_factor_membrane"
     VOL_CORRECTION_FACTOR_RBC = "vol_correction_factor_rbc"
+    VENT_NORMALIZATION_METHOD = "vent_normalization_method"
     CORRECTED_LUNG_VOLUME = "corrected_lung_volume"
     PREP_PULSES = "prep_pulses"
     RBCM_REF = "rbcm_ref"
@@ -304,15 +305,21 @@ class VENTHISTOGRAMFields(object):
 
     COLOR = (0.4196, 0.6824, 0.8392)
     XLIM = 1.0
+    XLIM_MEAN_ANCHOR = 2.0
     YLIM = 0.07
     YLIM_FRAC_VENT = 0.15
+    YLIM_MEAN_ANCHOR = 0.08
     NUMBINS = 50
     XTICKS = np.linspace(0, XLIM, 4)
+    XTICKS_MEAN_ANCHOR = np.linspace(0, XLIM_MEAN_ANCHOR, 4)
     YTICKS = np.linspace(0, YLIM, 5)
     YTICKS_FRAC_VENT = np.linspace(0, YLIM_FRAC_VENT, 5)
+    YTICKS_MEAN_ANCHOR = np.linspace(0, YLIM_MEAN_ANCHOR, 5)
     XTICKLABELS = ["{:.2f}".format(x) for x in XTICKS]
+    XTICKLABELS_MEAN_ANCHOR = ["{:.2f}".format(x) for x in XTICKS_MEAN_ANCHOR]
     YTICKLABELS = ["{:.2f}".format(x) for x in YTICKS]
     YTICKLABELS_FRAC_VENT = ["{:.2f}".format(x) for x in YTICKS_FRAC_VENT]
+    YTICKLABELS_MEAN_ANCHOR = ["{:.2f}".format(x) for x in YTICKS_MEAN_ANCHOR]
     TITLE = "Ventilation"
 
 
@@ -362,12 +369,15 @@ class PDFOPTIONS(object):
 
 class NormalizationMethods(object):
     """Image normalization methods."""
+    # For increasing the image contrast
+    MAX = "max"  # Normalize by the global maximum intensity in the image (increase contrast, not currently used)
+    PERCENTILE = "percentile"  # Normalize by a given percentile of the entire image (increase proton contrast)
+    MEAN = "mean"  # Normalize by the mean intensity within the mask (deep learning segmetation)
 
-    MAX = "max"  # Normalize by the global maximum intensity in the image
+    # For histogram normalization
     PERCENTILE_MASKED = "percentile_masked"  # Normalize by a given percentile computed only within the mask
     FRAC_VENT = "frac_vent"  # Normalize to estimate fractional ventilation using bag volume and voxel size
-    PERCENTILE = "percentile"  # Normalize by a given percentile of the entire image
-    MEAN = "mean"  # Normalize by the mean intensity within the mask
+    MEAN_ANCHOR = "mean_anchor" # MEAN_ANCHOR: normalize to unit-mean inside mask (like MEAN), then clip high outliers at the masked 99th percentile to stabilize scaling.
 
 
 class CMAP(object):
@@ -455,11 +465,13 @@ class ReferenceDistribution(object):
 
     REFERENCE_218_PPM = {
     "title": "REFERENCE_218_PPM",
-    "healthy_histogram_vent_dir" : "assets/histogram_profiles/218_ppm/vent_hist_profile.npy",
-    "healthy_histogram_vent_frac_dir" : "assets/histogram_profiles/218_ppm/frac_vent_dist.npy",
+    "healthy_histogram_vent_dir" : "assets/histogram_profiles/0_ppm/vent_hist_profile.npy",
+    "healthy_histogram_vent_frac_dir" : "assets/histogram_profiles/0_ppm/frac_vent_dist.npy",
+    "healthy_histogram_vent_mean_anchor_dir" : "assets/histogram_profiles/0_ppm/vent_mean_anchor_dist.npy",
     "healthy_histogram_rbc_dir" : "assets/histogram_profiles/218_ppm/rbc_hist_profile.npy",
     "healthy_histogram_membrane_dir" : "assets/histogram_profiles/218_ppm/mem_hist_profile.npy",
     "threshold_vent": [0.3891, 0.5753, 0.7203, 0.8440, 0.9539],
+    "threshold_vent_mean_anchor": [0.5656, 0.8138, 1.0138, 1.1871, 1.3428],
     "thresholds_fractional_ventilation": [0.126229, 0.198441, 0.271045, 0.343936, 0.417054],
     "reference_fractional_ventilation_fit_vent": (0.0654281965334782, 0.27119297933193004, 0.07271780094487755),
     "threshold_rbc": [0.001393, 0.002891, 0.004772, 0.006991, 0.009518],
@@ -497,11 +509,13 @@ class ReferenceDistribution(object):
 
     REFERENCE_208_PPM = {
         "title": "REFERENCE_208_PPM",
-        "healthy_histogram_vent_dir" : "assets/histogram_profiles/208_ppm/vent_hist_profile.npy",
-        "healthy_histogram_vent_frac_dir" : "assets/histogram_profiles/218_ppm/frac_vent_dist.npy",
+        "healthy_histogram_vent_dir" : "assets/histogram_profiles/0_ppm/vent_hist_profile.npy",
+        "healthy_histogram_vent_frac_dir" : "assets/histogram_profiles/0_ppm/frac_vent_dist.npy",
+        "healthy_histogram_vent_mean_anchor_dir" : "assets/histogram_profiles/0_ppm/vent_mean_anchor_dist.npy",
         "healthy_histogram_rbc_dir" : "assets/histogram_profiles/208_ppm/rbc_hist_profile.npy",
         "healthy_histogram_membrane_dir" : "assets/histogram_profiles/208_ppm/mem_hist_profile.npy",
         "threshold_vent": [0.3891, 0.5753, 0.7203, 0.8440, 0.9539],
+        "threshold_vent_mean_anchor": [0.5656, 0.8138, 1.0138, 1.1871, 1.3428],
         "thresholds_fractional_ventilation": [0.126229, 0.198441, 0.271045, 0.343936, 0.417054],
         "reference_fractional_ventilation_fit_vent": (0.0654281965334782, 0.27119297933193004, 0.07271780094487755),
         "threshold_rbc": [0.001351, 0.002804, 0.004629, 0.006781, 0.009232],
@@ -539,12 +553,14 @@ class ReferenceDistribution(object):
     
     REFERENCE_MANUAL = {
         "title": "MANUAL",
-        "healthy_histogram_vent_dir" : "assets/histogram_profiles/218_ppm/vent_hist_profile.npy",
-        "healthy_histogram_vent_frac_dir" : "assets/histogram_profiles/218_ppm/frac_vent_dist.npy",
+        "healthy_histogram_vent_dir" : "assets/histogram_profiles/0_ppm/vent_hist_profile.npy",
+        "healthy_histogram_vent_frac_dir" : "assets/histogram_profiles/0_ppm/frac_vent_dist.npy",
+        "healthy_histogram_vent_mean_anchor_dir" : "assets/histogram_profiles/0_ppm/vent_mean_anchor_dist.npy",
         "healthy_histogram_rbc_dir" : "assets/histogram_profiles/218_ppm/rbc_hist_profile.npy",
         "healthy_histogram_membrane_dir" : "assets/histogram_profiles/218_ppm/mem_hist_profile.npy",
         "threshold_vent": [0.3891, 0.5753, 0.7203, 0.8440, 0.9539],
         "thresholds_fractional_ventilation": [0.126229, 0.198441, 0.271045, 0.343936, 0.417054],
+        "threshold_vent_mean_anchor": [0.5656, 0.8138, 1.0138, 1.1871, 1.3428],
         "reference_fractional_ventilation_fit_vent": (0.0654281965334782, 0.27119297933193004, 0.07271780094487755),
         "threshold_rbc": [0.001393, 0.002891, 0.004772, 0.006991, 0.009518],
         "threshold_membrane": [0.004881, 0.006522, 0.008603, 0.011216, 0.014466, 0.018471, 0.023370],
