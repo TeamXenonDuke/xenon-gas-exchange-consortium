@@ -9,7 +9,7 @@ GRYOMAGNETIC_RATIO = 11.777  # MHz/T
 T2STAR_GAS = 1.8e-2  # seconds
 T2STAR_RBC_3T = 1.044575 * 1e-3  # seconds
 T2STAR_MEMBRANE_3T = 0.988588 * 1e-3  # seconds
-T2STAR_DISSOLVED_3T = 1.5 * 1e-3  # seconds
+T2STAR_DISSOLVED_3T = 1.0 * 1e-3  # seconds
 
 
 KCO_ALPHA = 22.6  # membrane coefficient

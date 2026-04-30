@@ -981,31 +981,30 @@ class Subject(object):
             image2=np.abs(self.image_gas_highsnr),
             mask=self.mask_vent,
         )
-        if self.config.recon.recon_key == constants.ReconKey.ROBERTSON.value:
-            # Plummer recon already includes T2* correction
-            # scale by flip angle difference
-            flip_angle_scale_factor = signal_utils.calculate_flipangle_correction(
-                self.dict_dis[constants.IOFields.FA_GAS],
-                self.dict_dis[constants.IOFields.FA_DIS],
-            )
-            t2star_scale_factor_rbc = signal_utils.calculate_t2star_correction(
-                self.dict_dis[constants.IOFields.TE90],
-                constants.T2STAR_RBC_3T,
-                self.dict_dis[constants.IOFields.FIELD_STRENGTH],
-            )
-            t2star_scale_factor_membrane = signal_utils.calculate_t2star_correction(
-                self.dict_dis[constants.IOFields.TE90],
-                constants.T2STAR_MEMBRANE_3T,
-                self.dict_dis[constants.IOFields.FIELD_STRENGTH],
-            )
-            self.image_rbc2gas = (
-                flip_angle_scale_factor * t2star_scale_factor_rbc * self.image_rbc2gas
-            )
-            self.image_membrane2gas = (
-                flip_angle_scale_factor
-                * t2star_scale_factor_membrane
-                * self.image_membrane2gas
-            )
+        # scale by flip angle difference
+        flip_angle_scale_factor = signal_utils.calculate_flipangle_correction(
+            self.dict_dis[constants.IOFields.FA_GAS],
+            self.dict_dis[constants.IOFields.FA_DIS],
+        )
+        # correct for T2* decay
+        t2star_scale_factor_rbc = signal_utils.calculate_t2star_correction(
+            self.dict_dis[constants.IOFields.TE90],
+            constants.T2STAR_RBC_3T,
+            self.dict_dis[constants.IOFields.FIELD_STRENGTH],
+        )
+        t2star_scale_factor_membrane = signal_utils.calculate_t2star_correction(
+            self.dict_dis[constants.IOFields.TE90],
+            constants.T2STAR_MEMBRANE_3T,
+            self.dict_dis[constants.IOFields.FIELD_STRENGTH],
+        )
+        self.image_rbc2gas = (
+            flip_angle_scale_factor * t2star_scale_factor_rbc * self.image_rbc2gas
+        )
+        self.image_membrane2gas = (
+            flip_angle_scale_factor
+            * t2star_scale_factor_membrane
+            * self.image_membrane2gas
+        )
 
     def dissolved_binning(self):
         """Bin dissolved images to colormap bins."""
@@ -1076,7 +1075,7 @@ class Subject(object):
 
         # analyze oscillations corrected for relative capillary blood volume
         if self.config.osc_recon.vc_correction:
-            rbc_ref = self.reference_data["threshold_rbc"][2] * 100
+            rbc_ref = self.reference_data["threshold_rbc"][2]
             corr_calc = img_utils.calculate_corrected_rbc_oscillation(
                 self.image_rbc_high,
                 self.image_rbc_low,

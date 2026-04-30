@@ -536,7 +536,7 @@ def relative_vc_map(
             va
             * constants.KCO_BETA_MUNKHOLM
             * constants.THETA_INV_FEMALE
-            * np.divide(100 * np.abs(rbc_img), rbc_ref)
+            * np.divide(np.abs(rbc_img), rbc_ref)
         )
         return np.divide(estimated, predicted)
     elif sex == 2:
