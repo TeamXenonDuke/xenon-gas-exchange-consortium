@@ -287,11 +287,7 @@ def normalize(
         voxel_side = .3125  # cm
         voxel_vol = voxel_side**3  # cm^3 = ml
         vent_img_mask = image.copy() 
-        print("vent_img_mask shape:", vent_img_mask.shape)
-        print("mask shape:", mask.shape)
         vent_img_mask[mask == 0] = 0.0
-        print('image' + str(np.sum(image)))
-        print('vent image mask' + str(np.sum(vent_img_mask)))
         signal_total = np.sum(vent_img_mask)
         sig_vol_rat = tcv_gas_vol / signal_total
         frac_vent = (image * sig_vol_rat) / voxel_vol

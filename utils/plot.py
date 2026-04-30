@@ -11,7 +11,7 @@ import cv2
 import matplotlib.pyplot as plt
 import numpy as np
 
-from utils import io_utils
+from utils import io_utils, constants
 
 import logging
 
@@ -668,3 +668,79 @@ def plot_histogram_with_thresholds(
     ax.tick_params(axis="x", which="major", labelsize=20)
     plt.tight_layout(pad=0.4, w_pad=0.5, h_pad=1.0)
     plt.savefig(path)
+
+def vent_hist_ticklabels(method: str):
+    """
+    Choose the axis tick *labels* for the ventilation histogram based on the
+    current ventilation normalization method.
+
+    - Default behavior: use the standard ventilation histogram labels.
+    """
+    f = constants.VENTHISTOGRAMFields
+
+    if method == constants.NormalizationMethods.FRAC_VENT:
+        return f.XTICKLABELS, f.YTICKLABELS_FRAC_VENT
+    elif method == constants.NormalizationMethods.MEAN_ANCHOR:
+        return f.XTICKLABELS_MEAN_ANCHOR, f.YTICKLABELS_MEAN_ANCHOR
+    else:
+        return f.XTICKLABELS, f.YTICKLABELS
+
+def vent_hist_lim(method: str):
+    """
+    Choose the axis limits for the ventilation histogram based on the
+    current ventilation normalization method.
+
+    - Default behavior: use the standard ventilation histogram y-limits.
+    """
+    f = constants.VENTHISTOGRAMFields
+
+    if method == constants.NormalizationMethods.FRAC_VENT:
+        return f.XLIM, f.YLIM_FRAC_VENT
+    elif method == constants.NormalizationMethods.MEAN_ANCHOR:
+        return f.XLIM_MEAN_ANCHOR, f.YLIM_MEAN_ANCHOR
+    else:
+        return f.XLIM, f.YLIM
+
+def vent_hist_ticks(method: str):
+    """
+    Choose the tick *positions* for the ventilation histogram based on the
+    current ventilation normalization method.
+
+    Important:
+    - The returned value MUST be a list/array of tick locations (not a scalar).
+    - Use method-specific ticks when the histogram scale differs (FRAC_VENT, and
+        optionally MEAN_ANCHOR).
+    - Default behavior: use the standard ventilation histogram tick positions.
+    """
+    f = constants.VENTHISTOGRAMFields
+
+    if method == constants.NormalizationMethods.FRAC_VENT:
+        return f.XTICKS, f.YTICKS_FRAC_VENT
+    elif method == constants.NormalizationMethods.MEAN_ANCHOR:
+        return f.XTICKS_MEAN_ANCHOR, f.YTICKS_MEAN_ANCHOR
+    else:
+        return f.XTICKS, f.YTICKS
+
+def vent_hist_thresholds(method: str, reference_data: dict):
+    """
+    Return the bin thresholds for the current normalization method.
+    """
+    if method == constants.NormalizationMethods.FRAC_VENT:
+        return reference_data["thresholds_fractional_ventilation"]
+    if method == constants.NormalizationMethods.MEAN_ANCHOR:
+        return reference_data["threshold_vent_mean_anchor"]
+    else:
+        return reference_data["threshold_vent"]
+
+def vent_hist_reference_fit(method: str, reference_data: dict):
+    """
+    Return the reference histogram fit/profile (the [0] element) for the current
+    ventilation normalization method.
+    """
+
+    if method == constants.NormalizationMethods.FRAC_VENT:
+        return reference_data["healthy_histogram_vent_frac_dir"]
+    if method == constants.NormalizationMethods.MEAN_ANCHOR:
+        return reference_data["healthy_histogram_vent_mean_anchor_dir"]
+    else:
+        return reference_data["healthy_histogram_vent_dir"]
