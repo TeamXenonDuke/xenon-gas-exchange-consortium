@@ -1079,21 +1079,22 @@ class Subject(object):
 
         # analyze oscillations corrected for relative capillary blood volume
         if self.config.osc_recon.vc_correction:
-            rbc_ref = self.reference_data["threshold_rbc"][2]
             corr_calc = img_utils.calculate_corrected_rbc_oscillation(
-                self.image_rbc_high,
-                self.image_rbc_low,
-                self.image_rbc_norm,
-                self.image_rbc2gas,
-                rbc_ref,
-                self.mask_rbc,
-                age,
-                sex,
-                height,
-                metrics.inflation_volume(
-                    self.mask, self.dict_dis[constants.IOFields.FOV]
+                image_high=self.image_rbc_high,
+                image_low=self.image_rbc_low,
+                image_total=self.image_rbc_norm,
+                rbc2gas=self.image_rbc2gas,
+                rbc_ref=self.reference_data["threshold_rbc"][2],
+                mask=self.mask_rbc,
+                age=self.dict_dis[constants.IOFields.AGE],
+                sex=self.dict_dis[constants.IOFields.SEX],
+                height=self.dict_dis[constants.IOFields.HEIGHT],
+                alveolar_volume=metrics.alveolar_volume(
+                    self.image_gas_binned,
+                    self.mask,
+                    self.dict_dis[constants.IOFields.FOV],
                 ),
-                metrics.bin_percentage(self.image_gas_binned, np.array([1]), self.mask),
+                hemoglobin=self.config.hb,
             )
             self.relative_vc_map = corr_calc[0]
             self.correction_map = corr_calc[1]

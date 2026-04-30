@@ -430,10 +430,10 @@ def calculate_corrected_rbc_oscillation(
     rbc_ref: float,
     mask: np.ndarray,
     age: int,
-    sex: int,
+    sex: str,
     height: float,
-    inflation: float,
-    vdp: float,
+    alveolar_volume: float,
+    hemoglobin: float = 0.0,
     method: str = constants.Methods.SMOOTH,
 ) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
     """Calculate RBC oscillations corrected for relative capillary blood volume.
@@ -452,18 +452,14 @@ def calculate_corrected_rbc_oscillation(
     image_total = image_total.copy()
     image_total[mask == 0] = np.max(image_total[mask > 0])
 
-    roi = image_total[mask]
-    print("Step 2 - ROI finite:", np.sum(np.isfinite(roi)), "/", roi.size)
-
     relative_vc_map = metrics.relative_vc_map(
         age,
         sex,
         height,
         rbc2gas,
         rbc_ref,
-        mask,
-        inflation,
-        vdp,
+        alveolar_volume,
+        hemoglobin,
     )
     correction_map = np.divide(10.49, ((np.divide(3.73, relative_vc_map)) + 6.76))
     raw_oscillations = calculate_rbc_oscillation(

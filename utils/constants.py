@@ -16,13 +16,6 @@ KCO_ALPHA = 22.6  # membrane coefficient
 KCO_BETA = 7.42  # RBC coefficient
 VA_ALPHA = 1.58
 
-KCO_ALPHA_MUNKHOLM = 22.3  # membrane
-KCO_BETA_MUNKHOLM = 8  # RBC
-VA_ALPHA_MUNKHOLM = 1.46
-THETA_INV_FEMALE = 1.863  # mL_blood min mmHg / mL_CO
-THETA_INV_MALE = 1.71  # mL_blood min mmHg / mL_CO
-VOXEL_SIZE = 29.791e-6  # in Liters
-
 NONE = "None"
 
 

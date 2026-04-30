@@ -513,13 +513,12 @@ def rdp_ba(
 
 def relative_vc_map(
     age: int,
-    sex: int,
+    sex: str,
     height: float,
     rbc_img: np.ndarray,
     rbc_ref: float,
-    mask: np.ndarray,
-    inflation: float,
-    vdp: float,
+    alveolar_volume: float,
+    hemoglobin: float,
 ):
     """Get a map of the voxel-wise relative capillary blood volume.
 
@@ -530,36 +529,21 @@ def relative_vc_map(
         rbc_img: np.ndarray. RBC image normalized to gas image
         mask: np.ndarray. Mask of non-VDP region.
     """
-    va = constants.VA_ALPHA_MUNKHOLM * constants.VOXEL_SIZE
 
-    if sex == 1:
-        predicted = (-13.8 + (0.527 * height) - (0.00421 * (age**2))) / (
-            np.count_nonzero(mask)
-        )
-        print(predicted * np.count_nonzero(mask))
-        print(np.count_nonzero(mask))
-        estimated = (
-            va
-            * constants.KCO_BETA_MUNKHOLM
-            * constants.THETA_INV_FEMALE
-            * np.divide(np.abs(rbc_img), rbc_ref)
-        )
-        return np.divide(estimated, predicted)
-    elif sex == 2:
-        predicted = (-23.8 + (0.645 * height) - (0.00547 * (age**2))) / (
-            np.count_nonzero(mask)
-        )
-        print(np.sum(predicted))
-        print(np.count_nonzero(mask))
-        estimated = (
-            va
-            * constants.KCO_BETA_MUNKHOLM
-            * constants.THETA_INV_MALE
-            * np.divide(100 * np.abs(rbc_img), rbc_ref)
-        )
-        return np.divide(estimated, predicted)
+    alveolar_volume_ref = GLI_volume(
+        age,
+        sex,
+        height,
+        volume_type="va",
+    )
+    VA = np.divide(alveolar_volume, alveolar_volume_ref)
+    if hemoglobin > 0.0:
+        HB = np.divide(hemoglobin, constants.HbCorrection.HB_REF)
     else:
-        return 0.0
+        HB = 1.0
+    RBC = np.divide(rbc_img, rbc_ref)
+
+    return VA * HB * RBC
 
 
 def rbcm_ref(age: int, sex: str) -> float:

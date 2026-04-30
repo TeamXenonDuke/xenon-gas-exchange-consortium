@@ -59,7 +59,7 @@ class Config(config_dict.ConfigDict):
         self.registration_key = constants.RegistrationKey.SKIP.value
         self.bias_key = constants.BiasfieldKey.N4ITK.value
         self.hb_correction_key = constants.HbCorrectionKey.NONE.value
-        self.hb = "NA"
+        self.hb = 0.0
         self.vol_correction_key = constants.VolCorrectionKey.NONE.value
         self.corrected_lung_volume = "NA"
         self.dicom_proton_dir = ""

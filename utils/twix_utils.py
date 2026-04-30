@@ -12,6 +12,7 @@ import numpy as np
 
 from utils import constants
 
+
 def get_patient_age(twix_obj: mapvbvd._attrdict.AttrDict) -> float:
     """
     Get the patient's age.
@@ -29,8 +30,6 @@ def get_patient_age(twix_obj: mapvbvd._attrdict.AttrDict) -> float:
         return round(twix_obj.hdr.Meas.flPatientAge)
     except:
         return np.nan
-
-    raise ValueError("Could not find age from twix object")
 
 
 def get_patient_sex(twix_obj: mapvbvd._attrdict.AttrDict) -> str:
@@ -51,8 +50,6 @@ def get_patient_sex(twix_obj: mapvbvd._attrdict.AttrDict) -> str:
     except:
         return np.nan
 
-    raise ValueError("Could not find sex from twix object")
-
 
 def get_patient_height(twix_obj: mapvbvd._attrdict.AttrDict) -> float:
     """
@@ -72,7 +69,6 @@ def get_patient_height(twix_obj: mapvbvd._attrdict.AttrDict) -> float:
     except:
         return np.nan
 
-    raise ValueError("Could not find height from twix object")
 
 def get_patient_weight(twix_obj: mapvbvd._attrdict.AttrDict) -> float:
     """
@@ -92,7 +88,6 @@ def get_patient_weight(twix_obj: mapvbvd._attrdict.AttrDict) -> float:
     except:
         return np.nan
 
-    raise ValueError("Could not find weight from twix object")
 
 def get_scan_date(twix_obj: mapvbvd._attrdict.AttrDict) -> str:
     """Get the scan date in MM-DD-YYYY format.
@@ -443,9 +438,7 @@ def get_institution_name(twix_obj: mapvbvd._attrdict.AttrDict) -> str:
         return "unknown"
 
 
-def get_system_vendor(
-    twix_obj: mapvbvd._attrdict.AttrDict
-) -> str:
+def get_system_vendor(twix_obj: mapvbvd._attrdict.AttrDict) -> str:
     """Get system vendor from the Twix header.
 
     Args
@@ -453,7 +446,7 @@ def get_system_vendor(
     Returns:
         system vendor (str)
     """
-    try :
+    try:
         return str(twix_obj.hdr.Dicom.Manufacturer)
     except:
         return "Siemens"
@@ -543,13 +536,14 @@ def get_gx_data(twix_obj: mapvbvd._attrdict.AttrDict) -> Dict[str, Any]:
     except:
         raise ValueError("Cannot get data from twix object.")
     return {
-    	constants.IOFields.FIDS: raw_fids,
+        constants.IOFields.FIDS: raw_fids,
         constants.IOFields.FIDS_GAS: data_gas,
-    	constants.IOFields.FIDS_DIS: data_dis,
-    	constants.IOFields.N_FRAMES: n_frames,
+        constants.IOFields.FIDS_DIS: data_dis,
+        constants.IOFields.N_FRAMES: n_frames,
         constants.IOFields.N_SKIP_START: n_skip_start,
         constants.IOFields.N_SKIP_END: n_skip_end,
     }
+
 
 def get_ute_data(twix_obj: mapvbvd._attrdict.AttrDict) -> Dict[str, Any]:
     """Get the UTE FIDs from twix object.
