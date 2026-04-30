@@ -130,7 +130,15 @@ class Subject(object):
         self.reference_data = {}
         self.user_lung_volume_value = ""
         self.vol_correction_factor_rbc = "NA"
+<<<<<<< HEAD
         self.vol_correction_factor_membrane = "NA"
+=======
+        self.vol_correction_factor_membrane ="NA"
+        self.frc = ""
+        self.va = ""
+        self.kco = ""
+        self.dlco = ""        
+>>>>>>> origin/main
 
     def read_twix_files(self):
         """Read in twix files to dictionary.
@@ -1218,15 +1226,40 @@ class Subject(object):
                 0.008871,
                 0.00455,  # sex- and hemoglobin averaged, the value in Sup's paper is non-Hb-corrected, non-sex-specific average
             ),
-            constants.StatsIOFields.RDP_BA: round(
-                metrics.rdp_ba(
-                    self.image_rbc2gas_binned,
-                    self.mask,
-                ),
-                1,
+            constants.StatsIOFields.RDP_BA: round(metrics.rdp_ba(
+                self.image_rbc2gas_binned,
+                self.mask,
+            ), 1),
+            constants.IOFields.GLI_FRC: metrics.GLI_volume(
+                self.dict_dis[constants.IOFields.AGE],
+                self.dict_dis[constants.IOFields.SEX],
+                self.dict_dis[constants.IOFields.HEIGHT],
+                volume_type="frc",
+            ),            
+            constants.IOFields.GLI_VA: metrics.GLI_volume(
+                self.dict_dis[constants.IOFields.AGE],
+                self.dict_dis[constants.IOFields.SEX],
+                self.dict_dis[constants.IOFields.HEIGHT],
+                volume_type="va",
             ),
-        }
-
+            constants.IOFields.GLI_KCO: metrics.GLI_volume(
+                self.dict_dis[constants.IOFields.AGE],
+                self.dict_dis[constants.IOFields.SEX],
+                self.dict_dis[constants.IOFields.HEIGHT],
+                volume_type="kco",
+            ),
+            constants.IOFields.GLI_DLCO: metrics.GLI_volume(
+                self.dict_dis[constants.IOFields.AGE],
+                self.dict_dis[constants.IOFields.SEX],
+                self.dict_dis[constants.IOFields.HEIGHT],
+                volume_type="dlco",
+            ),               
+            constants.IOFields.RBCM_REF: metrics.rbcm_ref(
+                self.dict_dis[constants.IOFields.AGE],
+                self.dict_dis[constants.IOFields.SEX],
+            )
+        }        
+        self.dict_stats[constants.IOFields.RBCM_PERC] = round(100 * self.rbc_m_ratio/self.dict_stats[constants.IOFields.RBCM_REF])
         if isinstance(self.config.patient_frc, (int, float)):
             FRC_Volume = float(self.config.patient_frc)
             User_Volume_FRC = f"{FRC_Volume}L"
@@ -1452,8 +1485,12 @@ class Subject(object):
             ),
             constants.IOFields.TE90: 1e6 * self.dict_dis[constants.IOFields.TE90],
             constants.IOFields.TR_DIS: 1e3 * self.dict_dis[constants.IOFields.TR],
-            constants.IOFields.USER_LUNG_VOLUME_VALUE: self.user_lung_volume_value,
-            constants.IOFields.VENT_NORMALIZATION_METHOD: self.config.vent_normalization_method,
+            constants.IOFields.USER_LUNG_VOLUME_VALUE:self.user_lung_volume_value,
+            constants.IOFields.AGE: self.dict_dis[constants.IOFields.AGE],
+            constants.IOFields.SEX: self.dict_dis[constants.IOFields.SEX],
+            constants.IOFields.HEIGHT: self.dict_dis[constants.IOFields.HEIGHT],
+            constants.IOFields.WEIGHT: self.dict_dis[constants.IOFields.WEIGHT],
+            constants.IOFields.VENT_NORMALIZATION_METHOD: self.config.vent_normalization_method
         }
         return self.dict_info
 

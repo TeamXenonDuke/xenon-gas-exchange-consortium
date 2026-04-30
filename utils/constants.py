@@ -32,6 +32,11 @@ class IOFields(object):
     AGE = "age"
     SEX = "sex"
     HEIGHT = "height"
+    WEIGHT = "weight"
+    GLI_FRC = "gli_frc"
+    GLI_VA = "gli_va"
+    GLI_KCO = "gli_kco"
+    GLI_DLCO = "gli_dlco"
     BANDWIDTH = "bandwidth"
     USER_LUNG_VOLUME_VALUE = "user_lung_volume_value"
     BIASFIELD_KEY = "biasfield_key"
@@ -93,6 +98,8 @@ class IOFields(object):
     VENT_NORMALIZATION_METHOD = "vent_normalization_method"
     CORRECTED_LUNG_VOLUME = "corrected_lung_volume"
     PREP_PULSES = "prep_pulses"
+    RBCM_REF = "rbcm_ref"
+    RBCM_PERC = "rbcm_perc"
 
 
 class PrepPulses(enum.Enum):
