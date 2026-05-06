@@ -51,7 +51,7 @@ body {
   float: left;
 }
 .map-container {
-  width: 625px;
+  width: 700px;
   height: 620px;
   padding: 0px;
   border: 0px;
@@ -64,7 +64,7 @@ body {
 .map-tile {
   display: inline-block;
   background: black;
-  width: 600px;
+  width: 680px;
   color: white;
   border: 0px;
   padding: 0px;

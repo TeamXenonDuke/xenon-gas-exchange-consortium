@@ -206,6 +206,9 @@ class Subject(object):
         self.data_dissolved = mdict["data_dissolved"]
         self.data_gas = mdict["data_gas"]
         self.image_dissolved = mdict["image_dissolved"]
+        self.image_dissolved_high = mdict["image_dissolved_high"]
+        self.image_dissolved_low = mdict["image_dissolved_low"]
+        self.image_dissolved_norm = mdict["image_dissolved_norm"]
         self.image_gas_highreso = mdict["image_gas_highreso"]
         self.image_gas_highsnr = mdict["image_gas_highsnr"]
         self.image_gas_cor = mdict["image_gas_cor"]
@@ -573,8 +576,14 @@ class Subject(object):
             rbc_m_ratio=self.rbc_m_ratio,
             TR=self.dict_dis[constants.IOFields.TR],
         )
-        # calculate the key radius
-        self.key_radius = self.config.osc_recon.key_radius
+        # calculate the key radius and normalize
+        self.key_radius = int(
+            np.ceil(
+                self.data_dissolved.shape[1]
+                * self.config.osc_recon.key_radius_pct
+                / 100
+            )
+        )
         normalization = np.abs(self.data_gas[:, 0])
         data_dissolved_norm = np.divide(
             self.data_dissolved, np.expand_dims(normalization, -1)
@@ -1103,10 +1112,12 @@ class Subject(object):
     def oscillation_binning(self):
         """Bin oscillation image to colormap bins."""
 
+        self.reference_data_osc = constants.ReferenceDistribution.REFERENCE_RBC_OSC
+
         self.image_rbc_osc_binned = binning.linear_bin(
             image=self.image_rbc_osc,
             mask=self.mask,
-            thresholds=constants.ReferenceDistribution.THRESHOLD_OSC_IMAGING,
+            thresholds=self.reference_data_osc["threshold_rbc_osc"],
         )
         # set unanalyzed voxels to -1
         self.image_rbc_osc_binned[np.logical_and(self.mask, ~self.mask_rbc)] = -1
@@ -1116,7 +1127,7 @@ class Subject(object):
             self.image_rbc_osc_binned_corr = binning.linear_bin(
                 image=self.image_rbc_osc_corr,
                 mask=self.mask,
-                thresholds=constants.ReferenceDistribution.THRESHOLD_OSC_IMAGING,
+                thresholds=self.reference_data_osc["threshold_rbc_osc"],
             )
             # set unanalyzed voxels to -1
             self.image_rbc_osc_binned_corr[
@@ -1647,15 +1658,28 @@ class Subject(object):
             plot.plot_montage_color(
                 image=plot.map_grey_to_rgb(
                     self.image_rbc_osc_binned,
-                    constants.CMAP.RBC_BIN2COLOR,  # RBC_OSC_BIN2COLOR
+                    constants.CMAP.RBC_OSC_BIN2COLOR,
                 ),
                 path="tmp/montage_osc_binned.png",
                 index_start=index_start,
                 index_skip=index_skip,
             )
-            plot.plot_histogram_rbc_osc(
-                data=self.image_rbc_osc[self.mask_rbc],
+            plot.plot_histogram(
+                data=self.image_rbc_osc[np.array(self.mask_rbc, dtype=bool)].flatten(),
                 path="tmp/hist_rbc_osc.png",
+                color=constants.OSCHISTOGRAMFields.COLOR,
+                xlim=constants.OSCHISTOGRAMFields.XLIM,
+                ylim=constants.OSCHISTOGRAMFields.YLIM,
+                num_bins=constants.OSCHISTOGRAMFields.NUMBINS,
+                refer_fit=self.reference_data_osc["healthy_histogram_osc_dir"],
+                xticks=constants.OSCHISTOGRAMFields.XTICKS,
+                yticks=constants.OSCHISTOGRAMFields.YTICKS,
+                xticklabels=constants.OSCHISTOGRAMFields.XTICKLABELS,
+                yticklabels=constants.OSCHISTOGRAMFields.YTICKLABELS,
+                title=constants.OSCHISTOGRAMFields.TITLE,
+                thresholds=self.reference_data_osc["threshold_rbc_osc"],
+                band_colors=constants.CMAP.RBC_OSC_BIN2COLOR,
+                outline="data",
             )
             plot.plot_data_rbc_k0(
                 t=np.arange(self.data_rbc_k0.shape[0])
@@ -1664,6 +1688,7 @@ class Subject(object):
                 path="tmp/data_rbc_k0_proc.png",
                 high=self.high_indices,
                 low=self.low_indices,
+                title="H/L Binning of Detrended RBC k0",
             )
             plot.plot_data_rbc_k0(
                 t=np.arange(self.data_rbc_k0.shape[0])
@@ -1674,6 +1699,7 @@ class Subject(object):
                 path="tmp/data_rbc_k0.png",
                 high=self.high_indices,
                 low=self.low_indices,
+                title="H/L Binning of RBC k0",
             )
             if self.config.osc_recon.vc_correction:
                 plot.plot_montage_grey(
@@ -1699,9 +1725,24 @@ class Subject(object):
                     index_start=index_start,
                     index_skip=index_skip,
                 )
-                plot.plot_histogram_rbc_osc(
-                    data=self.image_rbc_osc_corr[self.mask_rbc],
+                plot.plot_histogram(
+                    data=self.image_rbc_osc_corr[
+                        np.array(self.mask_rbc, dtype=bool)
+                    ].flatten(),
                     path="tmp/hist_rbc_osc_corr.png",
+                    color=constants.OSCHISTOGRAMFields.COLOR,
+                    xlim=constants.OSCHISTOGRAMFields.XLIM,
+                    ylim=constants.OSCHISTOGRAMFields.YLIM,
+                    num_bins=constants.OSCHISTOGRAMFields.NUMBINS,
+                    refer_fit=self.reference_data_osc["healthy_histogram_osc_dir"],
+                    xticks=constants.OSCHISTOGRAMFields.XTICKS,
+                    yticks=constants.OSCHISTOGRAMFields.YTICKS,
+                    xticklabels=constants.OSCHISTOGRAMFields.XTICKLABELS,
+                    yticklabels=constants.OSCHISTOGRAMFields.YTICKLABELS,
+                    title=constants.OSCHISTOGRAMFields.TITLE,
+                    thresholds=self.reference_data_osc["threshold_rbc_osc"],
+                    band_colors=constants.CMAP.RBC_OSC_BIN2COLOR,
+                    outline="data",
                 )
 
     def generate_pdf(self):
@@ -1746,7 +1787,14 @@ class Subject(object):
             base_path = os.path.join(
                 "tmp/{}_report_osc_imaging.pdf".format(self.config.subject_id),
             )
-            report.clinical_osc_imaging(self.dict_stats, path=base_path)
+            report.clinical_osc_imaging(
+                {
+                    **self.dict_stats,
+                    **self.reference_data["reference_stats"],
+                    **self.reference_data_osc["reference_stats"],
+                },
+                path=base_path,
+            )
             pdf_list.append(base_path)
 
             # report on correction for capillary blood volume
@@ -1754,7 +1802,14 @@ class Subject(object):
                 corr_path = os.path.join(
                     "tmp/{}_osc_imaging_correction.pdf".format(self.config.subject_id),
                 )
-                report.clinical_osc_imaging_correction(self.dict_stats, path=corr_path)
+                report.clinical_osc_imaging_correction(
+                    {
+                        **self.dict_stats,
+                        **self.reference_data["reference_stats"],
+                        **self.reference_data_osc["reference_stats"],
+                    },
+                    path=corr_path,
+                )
                 pdf_list.append(corr_path)
 
             final_path = base_path

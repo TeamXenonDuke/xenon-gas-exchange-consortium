@@ -326,17 +326,17 @@ class VENTHISTOGRAMFields(object):
     """Ventilation histogram fields."""
 
     COLOR = (0.4196, 0.6824, 0.8392)
-    XLIM = 1.0
-    XLIM_MEAN_ANCHOR = 2.0
-    YLIM = 0.07
-    YLIM_FRAC_VENT = 0.15
-    YLIM_MEAN_ANCHOR = 0.08
+    XLIM = (0.0, 1.0)
+    XLIM_MEAN_ANCHOR = (0.0, 2.0)
+    YLIM = (0.0, 0.07)
+    YLIM_FRAC_VENT = (0.0, 0.15)
+    YLIM_MEAN_ANCHOR = (0.0, 0.08)
     NUMBINS = 50
-    XTICKS = np.linspace(0, XLIM, 4)
-    XTICKS_MEAN_ANCHOR = np.linspace(0, XLIM_MEAN_ANCHOR, 4)
-    YTICKS = np.linspace(0, YLIM, 5)
-    YTICKS_FRAC_VENT = np.linspace(0, YLIM_FRAC_VENT, 5)
-    YTICKS_MEAN_ANCHOR = np.linspace(0, YLIM_MEAN_ANCHOR, 5)
+    XTICKS = np.linspace(XLIM[0], XLIM[1], 4)
+    XTICKS_MEAN_ANCHOR = np.linspace(XLIM_MEAN_ANCHOR[0], XLIM_MEAN_ANCHOR[1], 4)
+    YTICKS = np.linspace(YLIM[0], YLIM[1], 5)
+    YTICKS_FRAC_VENT = np.linspace(YLIM_FRAC_VENT[0], YLIM_FRAC_VENT[1], 5)
+    YTICKS_MEAN_ANCHOR = np.linspace(YLIM_MEAN_ANCHOR[0], YLIM_MEAN_ANCHOR[1], 5)
     XTICKLABELS = ["{:.2f}".format(x) for x in XTICKS]
     XTICKLABELS_MEAN_ANCHOR = ["{:.2f}".format(x) for x in XTICKS_MEAN_ANCHOR]
     YTICKLABELS = ["{:.2f}".format(x) for x in YTICKS]
@@ -349,11 +349,11 @@ class RBCHISTOGRAMFields(object):
     """Ventilation histogram fields."""
 
     COLOR = (247.0 / 255, 96.0 / 255, 111.0 / 255)
-    XLIM = 0.012
-    YLIM = 0.1
+    XLIM = (0.0, 0.012)
+    YLIM = (0.0, 0.1)
     NUMBINS = 50
-    XTICKS = np.linspace(0, XLIM, 4)
-    YTICKS = np.linspace(0, YLIM, 5)
+    XTICKS = np.linspace(XLIM[0], XLIM[1], 4)
+    YTICKS = np.linspace(YLIM[0], YLIM[1], 5)
     XTICKLABELS = ["{:.2f}".format(x * 1e2) for x in XTICKS]
     YTICKLABELS = ["{:.2f}".format(x) for x in YTICKS]
     TITLE = "RBC:Gas x 100"
@@ -363,30 +363,28 @@ class MEMBRANEHISTOGRAMFields(object):
     """Membrane histogram fields."""
 
     COLOR = (0.4, 0.7608, 0.6471)
-    XLIM = 0.025
-    YLIM = 0.18
+    XLIM = (0.0, 0.025)
+    YLIM = (0.0, 0.18)
     NUMBINS = 70
-    XTICKS = np.linspace(0, XLIM, 4)
-    YTICKS = np.linspace(0, YLIM, 5)
+    XTICKS = np.linspace(XLIM[0], XLIM[1], 4)
+    YTICKS = np.linspace(YLIM[0], YLIM[1], 5)
     XTICKLABELS = ["{:.2f}".format(x * 1e2) for x in XTICKS]
     YTICKLABELS = ["{:.2f}".format(x) for x in YTICKS]
     TITLE = "Membrane:Gas x 100"
 
 
-class PDFOPTIONS(object):
-    """PDF Options dict."""
+class OSCHISTOGRAMFields(object):
+    """RBC oscillation imaging histogram fields."""
 
-    VEN_PDF_OPTIONS = {
-        "page-width": 256,  # 320,
-        "page-height": 160,  # 160,
-        "margin-top": 1,
-        "margin-right": 0.1,
-        "margin-bottom": 0.1,
-        "margin-left": 0.1,
-        "dpi": 300,
-        "encoding": "UTF-8",
-        "enable-local-file-access": None,
-    }
+    COLOR = (0.0, 0.8, 0.8)
+    XLIM = (-15, 35)
+    YLIM = (0, 0.2)
+    NUMBINS = 50
+    XTICKS = np.linspace(XLIM[0], XLIM[1], 5)
+    YTICKS = np.linspace(YLIM[0], YLIM[1], 5)
+    XTICKLABELS = ["{:.0f}".format(x) for x in XTICKS]
+    YTICKLABELS = ["{:.2f}".format(x) for x in YTICKS]
+    TITLE = "RBC Oscillations (%)"
 
 
 class NormalizationMethods(object):
@@ -439,7 +437,6 @@ class CMAP(object):
     }
 
     RBC_OSC_BIN2COLOR = {
-        -1: [0.33, 0.33, 0.33],
         0: [0, 0, 0],
         1: [1, 0, 0],
         2: [1, 0.7143, 0],
@@ -683,5 +680,18 @@ class ReferenceDistribution(object):
             "inflation_display": "0.0",
         },
     }
-    # plummer data only so far -- need to fix this to include robertson too
-    THRESHOLD_OSC_IMAGING = np.array([-6.4, 0.22, 7.10, 14.23, 21.623])
+
+    REFERENCE_RBC_OSC = {
+        "title": "REFERENCE_RBC_OSC",
+        "healthy_histogram_osc_dir": "assets/histogram_profiles/osc_imaging/rbc_osc_reference_dist.npy",
+        "threshold_rbc_osc": [-1.58, 2.02, 5.96, 10.28, 15.02],
+        "reference_stats": {
+            "osc_defect_avg": "1.14",
+            "osc_low_avg": "5.07",
+            "osc_defectlow_avg": "6.21",
+            "osc_high_avg": "11.5",
+            "osc_mean_avg": "5.96",
+            "osc_negative_avg": "1.93",
+            "key_radius_ref": "14",
+        },
+    }

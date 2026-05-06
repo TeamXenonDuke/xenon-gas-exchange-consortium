@@ -523,11 +523,13 @@ def relative_vc_map(
     """Get a map of the voxel-wise relative capillary blood volume.
 
     Args:
-        subject_age: int. Age of the subject
-        subject_sex: int. 1 if female, 2 if male
-        subject_height: float. Height of subject in cm
+        age (int): age of the subject in years.
+        sex (str): F if female, M if male
+        height (float): height of subject in cm
         rbc_img: np.ndarray. RBC image normalized to gas image
-        mask: np.ndarray. Mask of non-VDP region.
+        rbc_ref (float): reference mean for rbc/gas image.
+        alveolar_volume (float): measured subject alveolar volume in L.
+        hemoglobin (float): subject hemoglobin concentration in g/dL.
     """
 
     alveolar_volume_ref = GLI_volume(

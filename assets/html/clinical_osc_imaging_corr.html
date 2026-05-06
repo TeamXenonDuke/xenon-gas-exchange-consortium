@@ -12,31 +12,25 @@
       rel="stylesheet"
     />
     <link href="../assets/css/report_reset.css" rel="stylesheet" />
-    <link href="../assets/css/report_style_osc_imaging.css" rel="stylesheet" />
+    <link href="../assets/css/report_clinical.css" rel="stylesheet" />
     <title>Oscillation Imaging Report</title>
   </head>
   <body>
     <div class="title-container">
-      <h1 id="big-title">Summary of {subject_id}</h1>
+      <h1 id="big-title"> {subject_id} Oscillation Mapping </h1>
       <h5 id="date-title">scan: {scan_date}; processed: {process_date}</h5>
     </div>
     <div class="hist-container">
       <div class="hist-tile" align="right">
-        <img src="../tmp/data_rbc_k0_proc.png" style="width: 100%" />
-        <div class="top-right">
-          <h2>H/L Binning w/ detrended RBC k0</h2>
-        </div>
+        <img src="../tmp/data_rbc_k0.png" style="width: 100%" />
       </div>
       <div class="hist-tile" align="right">
-        <img src="../tmp/data_rbc_k0.png" style="width: 100%" />
-        <div class="top-right">
-          <h2>H/L binning w/ RBC k0</h2>
-        </div>
+        <img src="../tmp/data_rbc_k0_proc.png" style="width: 100%" />
       </div>
       <div class="hist-tile" align="right">
         <img src="../tmp/hist_rbc_osc_corr.png" style="width: 100%" />
-        <div class="top-right">
-          <h2>RBC Osc. histogram</h2>
+        <div class="hist-label">
+          <p>RBC SNR:{rbc_snr}</p>
         </div>
       </div>
     </div>
@@ -77,54 +71,49 @@
           <th>Ref</th>
         </tr>
         <tr class="basic">
-          <td>RBC SNR</td>
-          <td>{rbc_snr}</td>
-          <td>X &#177;Y</td>
-        </tr>
-        <tr class="basic">
           <td>RBC:M.</td>
           <td>{rbc_m_ratio}</td>
-          <td>X &#177;Y</td>
-        </tr>
-        <tr class="basic">
-          <td>Defect</td>
-          <td>{osc_defect_corr} %</td>
-          <td>X &#177;Y</td>
-        </tr>
-        <tr class="basic">
-          <td>Low</td>
-          <td>{osc_low_corr} %</td>
-          <td>X &#177;Y</td>
-        </tr>
-        <tr class="basic">
-          <td>Defect + Low</td>
-          <td>{osc_defectlow_corr} %</td>
-          <td>X &#177;Y</td>
-        </tr>
-        <tr class="basic">
-          <td>High</td>
-          <td>{osc_high_corr}%</td>
-          <td>X &#177;Y</td>
-        </tr>
-        <tr class="basic">
-          <td>Mean Oscillation %</td>
-          <td>{osc_mean_corr}%</td>
-          <td>X &#177;Y</td>
+          <td>{rbcm_ref} ({rbcm_perc}%)</td>
         </tr>
         <tr class="basic">
           <td>Inflation</td>
           <td>{inflation}L</td>
-          <td>X &#177;Y</td>
-        </tr>
-        <tr class="basic">
-          <td>Pct. Negative</td>
-          <td>{osc_negative_corr} %</td>
-          <td>X &#177;Y</td>
+          <td>{inflation_display}</td>
         </tr>
         <tr class="basic">
           <td>Key Radius</td>
           <td>{key_radius}/{n_points}</td>
-          <td>X &#177;Y</td>
+          <td>{key_radius_ref}%</td>
+        </tr>
+        <tr class="rbc">
+          <td>Mean Oscillation %</td>
+          <td>{osc_mean_corr}%</td>
+          <td>{osc_mean_avg}%</td>
+        </tr>
+        <tr class="rbc">
+          <td>Defect</td>
+          <td>{osc_defect_corr}%</td>
+          <td>{osc_defect_avg}%</td>
+        </tr>
+        <tr class="rbc">
+          <td>Low</td>
+          <td>{osc_low_corr}%</td>
+          <td>{osc_low_avg}%</td>
+        </tr>
+        <tr class="rbc">
+          <td>Defect + Low</td>
+          <td>{osc_defectlow_corr}%</td>
+          <td>{osc_defectlow_avg}%</td>
+        </tr>
+        <tr class="rbc">
+          <td>High</td>
+          <td>{osc_high_corr}%</td>
+          <td>{osc_high_avg}%</td>
+        </tr>
+        <tr class="rbc">
+          <td>Negative</td>
+          <td>{osc_negative_corr} %</td>
+          <td>{osc_negative_avg}%</td>
         </tr>
       </table>
     </div>

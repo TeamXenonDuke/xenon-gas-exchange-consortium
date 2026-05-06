@@ -402,7 +402,7 @@ def calculate_rbc_oscillation(
         image_low (np.ndarray): low rbc image.
         image_total (np.ndarray): total image.
         mask(np.ndarray): booleaan mask of the lung. Must be the same size as the images.
-        method (str): method to use for calculating oscillation.
+        method (str): method to use for normalizing oscillation image.
     Returns:
         RBC oscillation image in percentage.
     """
@@ -442,12 +442,18 @@ def calculate_corrected_rbc_oscillation(
         image_high (np.ndarray): high rbc image.
         image_low (np.ndarray): low rbc image.
         image_total (np.ndarray): total image.
-        rbc2gas (np.ndarray): RBC image normalized to gas signal
+        rbc2gas (np.ndarray): rbc image normalized to gas signal.
+        rbc_ref (float): reference mean for rbc/gas image.
         mask(np.ndarray): booleaan mask of the lung. Must be the same size as the images.
+        age (int): subject age in years.
+        sex (str): subject sex (M or F).
+        height (float): subject height in cm.
+        alveolar_volume (float): measured subject alveolar volume in L.
+        hemoglobin (float): subject hemoglobin concentration in g/dL.
         method (str): method to use for calculating oscillation.
     Returns:
         Map of relative capillary blood volume, map of oscillation correction factor,
-        and RBC oscillation image in percentage.
+        and corrected rbc oscillation image in percentage.
     """
     image_total = image_total.copy()
     image_total[mask == 0] = np.max(image_total[mask > 0])

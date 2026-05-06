@@ -135,7 +135,7 @@ def reconstruct_cs(
             sense_map,
         )
         F = sp.linop.NUFFT(
-            sense_map.shape, coord=traj, oversamp=1.75, width=4, toeplitz=True
+            sense_map.shape, coord=traj, oversamp=1.5, width=4, toeplitz=True
         )
 
         K = sp.linop.Multiply(F.oshape, k)

@@ -137,8 +137,7 @@ class OscillationRecon(object):
         self.oscillation_analysis = False
 
         # Keyhole Radius
-        self.key_radius = 9
-        self.key_radius_pct = 0.3
+        self.key_radius_pct = 0.14
         # Recon Type
         # Gridded (Robertson)
         # Gridded Sliding Window (PilgrimMorris - not yet implemented)
