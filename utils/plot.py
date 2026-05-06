@@ -442,54 +442,6 @@ def plot_montage_color(
     plt.close()
 
 
-def plot_histogram_rbc_osc(
-    data: np.ndarray,
-    path: str,
-    fig_size: Tuple[int, int] = (9, 6),
-    xlim: Tuple[float, float] = (-15, 35),
-    ylim: Tuple[float, float] = (0, 0.2),
-    xticks: List[float] = [-10, 0, 10, 20, 30, 50],
-    yticks: List[float] = [0, 0.05, 0.1, 0.15],
-    plot_ref: bool = True,
-):
-    """Plot histogram of RBC oscillation.
-
-    Args:
-        data (np.ndarray): data to plot histogram of.
-        path (str): path to save the image.
-    """
-    fig, ax = plt.subplots(figsize=fig_size)
-    data = data.flatten()
-    weights = np.ones_like(data) / float(len(data))
-    # plot histogram
-    _, bins, _ = ax.hist(
-        data, bins=50, color=(0, 0.8, 0.8), weights=weights, edgecolor="black"
-    )
-    ax.set_ylabel("Fraction of Voxels", fontsize=35)
-    # define and plot healthy reference line
-    if plot_ref:
-        data_ref = io_utils.import_np(
-            path="assets/histogram_profiles/osc_imaging/reference_dist.npy"
-        )
-        n, bins, _ = ax.hist(
-            data_ref,
-            bins=bins,
-            color=(1, 1, 1),
-            alpha=0.0,
-            weights=np.ones_like(data_ref) / float(len(data_ref)),
-        )
-        ax.plot(0.5 * (bins[1:] + bins[:-1]), n, "--", color="k", linewidth=4)
-    # set plot parameters
-    plt.xlim(xlim)
-    plt.ylim(ylim)
-    # define ticks
-    plt.xticks(xticks, ["{:.0f}".format(x) for x in xticks], fontsize=40)
-    plt.yticks(yticks, ["{:.2f}".format(x) for x in yticks], fontsize=40)
-    fig.tight_layout()
-    plt.savefig(path)
-    plt.close()
-
-
 def plot_histogram(
     data: np.ndarray,
     path: str,
