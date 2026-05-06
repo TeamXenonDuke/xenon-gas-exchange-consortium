@@ -68,17 +68,14 @@ class Config(config_dict.ConfigDict):
         self.phase_gas_acq_diss = "None" #degree
         self.area_gas_acq_diss = "None"
 
-<<<<<<< HEAD
         # Git/version check options (optional)
         self.git_compare_branch = "origin/main"  # Compare HEAD to this ref (None -> auto origin/HEAD -> origin/main).
         self.git_always_show = False            # If True log every run; if False log only when compare-branch warnings exist.
 
-=======
         # Additional options for Dixon TE90 correction
         self.te90 = "None"              # TE90 from bonus spectra [msec]
         self.rbc_freq = "None"          # RBC frequency from bonus spectra [Hz]
         self.membrane_freq = "None"     # Membrane frequency from bonus spectra [Hz]
->>>>>>> a499024 (Added TE90 correction based on new config inputs)
 
         # Loading the paramater to base_config
         self.processes = Process()
