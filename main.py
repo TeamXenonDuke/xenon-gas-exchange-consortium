@@ -26,9 +26,9 @@ def gx_mapping_reconstruction(config: base_config.Config):
         config (config_dict.ConfigDict): config dict
     """
     subject = Subject(config=config)
-    if config.vent_normalization_method not in ["percentile_masked", "frac_vent", "mean_anchor"]:
+    if config.vent_normalization_method not in ["glb_99", "glb_fv", "glb_ma"]:
         msg = (
-            f"You choose a wrong normalization method: {config.vent_normalization_method}! It has to be: PERCENTILE_MASKED, FRAC_VENT, or MEAN_ANCHOR"
+            f"You choose a wrong normalization method: {config.vent_normalization_method}! It has to be: GLB_99, GLB_FV, or GLB_MA"
         )
         raise ValueError(msg)
     try:
@@ -84,9 +84,9 @@ def gx_mapping_readin(config: base_config.Config):
         config (config_dict.ConfigDict): config dict
     """
     subject = Subject(config=config)
-    if config.vent_normalization_method not in ["percentile_masked", "frac_vent", "mean_anchor"]:
+    if config.vent_normalization_method not in ["glb_99", "glb_fv", "glb_ma"]:
         msg = (
-            f"You choose a wrong normalization method: {config.vent_normalization_method}! It has to be: PERCENTILE_MASKED, FRAC_VENT, or MEAN_ANCHOR"
+            f"You choose a wrong normalization method: {config.vent_normalization_method}! It has to be: GLB_99, GLB_FV, or GLB_MA"
         )
         raise ValueError(msg)
     subject.read_mat_file()

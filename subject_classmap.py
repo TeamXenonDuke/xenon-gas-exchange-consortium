@@ -113,7 +113,7 @@ class Subject(object):
         self.frc = ""
         self.va = ""
         self.kco = ""
-        self.dlco = ""        
+        self.dlco = ""
 
     def read_twix_files(self):
         """Read in twix files to dictionary.
@@ -618,17 +618,21 @@ class Subject(object):
     def gas_binning(self):
         """Bin gas images to colormap bins."""
 
-        if self.config.vent_normalization_method == constants.NormalizationMethods.PERCENTILE_MASKED:
+        if self.config.vent_normalization_method == constants.NormalizationMethods.GLB_99:
             self.image_gas_binned = binning.linear_bin(
                 image=self._normalize_vent(self.image_gas_cor),
                 mask=self.mask,
-                thresholds=self.reference_data['threshold_vent'],
+                thresholds=self.reference_data[
+                    'threshold_vent_nb'
+                    if self.config.bias_key == constants.BiasfieldKey.SKIP.value
+                    else 'threshold_vent'
+                ],
             )
             self.mask_vent = np.logical_and(self.image_gas_binned > 1, self.mask)
             gas_nifti_img = nib.Nifti1Image(self.image_gas_binned, affine=np.eye(4))
             gas_nifti_img.to_filename('tmp/image_gas_binned.nii')
 
-        elif self.config.vent_normalization_method == constants.NormalizationMethods.FRAC_VENT:
+        elif self.config.vent_normalization_method == constants.NormalizationMethods.GLB_FV:
             self.image_gas_binned = binning.linear_bin(
             image=self._normalize_vent(self.image_gas_cor), #big mask here 
             mask=self.mask,
@@ -637,13 +641,26 @@ class Subject(object):
             self.mask_vent = np.logical_and(self.image_gas_binned > 1, self.mask)
 
             gas_nifti_img = nib.Nifti1Image(self.image_gas_binned, affine=np.eye(4))
-            gas_nifti_img.to_filename('tmp/image_gas_binned_frac_vent.nii')
-        elif self.config.vent_normalization_method == constants.NormalizationMethods.MEAN_ANCHOR:
+            gas_nifti_img.to_filename('tmp/image_gas_binned_GLB_FV.nii')
+        elif self.config.vent_normalization_method == constants.NormalizationMethods.GLB_MA:
             self.image_gas_binned = binning.linear_bin(
+                image=self._normalize_vent(self.image_gas_cor),
+                mask=self.mask,
+                thresholds=self.reference_data[
+                    'threshold_vent_mean_anchor_nb'
+                    if self.config.bias_key == constants.BiasfieldKey.SKIP.value
+                    else 'threshold_vent_mean_anchor'
+                ],
+            )
+            self.mask_vent = np.logical_and(self.image_gas_binned > 1, self.mask)
+            gas_nifti_img = nib.Nifti1Image(self.image_gas_binned, affine=np.eye(4))
+            gas_nifti_img.to_filename('tmp/image_gas_binned.nii')
+        elif self.config.vent_normalization_method == constants.NormalizationMethods.THRESHOLD_MA:
+            self.image_gas_binned = binning.threshold(
             image=self._normalize_vent(self.image_gas_cor),
             mask=self.mask,
-            thresholds=self.reference_data['threshold_vent_mean_anchor'],
-            )
+            threshold= constants.THRESHOLD_MA,
+        )
             self.mask_vent = np.logical_and(self.image_gas_binned > 1, self.mask)
             gas_nifti_img = nib.Nifti1Image(self.image_gas_binned, affine=np.eye(4))
             gas_nifti_img.to_filename('tmp/image_gas_binned.nii')
@@ -1139,6 +1156,7 @@ class Subject(object):
             thresholds = self._vent_hist_thresholds(),
             band_colors=constants.CMAP.VENT_BIN2COLOR,                    # per-segment bar colors (bin 0 ignored)
             outline="data",
+            refer_threshold = constants.THRESHOLD_MA if self.config.vent_normalization_method == constants.NormalizationMethods.THRESHOLD_MA else None,
         )
         plot.plot_histogram(
             data=np.abs(self.image_rbc2gas)[np.array(self.mask_vent, dtype=bool)].flatten(),
@@ -1306,8 +1324,8 @@ class Subject(object):
             "tmp/gas_rgb.nii",
         )
 
-        if self.config.vent_normalization_method == constants.NormalizationMethods.FRAC_VENT: 
-            io_utils.export_nii(img_utils.normalize(self.image_gas_cor, self.mask_include_trachea, bag_volume=self.config.bag_volume, method=constants.NormalizationMethods.FRAC_VENT), "tmp/frac_vent.nii")
+        if self.config.vent_normalization_method == constants.NormalizationMethods.GLB_FV: 
+            io_utils.export_nii(img_utils.normalize(self.image_gas_cor, self.mask_include_trachea, bag_volume=self.config.bag_volume, method=constants.NormalizationMethods.GLB_FV), "tmp/GLB_FV.nii")
 
     def save_config_as_json(self):
         """Save subject config .py file as json."""
@@ -1387,7 +1405,7 @@ class Subject(object):
           that do not use them.
 
         Behavior:
-        - FRAC_VENT normalization:
+        - GLB_FV normalization:
             * Uses the larger mask that includes trachea (mask_include_trachea) to compute
               total signal / volume scaling.
             * Requires bag_volume from config.
@@ -1398,16 +1416,16 @@ class Subject(object):
         method = self.config.vent_normalization_method
 
         # Select the mask used to COMPUTE the normalization factor.
-        # FRAC_VENT often needs the “include trachea” mask because it relies on total signal.
+        # GLB_FV often needs the “include trachea” mask because it relies on total signal.
         # Other methods typically normalize within the lung-only mask.
-        if method == constants.NormalizationMethods.FRAC_VENT:
+        if method == constants.NormalizationMethods.GLB_FV:
             norm_mask = self.mask_include_trachea
         else:
             norm_mask = self.mask
 
         # Call the shared normalize() utility.
-        # Only FRAC_VENT needs bag_volume; passing it to other methods can cause errors/confusion.
-        if method == constants.NormalizationMethods.FRAC_VENT:
+        # Only GLB_FV needs bag_volume; passing it to other methods can cause errors/confusion.
+        if method == constants.NormalizationMethods.GLB_FV:
             return img_utils.normalize(
                 img,
                 mask=norm_mask,
@@ -1424,16 +1442,19 @@ class Subject(object):
 
         Why:
         - Different normalization methods change the scale/meaning of the histogram,
-          so we may want different label text (e.g., FRAC_VENT uses a different scale).
+          so we may want different label text (e.g., GLB_FV uses a different scale).
         - Default behavior: use the standard ventilation histogram labels.
         """
         f = constants.VENTHISTOGRAMFields
         method = self.config.vent_normalization_method
 
-        if method == constants.NormalizationMethods.FRAC_VENT:
-            return f.YTICKLABELS_FRAC_VENT
-        elif method == constants.NormalizationMethods.MEAN_ANCHOR:
-            return f.YTICKLABELS_MEAN_ANCHOR  # define in constants if you want custom labels
+        if method == constants.NormalizationMethods.GLB_FV:
+            return f.YTICKLABELS_GLB_FV
+        elif method in (constants.NormalizationMethods.GLB_MA, constants.NormalizationMethods.THRESHOLD_MA):
+            if self.config.bias_key == constants.BiasfieldKey.SKIP.value:
+                    return f.YTICKLABELS_GLB_MA_NB  # define in constants if you want custom labels
+            else:
+                    return f.YTICKLABELS_GLB_MA  # define in constants if you want custom labels
         else:
             return f.YTICKLABELS
 
@@ -1443,7 +1464,7 @@ class Subject(object):
         current ventilation normalization method.
 
         Why:
-        - FRAC_VENT (and optionally MEAN_ANCHOR) can produce histograms on a different
+        - GLB_FV (and optionally GLB_MA) can produce histograms on a different
           numeric range than the default normalization, so using a method-specific ylim
           keeps the plot readable and consistent.
         - Default behavior: use the standard ventilation histogram y-limits.
@@ -1451,10 +1472,13 @@ class Subject(object):
         f = constants.VENTHISTOGRAMFields
         method = self.config.vent_normalization_method
 
-        if method == constants.NormalizationMethods.FRAC_VENT:
-            return f.YLIM_FRAC_VENT
-        elif method == constants.NormalizationMethods.MEAN_ANCHOR:
-            return f.YLIM_MEAN_ANCHOR  # define in constants if you want a custom range
+        if method == constants.NormalizationMethods.GLB_FV:
+            return f.YLIM_GLB_FV
+        elif method in (constants.NormalizationMethods.GLB_MA, constants.NormalizationMethods.THRESHOLD_MA):
+            if self.config.bias_key == constants.BiasfieldKey.SKIP.value:
+                return f.YLIM_GLB_MA_NB  # define in constants if you want a custom range
+            else:
+                return f.YLIM_GLB_MA  # define in constants if you want a custom range
         else:
             return f.YLIM
 
@@ -1466,34 +1490,43 @@ class Subject(object):
         f = constants.VENTHISTOGRAMFields
         method = self.config.vent_normalization_method
 
-        if method == constants.NormalizationMethods.MEAN_ANCHOR:
-            return f.XLIM_MEAN_ANCHOR  # define in constants if you want a custom range
+        if method in (constants.NormalizationMethods.GLB_MA, constants.NormalizationMethods.THRESHOLD_MA):
+            if self.config.bias_key == constants.BiasfieldKey.SKIP.value:
+                return f.XLIM_GLB_MA_NB  # define in constants if you want a custom range
+            else:
+                return f.XLIM_GLB_MA  # define in constants if you want a custom range
         else:
             return f.XLIM
 
     def _vent_hist_xticks(self):
         """
         Choose the x-axis tick positions (xticks) for the ventilation histogram.
-        Only MEAN_ANCHOR uses a different tick set; all other methods use defaults.
+        Only GLB_MA uses a different tick set; all other methods use defaults.
         """
         f = constants.VENTHISTOGRAMFields
         method = self.config.vent_normalization_method
 
-        if method == constants.NormalizationMethods.MEAN_ANCHOR:
-            return f.XTICKS_MEAN_ANCHOR  # define in constants
+        if method in (constants.NormalizationMethods.GLB_MA, constants.NormalizationMethods.THRESHOLD_MA):
+            if self.config.bias_key == constants.BiasfieldKey.SKIP.value:
+                return f.XTICKS_GLB_MA_NB  # define in constants
+            else:
+                return f.XTICKS_GLB_MA  # define in constants
         else:
             return f.XTICKS
 
     def _vent_hist_xticklabels(self):
         """
         Choose the x-axis tick labels (xticklabels) for the ventilation histogram.
-        Only MEAN_ANCHOR uses different labels; all other methods use defaults.
+        Only GLB_MA uses different labels; all other methods use defaults.
         """
         f = constants.VENTHISTOGRAMFields
         method = self.config.vent_normalization_method
 
-        if method == constants.NormalizationMethods.MEAN_ANCHOR:
-            return f.XTICKLABELS_MEAN_ANCHOR  # define in constants
+        if method in (constants.NormalizationMethods.GLB_MA, constants.NormalizationMethods.THRESHOLD_MA):
+            if self.config.bias_key == constants.BiasfieldKey.SKIP.value:
+                return f.XTICKLABELS_GLB_MA_NB  # define in constants
+            else:
+                return f.XTICKLABELS_GLB_MA  # define in constants
         else:
             return f.XTICKLABELS
 
@@ -1504,17 +1537,20 @@ class Subject(object):
 
         Important:
         - The returned value MUST be a list/array of tick locations (not a scalar).
-        - Use method-specific ticks when the histogram scale differs (FRAC_VENT, and
-          optionally MEAN_ANCHOR).
+        - Use method-specific ticks when the histogram scale differs (GLB_FV, and
+          optionally GLB_MA).
         - Default behavior: use the standard ventilation histogram tick positions.
         """
         f = constants.VENTHISTOGRAMFields
         method = self.config.vent_normalization_method
 
-        if method == constants.NormalizationMethods.FRAC_VENT:
-            return f.YTICKS_FRAC_VENT
-        elif method == constants.NormalizationMethods.MEAN_ANCHOR:
-            return f.YTICKS_MEAN_ANCHOR  # define in constants; clearer than f.MEAN_ANCHOR
+        if method == constants.NormalizationMethods.GLB_FV:
+            return f.YTICKS_GLB_FV
+        elif method == constants.NormalizationMethods.GLB_MA:
+            if self.config.bias_key == constants.BiasfieldKey.SKIP.value:
+                return f.YTICKS_GLB_MA_NB  # define in constants
+            else:
+                return f.YTICKS_GLB_MA  # define in constants; clearer than f.GLB_MA
         else:
             return f.YTICKS
 
@@ -1524,14 +1560,21 @@ class Subject(object):
         """
         method = self.config.vent_normalization_method
 
-        if method == constants.NormalizationMethods.PERCENTILE_MASKED:
+        if method == constants.NormalizationMethods.GLB_99:
+            if self.config.bias_key == constants.BiasfieldKey.SKIP.value:
+                return self.reference_data["threshold_vent_nb"]
             return self.reference_data["threshold_vent"]
 
-        if method == constants.NormalizationMethods.FRAC_VENT:
+        if method == constants.NormalizationMethods.GLB_FV:
             return self.reference_data["thresholds_fractional_ventilation"]
 
-        if method == constants.NormalizationMethods.MEAN_ANCHOR:
+        if method == constants.NormalizationMethods.GLB_MA:
+            if self.config.bias_key == constants.BiasfieldKey.SKIP.value:
+                return self.reference_data["threshold_vent_mean_anchor_nb"]
             return self.reference_data["threshold_vent_mean_anchor"]
+
+        if method == constants.NormalizationMethods.THRESHOLD_MA:
+            return None
 
         # fallback (safe default)
         return self.reference_data["threshold_vent"]
@@ -1543,11 +1586,18 @@ class Subject(object):
         """
         method = self.config.vent_normalization_method
 
-        if method == constants.NormalizationMethods.PERCENTILE_MASKED:
+        if method == constants.NormalizationMethods.GLB_99:
+            if self.config.bias_key == constants.BiasfieldKey.SKIP.value:
+                return self.reference_data["healthy_histogram_vent_nb_dir"]
             return self.reference_data["healthy_histogram_vent_dir"]
 
-        if method == constants.NormalizationMethods.MEAN_ANCHOR:
+        if method == constants.NormalizationMethods.GLB_MA:
+            if self.config.bias_key == constants.BiasfieldKey.SKIP.value:
+                return self.reference_data["healthy_histogram_vent_mean_anchor_nb_dir"]
             return self.reference_data["healthy_histogram_vent_mean_anchor_dir"]
 
-        # default (e.g., FRAC_VENT)
+        if method == constants.NormalizationMethods.THRESHOLD_MA:
+            return None
+
+        # default (e.g., GLB_FV)
         return self.reference_data["healthy_histogram_vent_frac_dir"]

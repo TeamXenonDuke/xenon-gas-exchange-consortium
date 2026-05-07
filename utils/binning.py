@@ -39,3 +39,27 @@ def linear_bin(
         right += 1
     image_binned[mask == 0] = 0
     return image_binned
+
+def threshold(
+    image: np.ndarray, mask: np.ndarray, threshold: np.float32
+) -> np.ndarray:
+    """Threshold the image into ventilation-defect and healthy-ventilation classes.
+
+    Args:
+        image: Input image to threshold.
+        mask: Binary mask defining the region of interest.
+        threshold: Fractional threshold between 0.0 and 1.0 used to separate defect from healthy voxels.
+
+    Returns:
+        Thresholded image where:
+            0 = outside mask / background
+            1 = ventilation defect
+            4 = healthy ventilation
+    """
+    image = image * mask
+    bin_threshold = threshold
+    image_binned = np.zeros(np.shape(image))
+    image_binned[(image > 0) & (image <= bin_threshold)] = 1
+    image_binned[(image > 0) & (image > bin_threshold)] = 4
+
+    return image_binned
