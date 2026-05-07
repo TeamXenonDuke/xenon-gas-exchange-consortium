@@ -244,7 +244,7 @@ def normalize(
     Returns:
         np.ndarray: normalized image
     """
-    # Only require bag_volume when doing FRAC_VENT normalization
+    # Only require bag_volume when doing GLB_FV normalization
 
     if method == constants.NormalizationMethods.MAX:
         return image * 1.0 / np.max(image)
@@ -259,7 +259,7 @@ def normalize(
         image[np.isnan(image)] = 0
         image[np.isinf(image)] = 0
         return image / np.mean(image[mask])
-    elif method == constants.NormalizationMethods.MEAN_ANCHOR:
+    elif method == constants.NormalizationMethods.GLB_MA:
         image_mean = np.mean(image[mask])
         image_n = np.divide(np.multiply(image, mask), image_mean)
         image_clip = np.percentile(image_n[mask], 99)
@@ -269,18 +269,18 @@ def normalize(
         image_mean = np.mean(image[mask])
         image_n = np.divide(np.multiply(image, mask), image_mean)
         return image_n
-    elif method == constants.NormalizationMethods.FRAC_VENT:
+    elif method == constants.NormalizationMethods.GLB_FV:
 
         if bag_volume is None or bag_volume in ("None", "NA", "") or pd.isna(bag_volume):
             raise ValueError(
-                "FRAC_VENT normalization requires bag_volume to be numeric (liters). "
+                "GLB_FV normalization requires bag_volume to be numeric (liters). "
                 f"Got bag_volume={bag_volume!r}. "
                 "Fix: set config.bag_volume to a number (e.g., 1.0–2.0 L) or ensure AGE/SEX/HEIGHT "
                 "are present so predicted bag volume can be computed."
             )
         elif not isinstance(bag_volume, (int, float)):
             logging.info(
-                f"WARNING :FRAC_VENT: bag_volume provided as string {bag_volume!r}; coercing to float.",
+                f"WARNING :GLB_FV: bag_volume provided as string {bag_volume!r}; coercing to float.",
                 RuntimeWarning,
                 stacklevel=2,
             )
@@ -298,13 +298,13 @@ def normalize(
         print('vent image mask' + str(np.sum(vent_img_mask)))
         signal_total = np.sum(vent_img_mask)
         sig_vol_rat = tcv_gas_vol / signal_total
-        frac_vent = (image * sig_vol_rat) / voxel_vol
-        nifti_img = nb.Nifti1Image(frac_vent, affine=np.eye(4))
-        nifti_img.to_filename('tmp/frac_vent_output.nii')
-        frac_vent_mask = frac_vent[mask == 1]
-        flat_array = frac_vent_mask.flatten()
+        GLB_FV = (image * sig_vol_rat) / voxel_vol
+        nifti_img = nb.Nifti1Image(GLB_FV, affine=np.eye(4))
+        nifti_img.to_filename('tmp/GLB_FV_output.nii')
+        GLB_FV_mask = GLB_FV[mask == 1]
+        flat_array = GLB_FV_mask.flatten()
         mean = np.mean(flat_array)
-        return frac_vent
+        return GLB_FV
     else:
         raise ValueError("Invalid normalization method")
 

@@ -305,27 +305,27 @@ class VENTHISTOGRAMFields(object):
 
     COLOR = (0.4196, 0.6824, 0.8392)
     XLIM = 1.0
-    XLIM_MEAN_ANCHOR = 2.0
-    XLIM_MEAN_ANCHOR_NB = 2.5
+    XLIM_GLB_MA = 2.0
+    XLIM_GLB_MA_NB = 2.5
     YLIM = 0.07
-    YLIM_FRAC_VENT = 0.15
-    YLIM_MEAN_ANCHOR = 0.08
-    YLIM_MEAN_ANCHOR_NB = 0.07
+    YLIM_GLB_FV = 0.15
+    YLIM_GLB_MA = 0.08
+    YLIM_GLB_MA_NB = 0.07
     NUMBINS = 50
     XTICKS = np.linspace(0, XLIM, 4)
-    XTICKS_MEAN_ANCHOR = np.linspace(0, XLIM_MEAN_ANCHOR, 4)
-    XTICKS_MEAN_ANCHOR_NB = np.linspace(0, XLIM_MEAN_ANCHOR_NB, 4)
+    XTICKS_GLB_MA = np.linspace(0, XLIM_GLB_MA, 4)
+    XTICKS_GLB_MA_NB = np.linspace(0, XLIM_GLB_MA_NB, 4)
     YTICKS = np.linspace(0, YLIM, 5)
-    YTICKS_FRAC_VENT = np.linspace(0, YLIM_FRAC_VENT, 5)
-    YTICKS_MEAN_ANCHOR = np.linspace(0, YLIM_MEAN_ANCHOR, 5)
-    YTICKS_MEAN_ANCHOR_NB = np.linspace(0, YLIM_MEAN_ANCHOR_NB, 5)
+    YTICKS_GLB_FV = np.linspace(0, YLIM_GLB_FV, 5)
+    YTICKS_GLB_MA = np.linspace(0, YLIM_GLB_MA, 5)
+    YTICKS_GLB_MA_NB = np.linspace(0, YLIM_GLB_MA_NB, 5)
     XTICKLABELS = ["{:.2f}".format(x) for x in XTICKS]
-    XTICKLABELS_MEAN_ANCHOR = ["{:.2f}".format(x) for x in XTICKS_MEAN_ANCHOR]
-    XTICKLABELS_MEAN_ANCHOR_NB = ["{:.2f}".format(x) for x in XTICKS_MEAN_ANCHOR_NB]
+    XTICKLABELS_GLB_MA = ["{:.2f}".format(x) for x in XTICKS_GLB_MA]
+    XTICKLABELS_GLB_MA_NB = ["{:.2f}".format(x) for x in XTICKS_GLB_MA_NB]
     YTICKLABELS = ["{:.2f}".format(x) for x in YTICKS]
-    YTICKLABELS_FRAC_VENT = ["{:.2f}".format(x) for x in YTICKS_FRAC_VENT]
-    YTICKLABELS_MEAN_ANCHOR = ["{:.2f}".format(x) for x in YTICKS_MEAN_ANCHOR]
-    YTICKLABELS_MEAN_ANCHOR_NB = ["{:.2f}".format(x) for x in YTICKS_MEAN_ANCHOR_NB]
+    YTICKLABELS_GLB_FV = ["{:.2f}".format(x) for x in YTICKS_GLB_FV]
+    YTICKLABELS_GLB_MA = ["{:.2f}".format(x) for x in YTICKS_GLB_MA]
+    YTICKLABELS_GLB_MA_NB = ["{:.2f}".format(x) for x in YTICKS_GLB_MA_NB]
     TITLE = "Ventilation"
 
 
@@ -381,9 +381,9 @@ class NormalizationMethods(object):
     MEAN = "mean"  # Normalize by the mean intensity within the mask (deep learning segmetation)
 
     # For histogram normalization
-    GLB_99 = "GLB_99"  # Normalize by general linear binning with 99th percentile rescaling
-    FRAC_VENT = "frac_vent"  # Normalize to estimate fractional ventilation using bag volume and voxel size
-    MEAN_ANCHOR = "mean_anchor" # MEAN_ANCHOR: normalize to unit-mean inside mask (like MEAN), then clip high outliers at the masked 99th percentile to stabilize scaling.
+    GLB_99 = "glb_99"  # Normalize by general linear binning with 99th percentile rescaling
+    GLB_FV = "glb_fv"  # Normalize to estimate fractional ventilation using bag volume and voxel size
+    GLB_MA = "glb_ma" # Normalize to unit-mean inside mask (like MEAN), then clip high outliers at the masked 99th percentile to stabilize scaling.
     THRESHOLD_MA = "threshold_ma"  # Use mean-anchor normalization, then apply thresholding instead of linear binning to separate ventilation-defect and healthy voxels.
 
 class CMAP(object):
