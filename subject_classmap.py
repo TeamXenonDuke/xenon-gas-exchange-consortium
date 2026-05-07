@@ -584,7 +584,7 @@ class Subject(object):
     def gas_binning(self):
         """Bin gas images to colormap bins."""
 
-        if self.config.vent_normalization_method == constants.NormalizationMethods.PERCENTILE_MASKED:
+        if self.config.vent_normalization_method == constants.NormalizationMethods.GLB_99:
             self.image_gas_binned = binning.linear_bin(
                 image=self._normalize_vent(self.image_gas_cor),
                 mask=self.mask,
@@ -621,11 +621,11 @@ class Subject(object):
             self.mask_vent = np.logical_and(self.image_gas_binned > 1, self.mask)
             gas_nifti_img = nib.Nifti1Image(self.image_gas_binned, affine=np.eye(4))
             gas_nifti_img.to_filename('tmp/image_gas_binned.nii')
-        elif self.config.vent_normalization_method == constants.NormalizationMethods.MEAN_ANCHOR_THRESHOLD:
+        elif self.config.vent_normalization_method == constants.NormalizationMethods.THRESHOLD_MA:
             self.image_gas_binned = binning.threshold(
             image=self._normalize_vent(self.image_gas_cor),
             mask=self.mask,
-            threshold= constants.MEAN_ANCHOR_THRESHOLD,
+            threshold= constants.THRESHOLD_MA,
         )
             self.mask_vent = np.logical_and(self.image_gas_binned > 1, self.mask)
             gas_nifti_img = nib.Nifti1Image(self.image_gas_binned, affine=np.eye(4))
@@ -1094,7 +1094,7 @@ class Subject(object):
             thresholds = self._vent_hist_thresholds(),
             band_colors=constants.CMAP.VENT_BIN2COLOR,                    # per-segment bar colors (bin 0 ignored)
             outline="data",
-            refer_threshold = constants.MEAN_ANCHOR_THRESHOLD if self.config.vent_normalization_method == constants.NormalizationMethods.MEAN_ANCHOR_THRESHOLD else None,
+            refer_threshold = constants.THRESHOLD_MA if self.config.vent_normalization_method == constants.NormalizationMethods.THRESHOLD_MA else None,
         )
         plot.plot_histogram(
             data=np.abs(self.image_rbc2gas)[np.array(self.mask_vent, dtype=bool)].flatten(),
@@ -1352,7 +1352,7 @@ class Subject(object):
 
         if method == constants.NormalizationMethods.FRAC_VENT:
             return f.YTICKLABELS_FRAC_VENT
-        elif method in (constants.NormalizationMethods.MEAN_ANCHOR, constants.NormalizationMethods.MEAN_ANCHOR_THRESHOLD):
+        elif method in (constants.NormalizationMethods.MEAN_ANCHOR, constants.NormalizationMethods.THRESHOLD_MA):
             if self.config.bias_key == constants.BiasfieldKey.SKIP.value:
                     return f.YTICKLABELS_MEAN_ANCHOR_NB  # define in constants if you want custom labels
             else:
@@ -1376,7 +1376,7 @@ class Subject(object):
 
         if method == constants.NormalizationMethods.FRAC_VENT:
             return f.YLIM_FRAC_VENT
-        elif method in (constants.NormalizationMethods.MEAN_ANCHOR, constants.NormalizationMethods.MEAN_ANCHOR_THRESHOLD):
+        elif method in (constants.NormalizationMethods.MEAN_ANCHOR, constants.NormalizationMethods.THRESHOLD_MA):
             if self.config.bias_key == constants.BiasfieldKey.SKIP.value:
                 return f.YLIM_MEAN_ANCHOR_NB  # define in constants if you want a custom range
             else:
@@ -1392,7 +1392,7 @@ class Subject(object):
         f = constants.VENTHISTOGRAMFields
         method = self.config.vent_normalization_method
 
-        if method in (constants.NormalizationMethods.MEAN_ANCHOR, constants.NormalizationMethods.MEAN_ANCHOR_THRESHOLD):
+        if method in (constants.NormalizationMethods.MEAN_ANCHOR, constants.NormalizationMethods.THRESHOLD_MA):
             if self.config.bias_key == constants.BiasfieldKey.SKIP.value:
                 return f.XLIM_MEAN_ANCHOR_NB  # define in constants if you want a custom range
             else:
@@ -1408,7 +1408,7 @@ class Subject(object):
         f = constants.VENTHISTOGRAMFields
         method = self.config.vent_normalization_method
 
-        if method in (constants.NormalizationMethods.MEAN_ANCHOR, constants.NormalizationMethods.MEAN_ANCHOR_THRESHOLD):
+        if method in (constants.NormalizationMethods.MEAN_ANCHOR, constants.NormalizationMethods.THRESHOLD_MA):
             if self.config.bias_key == constants.BiasfieldKey.SKIP.value:
                 return f.XTICKS_MEAN_ANCHOR_NB  # define in constants
             else:
@@ -1424,7 +1424,7 @@ class Subject(object):
         f = constants.VENTHISTOGRAMFields
         method = self.config.vent_normalization_method
 
-        if method in (constants.NormalizationMethods.MEAN_ANCHOR, constants.NormalizationMethods.MEAN_ANCHOR_THRESHOLD):
+        if method in (constants.NormalizationMethods.MEAN_ANCHOR, constants.NormalizationMethods.THRESHOLD_MA):
             if self.config.bias_key == constants.BiasfieldKey.SKIP.value:
                 return f.XTICKLABELS_MEAN_ANCHOR_NB  # define in constants
             else:
@@ -1462,7 +1462,7 @@ class Subject(object):
         """
         method = self.config.vent_normalization_method
 
-        if method == constants.NormalizationMethods.PERCENTILE_MASKED:
+        if method == constants.NormalizationMethods.GLB_99:
             if self.config.bias_key == constants.BiasfieldKey.SKIP.value:
                 return self.reference_data["threshold_vent_nb"]
             return self.reference_data["threshold_vent"]
@@ -1475,7 +1475,7 @@ class Subject(object):
                 return self.reference_data["threshold_vent_mean_anchor_nb"]
             return self.reference_data["threshold_vent_mean_anchor"]
 
-        if method == constants.NormalizationMethods.MEAN_ANCHOR_THRESHOLD:
+        if method == constants.NormalizationMethods.THRESHOLD_MA:
             return None
 
         # fallback (safe default)
@@ -1488,7 +1488,7 @@ class Subject(object):
         """
         method = self.config.vent_normalization_method
 
-        if method == constants.NormalizationMethods.PERCENTILE_MASKED:
+        if method == constants.NormalizationMethods.GLB_99:
             if self.config.bias_key == constants.BiasfieldKey.SKIP.value:
                 return self.reference_data["healthy_histogram_vent_nb_dir"]
             return self.reference_data["healthy_histogram_vent_dir"]
@@ -1498,7 +1498,7 @@ class Subject(object):
                 return self.reference_data["healthy_histogram_vent_mean_anchor_nb_dir"]
             return self.reference_data["healthy_histogram_vent_mean_anchor_dir"]
 
-        if method == constants.NormalizationMethods.MEAN_ANCHOR_THRESHOLD:
+        if method == constants.NormalizationMethods.THRESHOLD_MA:
             return None
 
         # default (e.g., FRAC_VENT)

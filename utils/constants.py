@@ -9,7 +9,7 @@ GRYOMAGNETIC_RATIO = 11.777  # MHz/T
 T2STAR_GAS = 1.8e-2  # seconds
 T2STAR_RBC_3T = 1.044575 * 1e-3  # seconds
 T2STAR_MEMBRANE_3T = 0.988588  * 1e-3  # seconds
-MEAN_ANCHOR_THRESHOLD = 55.34 / 100.0 # The original paper used 60%, but 55.34% better matched the VDP obtained using linear binning in healthy subjects.
+THRESHOLD_MA = 55.34 / 100.0 # The original paper used 60%, but 55.34% better matched the VDP obtained using linear binning in healthy subjects.
 
 KCO_ALPHA = 22.6 # membrane coefficient
 KCO_BETA = 7.42  # RBC coefficient
@@ -369,12 +369,12 @@ class NormalizationMethods(object):
     """Image normalization methods."""
 
     MAX = "max"  # Normalize by the global maximum intensity in the image
-    PERCENTILE_MASKED = "percentile_masked"  # Normalize by a given percentile computed only within the mask
+    GLB_99 = "GLB_99"  # Normalize by general linear binning with 99th percentile rescaling
     FRAC_VENT = "frac_vent"  # Normalize to estimate fractional ventilation using bag volume and voxel size
     PERCENTILE = "percentile"  # Normalize by a given percentile of the entire image
     MEAN = "mean"  # Normalize by the mean intensity within the mask
     MEAN_ANCHOR = "mean_anchor" # MEAN_ANCHOR: normalize to unit-mean inside mask (like MEAN), then clip high outliers at the masked 99th percentile to stabilize scaling.
-    MEAN_ANCHOR_THRESHOLD = "mean_anchor_threshold"  # Use mean-anchor normalization, then apply thresholding instead of linear binning to separate ventilation-defect and healthy voxels.
+    THRESHOLD_MA = "threshold_ma"  # Use mean-anchor normalization, then apply thresholding instead of linear binning to separate ventilation-defect and healthy voxels.
 
 class CMAP(object):
     """Maps of binned values to color values."""
