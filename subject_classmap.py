@@ -27,6 +27,7 @@ from utils import (
     signal_utils,
     spect_utils,
     traj_utils,
+    git_utils,
     mask_include_trachea,
 )
 
@@ -109,6 +110,10 @@ class Subject(object):
         self.user_lung_volume_value = ""
         self.vol_correction_factor_rbc = "NA"
         self.vol_correction_factor_membrane ="NA"
+        self.frc = ""
+        self.va = ""
+        self.kco = ""
+        self.dlco = ""
 
     def read_twix_files(self):
         """Read in twix files to dictionary.
@@ -466,17 +471,27 @@ class Subject(object):
             )
 
         if self.config.segmentation_key == constants.SegmentationKey.CNN_VENT.value:
-            logging.info("Performing neural network segmentation.")
-            self.mask = segmentation.predict(self.image_gas_highreso).astype(bool)
+            logging.info("Performing ventilation neural network segmentation.")
+            self.mask = segmentation.predict(self.image_gas_highreso, constants.ImageType.VENT.value).astype(bool)
 
             # Build include-trachea mask automatically (unless user provided one)
             self.mask_include_trachea = get_or_make_mask_include_trachea()
+
+        elif self.config.segmentation_key == constants.SegmentationKey.CNN_PROTON.value:
+            if self.config.recon.recon_proton:
+                logging.info("Performing proton neural network segmentation.")
+                self.mask = segmentation.predict(self.image_proton, constants.ImageType.UTE.value).astype(bool)
+
+                # Build include-trachea mask automatically (unless user provided one)
+                self.mask_include_trachea = get_or_make_mask_include_trachea()
+            else:
+                logging.error("Proton reconstruction is set to False. Proton segmentation cannot be performed.")
 
         elif self.config.segmentation_key == constants.SegmentationKey.SKIP.value:
             self.mask = np.ones_like(self.image_gas_highreso, dtype=bool)
             self.mask_include_trachea = self.mask.copy()
 
-        elif self.config.segmentation_key == constants.SegmentationKey.MANUAL_VENT.value:
+        elif self.config.segmentation_key in [constants.SegmentationKey.MANUAL_VENT.value, constants.SegmentationKey.MANUAL_PROTON.value]:
             logging.info("Loading manual mask file specified by the user.")
             loaded_mask = np.squeeze(
                 np.array(nib.load(self.config.manual_seg_filepath).get_fdata())
@@ -508,11 +523,21 @@ class Subject(object):
 
         Uses ANTs registration to register the proton image to the xenon image.
         """
+
         if self.config.registration_key == constants.RegistrationKey.MASK2GAS.value:
-            logging.info("Run registration algorithm, vent is fixed, mask is moving")
-            self.mask, self.image_proton_reg = np.abs(
+            logging.info("Run registration algorithm, vent is fixed, proton mask is moving")
+
+            if self.config.segmentation_key in [constants.SegmentationKey.CNN_PROTON.value, constants.SegmentationKey.MANUAL_PROTON.value]:
+                self.mask_proton = self.mask
+            else:
+                if self.config.recon.recon_proton:
+                    self.mask_proton = segmentation.predict(self.image_proton, constants.ImageType.UTE.value).astype(bool)
+                else:
+                    logging.error("Proton reconstruction is disabled. Cannot perform proton mask-to-gas registration.")
+
+            mask, self.image_proton_reg = np.abs(
                 registration.register_ants(
-                    abs(self.image_gas_highreso), self.mask, self.image_proton
+                    abs(self.image_gas_highreso), self.mask_proton, self.image_proton
                 )
             )
         elif self.config.registration_key == constants.RegistrationKey.PROTON2GAS.value:
@@ -522,13 +547,7 @@ class Subject(object):
                     abs(self.image_gas_highreso), self.image_proton, self.mask
                 )
             )
-            if (
-                self.config.segmentation_key
-                == constants.SegmentationKey.CNN_PROTON.value
-                or self.config.segmentation_key
-                == constants.SegmentationKey.MANUAL_PROTON.value
-            ):
-                self.mask = mask
+
         elif self.config.registration_key == constants.RegistrationKey.MANUAL.value:
             # Load a file specified by the user
             try:
@@ -543,6 +562,21 @@ class Subject(object):
             self.image_proton_reg = self.image_proton
         else:
             raise ValueError("Invalid registration key.")
+
+
+        # Use the registered mask when the segmentation comes from a proton image
+        # and registration to gas space was performed.   
+
+        if (
+            self.config.segmentation_key
+            in [
+                constants.SegmentationKey.CNN_PROTON.value,
+                constants.SegmentationKey.MANUAL_PROTON.value,
+            ]
+            and self.config.registration_key != constants.RegistrationKey.SKIP.value
+            ):
+            mask = np.around(mask)
+            self.mask = mask
 
         def convert_and_threshold_mask(mask):
             """
@@ -846,8 +880,31 @@ class Subject(object):
                 self.image_rbc2gas_binned,
                 self.mask,
             ), 1),
-        }
-        
+            constants.IOFields.GLI_FRC: metrics.GLI_volume(
+            self.dict_dis[constants.IOFields.AGE],
+            self.dict_dis[constants.IOFields.SEX],
+            self.dict_dis[constants.IOFields.HEIGHT],
+            volume_type="frc"),            
+            constants.IOFields.GLI_VA: metrics.GLI_volume(
+            self.dict_dis[constants.IOFields.AGE],
+            self.dict_dis[constants.IOFields.SEX],
+            self.dict_dis[constants.IOFields.HEIGHT],
+            volume_type="va"),
+            constants.IOFields.GLI_KCO: metrics.GLI_volume(
+            self.dict_dis[constants.IOFields.AGE],
+            self.dict_dis[constants.IOFields.SEX],
+            self.dict_dis[constants.IOFields.HEIGHT],
+            volume_type="kco"),
+            constants.IOFields.GLI_DLCO: metrics.GLI_volume(
+            self.dict_dis[constants.IOFields.AGE],
+            self.dict_dis[constants.IOFields.SEX],
+            self.dict_dis[constants.IOFields.HEIGHT],
+            volume_type="dlco"),               
+            constants.IOFields.RBCM_REF: metrics.rbcm_ref(
+            self.dict_dis[constants.IOFields.AGE],
+            self.dict_dis[constants.IOFields.SEX],)
+            }        
+        self.dict_stats[constants.IOFields.RBCM_PERC] = round(100 * self.rbc_m_ratio/self.dict_stats[constants.IOFields.RBCM_REF])
         if isinstance(self.config.patient_frc, (int, float)):
             FRC_Volume = float(self.config.patient_frc)
             User_Volume_FRC = f"{FRC_Volume}L"
@@ -990,6 +1047,11 @@ class Subject(object):
             constants.IOFields.TE90: 1e6 * self.dict_dis[constants.IOFields.TE90],
             constants.IOFields.TR_DIS: 1e3 * self.dict_dis[constants.IOFields.TR],
             constants.IOFields.USER_LUNG_VOLUME_VALUE:self.user_lung_volume_value,
+            constants.IOFields.AGE: self.dict_dis[constants.IOFields.AGE],
+            constants.IOFields.SEX: self.dict_dis[constants.IOFields.SEX],
+            constants.IOFields.HEIGHT: self.dict_dis[constants.IOFields.HEIGHT],
+            constants.IOFields.WEIGHT: self.dict_dis[constants.IOFields.WEIGHT],
+            constants.IOFields.VENT_NORMALIZATION_METHOD: self.config.vent_normalization_method
         }
         return self.dict_info
 
@@ -997,7 +1059,7 @@ class Subject(object):
         """Export image figures."""
         index_start, index_skip = plot.get_plot_indices(self.mask)
         proton_reg = img_utils.normalize(
-            np.abs(self.image_proton),
+            np.abs(self.image_proton_reg),
             self.mask,
             bag_volume=self.config.bag_volume,
             method=constants.NormalizationMethods.PERCENTILE,
@@ -1292,6 +1354,43 @@ class Subject(object):
         os.makedirs(subfolder, exist_ok=True)
         io_utils.move_files(output_files, subfolder)
 
+    def check_git_version(self) -> None:
+        """
+        Run a git “health check” for this repo and emit warnings if you are not in sync
+        with the target branch (default: origin/main).
+
+        What it checks
+        --------------
+        1) Remote sync vs compare_branch (here: origin/main)
+           - Warn if you are BEHIND (you need to pull/rebase)
+           - Warn if you are AHEAD  (you have local commits not pushed)
+
+        2) Local repo state (actionable problems)
+           - Dirty working tree (uncommitted and/or untracked files)
+           - Merge/rebase/cherry-pick in progress
+           - Unmerged conflict files
+
+        Behavior / Output
+        -----------------
+        - Runs `git fetch --all --prune` (best effort) so comparisons use fresh remote refs.
+          If offline, it falls back to cached refs.
+        - Shows up to `show_n` commit lines for:
+            * incoming commits (what would be pulled from compare_branch)
+            * outgoing commits (what would be pushed)
+        - always_show=False means it only logs if there is a compare-branch related warning
+          (behind/ahead compare_branch, or missing compare_branch). If you want the header
+          printed every run, set always_show=True.
+        """
+        # Run the repo status check in the current working directory ("."),
+        # which is typically the repo root when you run the pipeline from the cloned folder.
+        git_utils.warn_git_status(
+            repo_dir=".",
+            do_fetch=True,
+            show_n=8,
+            compare_branch=self.config.git_compare_branch,
+            git_always_show=self.config.git_always_show,
+        )
+
     ####################################################################
     # Helper methods for ventilation normalization / histogram settings#
     ####################################################################
@@ -1335,7 +1434,6 @@ class Subject(object):
             )
 
         return img_utils.normalize(img, mask=norm_mask, method=method)
-
 
     def _vent_hist_yticklabels(self):
         """
@@ -1503,4 +1601,3 @@ class Subject(object):
 
         # default (e.g., FRAC_VENT)
         return self.reference_data["healthy_histogram_vent_frac_dir"]
-

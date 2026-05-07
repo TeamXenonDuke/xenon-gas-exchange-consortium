@@ -106,18 +106,24 @@ def GLI_volume(age: float, sex: str, height: float, volume_type: str = "frc") ->
     """
     if pd.isna(age) or pd.isna(sex) or pd.isna(height):
         return np.nan
-    lookup_df = pd.read_pickle('./assets/lut/GLI.pkl')
+    lookup_df = pd.read_pickle('./assets/lut/gli_new.pkl')
 
     # Ensure sex is upper case, and volume_type is lower case
     sex = sex.upper()
     volume_type = volume_type.lower()
 
-    if volume_type == "frc":
-        column_name = 'frc_predicted'
-    elif volume_type == "fvc":
-        column_name = 'fvc_predicted'
-    else:
-        raise ValueError("volume_type must be either 'frc' or 'fvc'")
+    # Map parameter to dataframe column
+    column_map = {
+        "frc": "frc_predicted",
+        "fvc": "fvc_predicted",
+        "va": "va_predicted",
+        "kco": "kcotr_predicted",
+        "dlco": "dlco_predicted"
+    }
+    if volume_type not in column_map:
+        raise ValueError(f"volume_type must be one of {list(column_map.keys())}")
+    
+    column_name = column_map[volume_type]
 
     # Helper to get predicted value at specific age and height
     def get_predicted(a, h):
@@ -478,3 +484,10 @@ def rdp_ba(
     b_t = (bottom - top/2) / 2 * 100
     return b_t
     
+def rbcm_ref(age:int, sex:str)-> float:
+    sex_num = 0
+    if sex == "M":
+        sex_num == 1 
+    rbcm = 0.6476 - 0.00443 * age + 0.1202 * sex_num
+    return rbcm
+

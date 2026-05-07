@@ -120,7 +120,7 @@ def clinical(dict_stats: Dict[str, Any], path: str):
         base_url=str(project_root)
     ).write_pdf(
         target=path,
-        dpi=96,
+        dpi=300,
     )
 
 
@@ -157,7 +157,7 @@ def grayscale(dict_stats: Dict[str, Any], path: str):
         base_url=str(project_root)
     ).write_pdf(
         target=path,
-        dpi=96,
+        dpi=300,
     )
 
 
@@ -194,7 +194,7 @@ def grayscale_cor(dict_stats: Dict[str, Any], path: str):
         base_url=str(project_root)
     ).write_pdf(
         target=path,
-        dpi=96,
+        dpi=300,
     )
 
 
@@ -231,7 +231,7 @@ def intro(dict_info: Dict[str, Any], path: str):
         base_url=str(project_root)
     ).write_pdf(
         target=path,
-        dpi=96,
+        dpi=300,
     )
 
 
@@ -268,7 +268,7 @@ def qa(dict_stats: Dict[str, Any], path: str):
         base_url=str(project_root)
     ).write_pdf(
         target=path,
-        dpi=96,
+        dpi=300,
     )
 
 

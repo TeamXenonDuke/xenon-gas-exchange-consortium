@@ -24,6 +24,11 @@ class IOFields(object):
     AGE = "age"
     SEX = "sex"
     HEIGHT = "height"
+    WEIGHT = "weight"
+    GLI_FRC = "gli_frc"
+    GLI_VA = "gli_va"
+    GLI_KCO = "gli_kco"
+    GLI_DLCO = "gli_dlco"
     BANDWIDTH = "bandwidth"
     USER_LUNG_VOLUME_VALUE ="user_lung_volume_value"
     BIASFIELD_KEY = "biasfield_key"
@@ -82,8 +87,11 @@ class IOFields(object):
     VOL_CORRECTION_KEY = "vol_correction_key"
     VOL_CORRECTION_FACTOR_MEMBRANE  = "vol_correction_factor_membrane"
     VOL_CORRECTION_FACTOR_RBC = "vol_correction_factor_rbc"
+    VENT_NORMALIZATION_METHOD = "vent_normalization_method"
     CORRECTED_LUNG_VOLUME = "corrected_lung_volume"
     PREP_PULSES = "prep_pulses"
+    RBCM_REF = "rbcm_ref"
+    RBCM_PERC = "rbcm_perc"
 
 class PrepPulses(enum.Enum):
     """Preparation pulse flags."""
@@ -367,12 +375,14 @@ class PDFOPTIONS(object):
 
 class NormalizationMethods(object):
     """Image normalization methods."""
+    # For increasing the image contrast
+    MAX = "max"  # Normalize by the global maximum intensity in the image (increase contrast, not currently used)
+    PERCENTILE = "percentile"  # Normalize by a given percentile of the entire image (increase proton contrast)
+    MEAN = "mean"  # Normalize by the mean intensity within the mask (deep learning segmetation)
 
-    MAX = "max"  # Normalize by the global maximum intensity in the image
+    # For histogram normalization
     GLB_99 = "GLB_99"  # Normalize by general linear binning with 99th percentile rescaling
     FRAC_VENT = "frac_vent"  # Normalize to estimate fractional ventilation using bag volume and voxel size
-    PERCENTILE = "percentile"  # Normalize by a given percentile of the entire image
-    MEAN = "mean"  # Normalize by the mean intensity within the mask
     MEAN_ANCHOR = "mean_anchor" # MEAN_ANCHOR: normalize to unit-mean inside mask (like MEAN), then clip high outliers at the masked 99th percentile to stabilize scaling.
     THRESHOLD_MA = "threshold_ma"  # Use mean-anchor normalization, then apply thresholding instead of linear binning to separate ventilation-defect and healthy voxels.
 

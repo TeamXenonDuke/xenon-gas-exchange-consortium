@@ -2,13 +2,106 @@
 import logging
 import sys
 from typing import Any, Dict
-
+from datetime import date
 import ismrmrd
 import numpy as np
 
 sys.path.append("..")
 from utils import constants
 
+def get_patient_age(header: ismrmrd.xsd.ismrmrdschema.ismrmrd.ismrmrdHeader) -> int:
+    """
+    Get the patient's age.
+
+    Args:
+        header (ismrmrd.xsd.ismrmrdschema.ismrmrd.ismrmrdHeader): MRD header
+    Returns:
+        subject age (int)
+
+    Raises:
+        ValueError: If age information is not found in the MRD header.
+    """
+    try:
+        dob_xml = header.subjectInformation.patientBirthdate
+        scan_xml = header.studyInformation.studyDate
+
+        # Convert XmlDate → Python date
+        dob = date(dob_xml.year, dob_xml.month, dob_xml.day)
+        scan = date(scan_xml.year, scan_xml.month, scan_xml.day)
+
+        age = scan.year - dob.year - ((scan.month, scan.day) < (dob.month, dob.day))
+        return age
+    except:
+        return np.nan
+
+    raise ValueError("Could not find age from MRD header")
+
+
+def get_patient_sex(header: ismrmrd.xsd.ismrmrdschema.ismrmrd.ismrmrdHeader) -> str:
+    """
+    Get the patient's sex.
+
+    Args:
+        header (ismrmrd.xsd.ismrmrdschema.ismrmrd.ismrmrdHeader): MRD header
+
+    Returns:
+        Patient sex as a string: "M" for male, "F" for female.
+
+    Raises:
+        ValueError: If sex information is not found in the MRD header.
+    """
+    try:
+        sex = header.subjectInformation.patientGender
+        if sex == "male":
+            sex = "M"
+        elif sex == "female":
+            sex = "F"
+        return sex
+    except:
+        return np.nan
+    raise ValueError("Could not find sex from MRD header")
+
+def get_patient_height(header: ismrmrd.xsd.ismrmrdschema.ismrmrd.ismrmrdHeader) -> float:
+    """
+    Get the patient's height in centimeters.
+
+    Args:
+        header (ismrmrd.xsd.ismrmrdschema.ismrmrd.ismrmrdHeader): MRD header.
+
+    Returns:
+        Patient height as a float (in cm).
+
+    Raises:
+        ValueError: If height information is not found in the twix object.
+    """
+    try:
+        height = 100 * header.subjectInformation.patientHeight_m
+        return height
+    except:
+        return np.nan
+
+    raise ValueError("Could not find height from MRD header")
+
+def get_patient_weight(header: ismrmrd.xsd.ismrmrdschema.ismrmrd.ismrmrdHeader) -> float:
+    """
+    Get the patient's weight in kg.
+
+    Args:
+        header (ismrmrd.xsd.ismrmrdschema.ismrmrd.ismrmrdHeader): MRD header.
+
+    Returns:
+        Patient weight as a float (in kg).
+
+    Raises:
+        ValueError: If weight information is not found in the MRD header.
+    """
+    try:
+        weight = header.subjectInformation.patientWeight_kg
+        return weight
+    except:
+        return np.nan
+
+    raise ValueError("Could not find weight from MRD header")
 
 def get_subject_id(
     header: ismrmrd.xsd.ismrmrdschema.ismrmrd.ismrmrdHeader,

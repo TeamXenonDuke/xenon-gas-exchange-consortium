@@ -44,7 +44,7 @@ class Config(config_dict.ConfigDict):
         self.bag_volume = "None"
         self.segmentation_key = constants.SegmentationKey.CNN_VENT.value
         self.manual_seg_filepath = ""
-        # default 99th percentile rescaling method
+        # Choose NormalizationMethod from PERCENTILE_MASKED, FRAC_VENT, MEAN_ANCHOR (PERCENTILE_MASKED is default)!
         self.vent_normalization_method = constants.NormalizationMethods.PERCENTILE_MASKED
         # auto-generate if filepath missing or file not found
         self.auto_make_trachea_plus_lung_mask = True
@@ -67,6 +67,11 @@ class Config(config_dict.ConfigDict):
         # Additional options for contamination correction
         self.phase_gas_acq_diss = "None" #degree
         self.area_gas_acq_diss = "None"
+
+        # Git/version check options (optional)
+        self.git_compare_branch = "origin/main"  # Compare HEAD to this ref (None -> auto origin/HEAD -> origin/main).
+        self.git_always_show = False            # If True log every run; if False log only when compare-branch warnings exist.
+
 
         # Loading the paramater to base_config
         self.processes = Process()
