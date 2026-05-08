@@ -56,10 +56,12 @@ def get_patient_sex(header: ismrmrd.xsd.ismrmrdschema.ismrmrd.ismrmrdHeader) -> 
             sex = "M"
         elif sex == "female":
             sex = "F"
+        elif sex is None:
+        	sex = np.nan
         return sex
     except:
+        raise ValueError("Could not find sex from MRD header")
         return np.nan
-    raise ValueError("Could not find sex from MRD header")
 
 def get_patient_height(header: ismrmrd.xsd.ismrmrdschema.ismrmrd.ismrmrdHeader) -> float:
     """
