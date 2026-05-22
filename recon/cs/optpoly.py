@@ -1,4 +1,5 @@
 """Polynomial optimization for compressed sensing."""
+
 import logging
 
 import numpy as np
@@ -160,9 +161,9 @@ def create_polynomial_preconditioner(
     assert degree >= 0
 
     if norm == "l_2":
-        (c, _) = l_2_opt(degree, l, L, verbose=verbose)
+        c, _ = l_2_opt(degree, l, L, verbose=verbose)
     elif norm == "l_inf":
-        (c, _) = l_inf_opt(degree, l, L, verbose=verbose)
+        c, _ = l_inf_opt(degree, l, L, verbose=verbose)
     else:
         raise Exception("Unknown norm option.")
 

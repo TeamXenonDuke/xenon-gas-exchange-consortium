@@ -146,7 +146,7 @@ def get_dyn_mrd_files(path: str) -> str:
     try:
         return (
             glob.glob(os.path.join(path, "**Calibration***.h5"))
-            + glob.glob(os.path.join(path, "**calibration***.h5")) 
+            + glob.glob(os.path.join(path, "**calibration***.h5"))
             + glob.glob(os.path.join(path, "**Calibration***.mrd"))
             + glob.glob(os.path.join(path, "**calibration***.mrd"))
         )[0]
@@ -242,7 +242,9 @@ def read_dyn_twix(path: str) -> Dict[str, Any]:
     }
 
 
-def read_dis_twix(path: str, config: Optional[ml_collections.ConfigDict] = None) -> Dict[str, Any]:
+def read_dis_twix(
+    path: str, config: Optional[ml_collections.ConfigDict] = None
+) -> Dict[str, Any]:
     """Read 1-point dixon disssolved phase imaging twix file.
 
     Args:
@@ -569,7 +571,7 @@ def export_nii_4d(image, path, fov=None):
         fov: float field of view in cm
     """
     # Scale values and clip to ensure they stay in the [0, 255] range
-    color = np.copy(image)*255  
+    color = np.copy(image) * 255
     color = np.clip(color, 0, 255).astype("uint8")
 
     # some fancy and tricky re-arrange
@@ -671,6 +673,7 @@ def move_files(source_paths: list, destination_path: str) -> None:
         if os.path.isfile(path):
             shutil.move(path, os.path.join(destination_path, fname))
 
+
 def check_real_number(input_data):
-    input_data = np.asarray(input_data).squeeze()    # allow scalar or 1-element array
+    input_data = np.asarray(input_data).squeeze()  # allow scalar or 1-element array
     return input_data.shape == () and np.isreal(input_data) and np.isfinite(input_data)

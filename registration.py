@@ -1,4 +1,5 @@
 """Registration module."""
+
 import logging
 import os
 from typing import Tuple
@@ -57,9 +58,9 @@ def register_ants(
         return array
 
     # Converted the inputs with dtype float32 if the inputs are boolean
-    image_static = convert_bool_to_float(image_static);
-    image_moving1 = convert_bool_to_float(image_moving1);
-    image_moving2 = convert_bool_to_float(image_moving2);
+    image_static = convert_bool_to_float(image_static)
+    image_moving1 = convert_bool_to_float(image_moving1)
+    image_moving2 = convert_bool_to_float(image_moving2)
 
     # save the inputs into nii files so the execute N4 can read in
     nii_static = nib.Nifti1Image(abs(image_static), np.eye(4))
@@ -73,25 +74,16 @@ def register_ants(
     logging.info("*** Using Ants Executable files to register images ...")
     output_prefix = "[" + pathOutputprefix + ", " + pathOutputmoving1 + "]"
     # command string
-    cmd_register = (
-        pathReg
-        + " --dimensionality 3 \
+    cmd_register = pathReg + " --dimensionality 3 \
         --float 0 \
         --interpolation BSpline \
-        --metric MI["
-        + pathInputstatic
-        + ","
-        + pathInputmoving1
-        + ",1,32,Regular, 1] \
+        --metric MI[" + pathInputstatic + "," + pathInputmoving1 + ",1,32,Regular, 1] \
         --transform Rigid[0.1] \
         --convergence [20x20x20, 1e-6, 20] \
         --shrink-factors 4x2x1 \
         --smoothing-sigmas 0x0x0 \
-        --output "
-        + output_prefix
-        + " \
+        --output " + output_prefix + " \
         --verbose 1"
-    )
     # registration command
     os.system(cmd_register)
     tdata = os.path.join(tmp_path, "thisTransform_0GenericAffine.mat")

@@ -505,10 +505,14 @@ def rdp_ba(
     total_mean = np.array(total_mean)
     total_mean = np.nanmean(total_mean, axis=0)
 
-    bottom = total_mean[2] + total_mean[5]
-    top = total_mean[0] + total_mean[1] + total_mean[3] + total_mean[4]
-    b_t = (bottom - top / 2) / 2 * 100
-    return b_t
+    if np.isscalar(total_mean) or len(total_mean) < 6:
+        print("Warning: total_mean is not a valid vector, skipping rdp_ba calculation")
+    return 0
+
+    # bottom = total_mean[2] + total_mean[5]
+    # top = total_mean[0] + total_mean[1] + total_mean[3] + total_mean[4]
+    # b_t = (bottom - top / 2) / 2 * 100
+    # return b_t
 
 
 def relative_vc_map(

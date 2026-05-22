@@ -1108,6 +1108,19 @@ class Subject(object):
             self.relative_vc_map = corr_calc[0]
             self.correction_map = corr_calc[1]
             self.image_rbc_osc_corr = corr_calc[2]
+            data_array = self.relative_vc_map  # 直接用你的变量
+
+            # 构造 affine（默认单位矩阵，大多数场景可用；如果你有原图 affine 请替换）
+            affine = np.eye(4)
+
+            # 创建 NIfTI 图像
+            nii_img = nib.Nifti1Image(data_array, affine=affine)
+
+            # 保存路径
+            save_path = os.path.join("tmp/relative_vc_map.nii.gz")
+
+            # 保存
+            nib.save(nii_img, save_path)
 
     def oscillation_binning(self):
         """Bin oscillation image to colormap bins."""
@@ -1973,14 +1986,10 @@ class Subject(object):
         if self.config.osc_recon.oscillation_analysis:
             output_files = output_files + (
                 "tmp/{}_report_osc_imaging.pdf".format(self.config.subject_id),
-                "tmp/nii/osc_binned_color.nii",
-                "tmp/nii/osc.nii",
+                "tmp/osc_binned_color.nii",
             )
             if self.config.osc_recon.vc_correction:
-                output_files = output_files + (
-                    "tmp/nii/osc_binned_color_corr.nii",
-                    "tmp/nii/osc_corr.nii",
-                )
+                output_files = output_files + ("tmp/osc_binned_color_corr.nii",)
 
         # move files
         subfolder = os.path.join(self.config.data_dir, "gx")

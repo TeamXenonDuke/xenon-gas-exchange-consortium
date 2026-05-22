@@ -21,10 +21,12 @@ def gas_contamination_correction(
         data_dissolved=dict_dis[constants.IOFields.FIDS_DIS],
         data_gas=dict_dis[constants.IOFields.FIDS_GAS],
         sample_time=dict_dis[constants.IOFields.SAMPLE_TIME],
-        freq_gas_acq_diss= dict_dis[constants.IOFields.XE_CENTER_FREQUENCY]*dict_dis[constants.IOFields.XE_DISSOLVED_OFFSET_FREQUENCY]*(-1.0),
+        freq_gas_acq_diss=dict_dis[constants.IOFields.XE_CENTER_FREQUENCY]
+        * dict_dis[constants.IOFields.XE_DISSOLVED_OFFSET_FREQUENCY]
+        * (-1.0),
         phase_gas_acq_diss=config.phase_gas_acq_diss,
         area_gas_acq_diss=config.area_gas_acq_diss,
-        optimized_conta_phase = config.recon.optimized_conta_phase,
+        optimized_conta_phase=config.recon.optimized_conta_phase,
         fa_gas=dict_dis[constants.IOFields.FA_GAS],
     )
     return dict_dis

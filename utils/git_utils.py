@@ -8,7 +8,6 @@ import sys
 from dataclasses import dataclass
 from typing import Optional, List, Tuple
 
-
 # ----------------- ANSI color helpers -----------------
 RED = "\033[31m"
 YELLOW = "\033[33m"
@@ -96,7 +95,14 @@ def _remote_default_branch(repo_dir: str, remote: str = "origin") -> Optional[st
 
     for cand in (f"{remote}/main", f"{remote}/master"):
         try:
-            _run_git(repo_dir, "show-ref", "--verify", "--quiet", f"refs/remotes/{cand}", check=True)
+            _run_git(
+                repo_dir,
+                "show-ref",
+                "--verify",
+                "--quiet",
+                f"refs/remotes/{cand}",
+                check=True,
+            )
             return cand
         except Exception:
             continue
@@ -119,14 +125,18 @@ def _ahead_behind(repo_dir: str, left_ref: str, right_ref: str) -> Tuple[int, in
       - ahead  = commits only in left_ref
       - behind = commits only in right_ref
     """
-    counts = _run_git(repo_dir, "rev-list", "--left-right", "--count", f"{left_ref}...{right_ref}")
+    counts = _run_git(
+        repo_dir, "rev-list", "--left-right", "--count", f"{left_ref}...{right_ref}"
+    )
     left, right = counts.split()
     return int(left), int(right)
 
 
 def _log_oneline(repo_dir: str, rev_range: str, n: int) -> str:
     """Return `git log --oneline <rev_range> -n<n>` output."""
-    return _run_git(repo_dir, "log", "--oneline", rev_range, f"-n{n}", check=False).strip()
+    return _run_git(
+        repo_dir, "log", "--oneline", rev_range, f"-n{n}", check=False
+    ).strip()
 
 
 def _extract_merge_lines(oneline_log: str) -> List[str]:
@@ -134,7 +144,11 @@ def _extract_merge_lines(oneline_log: str) -> List[str]:
     out: List[str] = []
     for line in oneline_log.splitlines():
         low = line.lower()
-        if "merge pull request" in low or low.startswith("merge ") or "merge branch" in low:
+        if (
+            "merge pull request" in low
+            or low.startswith("merge ")
+            or "merge branch" in low
+        ):
             out.append(line)
     return out
 
@@ -143,6 +157,7 @@ def _extract_merge_lines(oneline_log: str) -> List[str]:
 @dataclass
 class RepoState:
     """Snapshot of local repo status + HEAD info."""
+
     repo_dir: str
     branch: str
     head_sha: str
@@ -176,9 +191,8 @@ def get_repo_state(repo_dir: str = ".") -> RepoState:
     git_dir = os.path.join(repo_dir, git_dir) if not os.path.isabs(git_dir) else git_dir
 
     in_merge = os.path.exists(os.path.join(git_dir, "MERGE_HEAD"))
-    in_rebase = (
-        os.path.exists(os.path.join(git_dir, "rebase-apply"))
-        or os.path.exists(os.path.join(git_dir, "rebase-merge"))
+    in_rebase = os.path.exists(os.path.join(git_dir, "rebase-apply")) or os.path.exists(
+        os.path.join(git_dir, "rebase-merge")
     )
     in_cherry_pick = os.path.exists(os.path.join(git_dir, "CHERRY_PICK_HEAD"))
 
@@ -240,15 +254,21 @@ def warn_git_status(
 
     st = get_repo_state(repo_dir)
 
-    issues: List[str] = []         # all issues we will print if output is enabled
-    compare_issues: List[str] = [] # only issues that should trigger output when git_always_show=False
+    issues: List[str] = []  # all issues we will print if output is enabled
+    compare_issues: List[str] = (
+        []
+    )  # only issues that should trigger output when git_always_show=False
 
     # Decide what to compare against
     if compare_branch is None:
         compare_branch = _remote_default_branch(repo_dir, remote="origin")
     else:
         compare_branch = compare_branch.strip()
-        if compare_branch and ("/" not in compare_branch) and (compare_branch not in ("HEAD",)):
+        if (
+            compare_branch
+            and ("/" not in compare_branch)
+            and (compare_branch not in ("HEAD",))
+        ):
             compare_branch = f"origin/{compare_branch}"
 
     if not compare_branch or not _ref_exists(repo_dir, compare_branch):
@@ -282,12 +302,17 @@ def warn_git_status(
                 incoming = _log_oneline(repo_dir, f"HEAD..{compare_branch}", show_n)
                 if incoming:
                     detail_blocks.append(
-                        _yellow(f"[git-check] Incoming from {compare_branch} (would be pulled):\n{incoming}")
+                        _yellow(
+                            f"[git-check] Incoming from {compare_branch} (would be pulled):\n{incoming}"
+                        )
                     )
                     merges = _extract_merge_lines(incoming)
                     if merges:
                         detail_blocks.append(
-                            _yellow("[git-check] Merge/PR commits among incoming:\n" + "\n".join(merges))
+                            _yellow(
+                                "[git-check] Merge/PR commits among incoming:\n"
+                                + "\n".join(merges)
+                            )
                         )
 
             # AHEAD => INFO only (does NOT trigger output when git_always_show=False)
@@ -298,7 +323,9 @@ def warn_git_status(
                 outgoing = _log_oneline(repo_dir, f"{compare_branch}..HEAD", show_n)
                 if outgoing:
                     detail_blocks.append(
-                        _yellow(f"[git-check] Outgoing vs {compare_branch} (would be pushed):\n{outgoing}")
+                        _yellow(
+                            f"[git-check] Outgoing vs {compare_branch} (would be pushed):\n{outgoing}"
+                        )
                     )
 
     # Only show output if requested and compare-branch issues exist
@@ -342,4 +369,3 @@ def warn_git_status(
 
     # Ending separator
     log.info(sep)
-
