@@ -296,9 +296,10 @@ class Subject(object):
                 self.dict_dis[constants.IOFields.INSTITUTION]
                 == constants.Institution.CCHMC.value
             ):
-                self.traj_scaling_factor = (
-                    0.903  # cincinnati requires a unique scaling factor
-                )
+                if self.config.recon.traj_type == constants.TrajType.HALTONSPIRAL:
+                    self.traj_scaling_factor = (
+                        0.903  # cincinnati requires a unique scaling factor
+                    )
 
         """Calculate the number of frames to skip at the beginning of scan:
           if the prep_pulse = 'true', there is no skip frames n_skip_start=0; else calculated by dissolved flip angle"""

@@ -288,6 +288,11 @@ def read_dis_twix(
     if config or config.recon.del_x is constants.NONE:  # type: ignore
         logging.error("Gradient delay is not properly set in the config file")
 
+    if config is not None and config.recon.ramp_time is not constants.NONE:
+        ramp_time = config.recon.ramp_time
+    else:
+        ramp_time = twix_utils.get_ramp_time(twix_obj)
+
     return {
         constants.IOFields.AGE: twix_utils.get_patient_age(twix_obj),
         constants.IOFields.SEX: twix_utils.get_patient_sex(twix_obj),
@@ -315,7 +320,7 @@ def read_dis_twix(
         constants.IOFields.N_SKIP_START: data_dict[constants.IOFields.N_SKIP_START],
         constants.IOFields.ORIENTATION: twix_utils.get_orientation(twix_obj),
         constants.IOFields.PROTOCOL_NAME: twix_utils.get_protocol_name(twix_obj),
-        constants.IOFields.RAMP_TIME: twix_utils.get_ramp_time(twix_obj),
+        constants.IOFields.RAMP_TIME: ramp_time,
         constants.IOFields.REMOVEOS: twix_utils.get_flag_removeOS(twix_obj),
         constants.IOFields.SCAN_DATE: twix_utils.get_scan_date(twix_obj),
         constants.IOFields.SOFTWARE_VERSION: twix_utils.get_software_version(twix_obj),

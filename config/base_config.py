@@ -112,6 +112,9 @@ class Recon(object):
         self.del_y = "None"
         self.del_z = "None"
 
+        # Ramp time will read in by default, but may be specified in us
+        self.ramp_time = "None"
+
         # Reconstruction and matrix sizes
         self.recon_size = 64
         self.matrix_size = 128
@@ -137,7 +140,7 @@ class OscillationRecon(object):
         self.oscillation_analysis = False
 
         # Keyhole Radius
-        self.key_radius_pct = 0.14
+        self.key_radius_pct = 14
         # Recon Type
         # Gridded (Robertson)
         # Gridded Sliding Window (PilgrimMorris - not yet implemented)
