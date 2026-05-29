@@ -89,6 +89,7 @@ class Recon(object):
         del_x: str, the x direction gradient delay in microseconds
         del_y: str, the y direction gradient delay in microseconds
         del_z: str, the z direction gradient delay in microseconds
+        ramp_time: str, gradient ramp time in microseconds
         traj_type: str, the trajectory type
         recon_key: str, the reconstruction key
         recon_proton: bool, whether to reconstruct proton images
