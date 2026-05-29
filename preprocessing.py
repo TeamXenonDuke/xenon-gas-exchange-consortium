@@ -44,12 +44,6 @@ def prepare_traj(
         traj (np.array): trajectory array of shape (n_projections, n_points, 3)
     """
     data = data_dict[constants.IOFields.FIDS]
-    if config and config.recon.del_x is not constants.NONE:  # type: ignore
-        data_dict[constants.IOFields.GRAD_DELAY_X] = config.recon.del_x  # type: ignore
-        data_dict[constants.IOFields.GRAD_DELAY_Y] = config.recon.del_y  # type: ignore
-        data_dict[constants.IOFields.GRAD_DELAY_Z] = config.recon.del_z  # type: ignore
-    else:
-        logging.error("Gradient delay is not properly set in the config file")
 
     traj_x, traj_y, traj_z = traj_utils.generate_trajectory(
         sample_time=1e6 * data_dict[constants.IOFields.SAMPLE_TIME],

@@ -155,7 +155,8 @@ class Subject(object):
         if self.config.recon.recon_proton:
             try:
                 self.dict_ute = io_utils.read_ute_twix(
-                    io_utils.get_ute_twix_files(str(self.config.data_dir))
+                    io_utils.get_ute_twix_files(str(self.config.data_dir)),
+                    config=self.config,
                 )
             except ValueError:
                 logging.info("No proton twix file found")
@@ -274,8 +275,8 @@ class Subject(object):
         self.data_gas = self.dict_dis[constants.IOFields.FIDS_GAS]
 
         if (
-            self.dict_dis[constants.IOFields.INSTITUTION]
-            == constants.Institution.IOWA.value
+            self.dict_dis[constants.IOFields.SYSTEM_VENDOR]
+            == constants.SystemVendor.GE.value
         ):
             self.data_dissolved = np.conjugate(self.data_dissolved)
             self.data_gas = np.conjugate(self.data_gas)
@@ -292,14 +293,8 @@ class Subject(object):
             self.traj_gas = self.dict_dis[constants.IOFields.TRAJ][0]
             self.traj_dissolved = self.dict_dis[constants.IOFields.TRAJ][1]
 
-            if (
-                self.dict_dis[constants.IOFields.INSTITUTION]
-                == constants.Institution.CCHMC.value
-            ):
-                if self.config.recon.traj_type == constants.TrajType.HALTONSPIRAL:
-                    self.traj_scaling_factor = (
-                        0.903  # cincinnati requires a unique scaling factor
-                    )
+            if self.config.recon.traj_scaling_factor is not constants.NONE:
+                self.traj_scaling_factor = self.config.recon.traj_scaling_factor
 
         """Calculate the number of frames to skip at the beginning of scan:
           if the prep_pulse = 'true', there is no skip frames n_skip_start=0; else calculated by dissolved flip angle"""
@@ -1471,6 +1466,7 @@ class Subject(object):
             constants.IOFields.GRAD_DELAY_Z: self.dict_dis[
                 constants.IOFields.GRAD_DELAY_Z
             ],
+            constants.IOFields.RAMP_TIME: self.dict_dis[constants.IOFields.RAMP_TIME],
             constants.IOFields.HB_CORRECTION_KEY: self.config.hb_correction_key,
             constants.IOFields.HB: self.config.hb,
             constants.IOFields.RBC_HB_CORRECTION_FACTOR: self.rbc_hb_correction_factor,

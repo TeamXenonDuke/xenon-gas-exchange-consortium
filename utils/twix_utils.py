@@ -561,9 +561,6 @@ def get_ute_data(twix_obj: mapvbvd._attrdict.AttrDict) -> Dict[str, Any]:
         2. number of FIDs to use for generating trajectory.
         3. number of FIDs to skip from the beginning. This may be due to a noise frame.
         4. number of FIDs to skip from the end. This may be due to blank frame.
-        5. gradient delay x in microseconds.
-        6. gradient delay y in microseconds.
-        7. gradient delay z in microseconds.
     """
     raw_fids = np.array(twix_obj.image.unsorted().astype(np.cdouble))
 
@@ -594,7 +591,4 @@ def get_ute_data(twix_obj: mapvbvd._attrdict.AttrDict) -> Dict[str, Any]:
         constants.IOFields.N_FRAMES: nframes,
         constants.IOFields.N_SKIP_START: n_skip_start,
         constants.IOFields.N_SKIP_END: n_skip_end,
-        constants.IOFields.GRAD_DELAY_X: -5,
-        constants.IOFields.GRAD_DELAY_Y: -5,
-        constants.IOFields.GRAD_DELAY_Z: -5,
     }

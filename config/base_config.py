@@ -90,8 +90,7 @@ class Recon(object):
         del_y: str, the y direction gradient delay in microseconds
         del_z: str, the z direction gradient delay in microseconds
         ramp_time: str, gradient ramp time in microseconds
-        traj_type: str, the trajectory type
-        recon_key: str, the reconstruction key
+        recon_key: str, the type of reconstruction to perform
         recon_proton: bool, whether to reconstruct proton images
         remove_contamination: bool, whether to remove gas contamination
         remove_noisy_projections: bool, whether to remove noisy projections
@@ -103,7 +102,10 @@ class Recon(object):
         n_skip_start: int, the number of frames to skip at the beginning
         n_skip_end: int, the number of frames to skip at the end
         key_radius: int, the key radius for the keyhole image
+        recon_size: int, size to which the images are reconstructed
         matrix_size: int, the final matrix size
+        traj_type: str, the trajectory type
+        traj_scaling_factor: str, scaling factor to apply to trajectories
     """
 
     def __init__(self):
@@ -134,6 +136,11 @@ class Recon(object):
         self.gas_contamination_correction = False
         self.traj_type = constants.TrajType.HALTONSPIRAL
 
+        # Scaling is calculated automatically if not reading in trajectories directly
+        # Will default to 1 when reading in trajectories, but may be specified instead
+        # (use 0.903 for Halton Spiral Cincy data)
+        self.traj_scaling_factor = "None"
+
 
 class OscillationRecon(object):
     def __init__(self):
@@ -144,10 +151,8 @@ class OscillationRecon(object):
         self.key_radius_pct = 14
         # Recon Type
         # Gridded (Robertson)
-        # Gridded Sliding Window (PilgrimMorris - not yet implemented)
         # Compressed Sensing (Plummer)
-        # Compressed Sensing Sliding Window (PMP - not yet implemented)
-        self.osc_recon_key = constants.ReconKey.PLUMMER.value
+        self.osc_recon_key = constants.ReconKey.ROBERTSON.value
 
         # Correction for relative capillary blood volume
         self.vc_correction = False

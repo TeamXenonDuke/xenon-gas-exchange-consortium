@@ -285,7 +285,12 @@ def read_dis_twix(
     data_dict = twix_utils.get_gx_data(twix_obj=twix_obj)
     filename = os.path.basename(path)
 
-    if config or config.recon.del_x is constants.NONE:  # type: ignore
+    if (
+        config is None
+        or config.recon.del_x is constants.NONE
+        or config.recon.del_y is constants.NONE
+        or config.recon.del_z is constants.NONE
+    ):  # type: ignore
         logging.error("Gradient delay is not properly set in the config file")
 
     if config is not None and config.recon.ramp_time is not constants.NONE:
@@ -333,14 +338,25 @@ def read_dis_twix(
     }
 
 
-def read_ute_twix(path: str) -> Dict[str, Any]:
+def read_ute_twix(
+    path: str, config: Optional[ml_collections.ConfigDict] = None
+) -> Dict[str, Any]:
     """Read proton ute imaging twix file.
 
     Args:
         path: str file path of twix file
     Returns: dictionary containing data and metadata extracted from the twix file.
     This includes:
-        TODO
+        - dwell time in seconds
+        - UTE FIDs
+        - Institution at which data was acquired
+        - System vendor on which data was acquired
+        - Ramp time in microseconds
+        - Gradient delays (x, y, z) in microseconds
+        - number of projections to skip at the beginning of the scan
+        - number of projections to skip at the end of the scan
+        - number of frames used to calculate trajectory
+        - orientation of the scan
     """
     try:
         twix_obj = mapvbvd.mapVBVD(path)
@@ -359,15 +375,23 @@ def read_ute_twix(path: str) -> Dict[str, Any]:
         raise ValueError("Cannot get data from twix object.")
     data_dict = twix_utils.get_ute_data(twix_obj=twix_obj)
 
+    if (
+        config is None
+        or config.recon.del_x is constants.NONE
+        or config.recon.del_y is constants.NONE
+        or config.recon.del_z is constants.NONE
+    ):  # type: ignore
+        logging.error("Gradient delay is not properly set in the config file")
+
     return {
         constants.IOFields.SAMPLE_TIME: twix_utils.get_sample_time(twix_obj),
         constants.IOFields.FIDS: data_dict[constants.IOFields.FIDS],
         constants.IOFields.INSTITUTION: twix_utils.get_institution_name(twix_obj),
         constants.IOFields.SYSTEM_VENDOR: twix_utils.get_system_vendor(twix_obj),
         constants.IOFields.RAMP_TIME: twix_utils.get_ramp_time(twix_obj),
-        constants.IOFields.GRAD_DELAY_X: data_dict[constants.IOFields.GRAD_DELAY_X],
-        constants.IOFields.GRAD_DELAY_Y: data_dict[constants.IOFields.GRAD_DELAY_Y],
-        constants.IOFields.GRAD_DELAY_Z: data_dict[constants.IOFields.GRAD_DELAY_Z],
+        constants.IOFields.GRAD_DELAY_X: config.recon.del_x,
+        constants.IOFields.GRAD_DELAY_Y: config.recon.del_y,
+        constants.IOFields.GRAD_DELAY_Z: config.recon.del_z,
         constants.IOFields.N_SKIP_END: data_dict[constants.IOFields.N_SKIP_END],
         constants.IOFields.N_SKIP_START: data_dict[constants.IOFields.N_SKIP_START],
         constants.IOFields.N_FRAMES: data_dict[constants.IOFields.N_FRAMES],
@@ -478,7 +502,6 @@ def read_dis_mrd(path: str, multi_echo: bool) -> Dict[str, Any]:
         constants.IOFields.RAMP_TIME: mrd_utils.get_ramp_time(header),
         constants.IOFields.REMOVEOS: False,
         constants.IOFields.SCAN_DATE: mrd_utils.get_scan_date(header),
-        constants.IOFields.SYSTEM_VENDOR: mrd_utils.get_system_vendor(header),
         constants.IOFields.SOFTWARE_VERSION: "NA",
         constants.IOFields.TE90: mrd_utils.get_TE90(header),
         constants.IOFields.TR: mrd_utils.get_TR_dissolved(header),
