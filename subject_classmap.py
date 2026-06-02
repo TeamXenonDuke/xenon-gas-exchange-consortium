@@ -284,15 +284,17 @@ class Subject(object):
         # get or generate trajectories and trajectory scaling factors
         if constants.IOFields.TRAJ not in self.dict_dis.keys():
             self.traj_dissolved = pp.prepare_traj(self.dict_dis, config=self.config)
-            self.traj_scaling_factor = traj_utils.get_scaling_factor(
-                recon_size=int(self.config.recon.recon_size),
-                n_points=self.data_gas.shape[1],
-            )
+            if self.config.recon.traj_scaling_factor is not constants.NONE:
+                self.traj_scaling_factor = self.config.recon.traj_scaling_factor
+            else:
+                self.traj_scaling_factor = traj_utils.get_scaling_factor(
+                    recon_size=int(self.config.recon.recon_size),
+                    n_points=self.data_gas.shape[1],
+                )
             self.traj_gas = self.traj_dissolved
         else:
             self.traj_gas = self.dict_dis[constants.IOFields.TRAJ][0]
             self.traj_dissolved = self.dict_dis[constants.IOFields.TRAJ][1]
-
             if self.config.recon.traj_scaling_factor is not constants.NONE:
                 self.traj_scaling_factor = self.config.recon.traj_scaling_factor
 
@@ -606,13 +608,25 @@ class Subject(object):
                 traj=traj_dis_high,
                 kernel_sharpness=float(self.config.recon.kernel_sharpness_lr),
                 kernel_extent=9 * float(self.config.recon.kernel_sharpness_lr),
+                image_size=int(self.config.recon.recon_size),
             )
             self.image_dissolved_low = reconstruction.reconstruct(
                 data=data_dis_low,
                 traj=traj_dis_low,
                 kernel_sharpness=float(self.config.recon.kernel_sharpness_lr),
                 kernel_extent=9 * float(self.config.recon.kernel_sharpness_lr),
+                image_size=int(self.config.recon.recon_size),
             )
+
+            self.image_dissolved_high = img_utils.interp(
+                self.image_dissolved_high,
+                self.config.recon.matrix_size // self.config.recon.recon_size,
+            )
+            self.image_dissolved_low = img_utils.interp(
+                self.image_dissolved_low,
+                self.config.recon.matrix_size // self.config.recon.recon_size,
+            )
+
             # flip and rotate images
             self.image_dissolved_high = img_utils.flip_and_rotate_image(
                 self.image_dissolved_high,
