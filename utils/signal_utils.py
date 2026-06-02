@@ -44,7 +44,7 @@ def _getxygrid(x: np.ndarray, y: np.ndarray) -> Tuple[np.ndarray, np.ndarray]:
     x = x[sort_idx]
     y = y[sort_idx]
 
-    return (x, y)
+    return x, y
 
 
 def _sinnstart(x: np.ndarray, y: np.ndarray, n: int) -> np.ndarray:

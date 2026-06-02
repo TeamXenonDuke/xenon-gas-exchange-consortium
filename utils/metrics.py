@@ -64,7 +64,7 @@ def snr(image: np.ndarray, mask: np.ndarray, window_size: int = 8):
                 mini_cube_noise_dist = mini_cube_noise_dist[
                     ~np.isnan(mini_cube_noise_dist)
                 ]
-                # only calculate std for the noise when it is long enough
+                # only calculate std for the noise when it is int enough
                 if len(mini_cube_noise_dist) > mini_vox_std:
                     std_dev_mini_noise_vol.append(np.std(mini_cube_noise_dist, ddof=1))
                     stepper = stepper + 1

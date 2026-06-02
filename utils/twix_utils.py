@@ -577,7 +577,7 @@ def get_ute_data(twix_obj: mapvbvd._attrdict.AttrDict) -> Dict[str, Any]:
         raw_fids = np.squeeze(raw_fids[:, 0, :])
 
     if raw_fids.shape[1] == 4601:
-        # For some reason, the raw data is 4601 points long. We need to remove the
+        # For some reason, the raw data is 4601 points int. We need to remove the
         # last projection.
         raw_fids = raw_fids[:, :4600]
         nframes = 4601

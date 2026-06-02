@@ -472,7 +472,7 @@ def get_TR_dissolved(header: ismrmrd.xsd.ismrmrdschema.ismrmrd.ismrmrdHeader) ->
     """
     tr_gas_to_dissolved = header.sequenceParameters.TR[0]
     tr_dissolved_to_gas = header.sequenceParameters.TR[1]
-    return (tr_gas_to_dissolved + tr_dissolved_to_gas) * 1e-3
+    return tr_gas_to_dissolved + tr_dissolved_to_gas * 1e-3
 
 
 def get_gx_data(dataset: ismrmrd.hdf5.Dataset, multi_echo: bool) -> Dict[str, Any]:

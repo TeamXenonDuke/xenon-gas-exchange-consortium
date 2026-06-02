@@ -45,7 +45,7 @@ def apply_indices_mask(
         Tuple of the data, and traj coordinates with the noisy FIDs removed
         given by the indices mask.
     """
-    return (data[indices], traj[indices])
+    return data[indices], traj[indices]
 
 
 def flatten_data(data: np.ndarray) -> np.ndarray:
