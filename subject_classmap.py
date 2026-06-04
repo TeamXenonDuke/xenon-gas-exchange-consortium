@@ -284,7 +284,10 @@ class Subject(object):
         # get or generate trajectories and trajectory scaling factors
         if constants.IOFields.TRAJ not in self.dict_dis.keys():
             self.traj_dissolved = pp.prepare_traj(self.dict_dis, config=self.config)
-            if self.config.recon.traj_scaling_factor is not constants.NONE:
+            if (
+                hasattr(self.config.recon, "traj_scaling_factor")
+                and self.config.recon.traj_scaling_factor is not constants.NONE
+            ):
                 self.traj_scaling_factor = self.config.recon.traj_scaling_factor
             else:
                 self.traj_scaling_factor = traj_utils.get_scaling_factor(
@@ -295,7 +298,10 @@ class Subject(object):
         else:
             self.traj_gas = self.dict_dis[constants.IOFields.TRAJ][0]
             self.traj_dissolved = self.dict_dis[constants.IOFields.TRAJ][1]
-            if self.config.recon.traj_scaling_factor is not constants.NONE:
+            if (
+                hasattr(self.config.recon, "traj_scaling_factor")
+                and self.config.recon.traj_scaling_factor is not constants.NONE
+            ):
                 self.traj_scaling_factor = self.config.recon.traj_scaling_factor
 
         """Calculate the number of frames to skip at the beginning of scan:
@@ -533,6 +539,7 @@ class Subject(object):
                 system_vendor=system_vendor,
             )
             io_utils.export_nii(np.abs(self.image_dissolved), "tmp/image_dissolved.nii")
+
         elif self.config.recon.recon_key == constants.ReconKey.PLUMMER.value:
             norm_data = np.linalg.norm(self.data_dissolved)
             self.data_dissolved /= norm_data
@@ -541,6 +548,7 @@ class Subject(object):
                 constants.T2STAR_DISSOLVED_3T,
                 self.dict_dyn[constants.IOFields.SAMPLE_TIME],
             )
+
             self.image_dissolved_norm = reconstruction.reconstruct_cs(
                 data=recon_utils.flatten_data(self.data_dissolved),
                 traj=recon_utils.flatten_traj(self.traj_dissolved),
@@ -548,12 +556,14 @@ class Subject(object):
                 overgrid_factor=1,
                 k=decay_factor,
             )
+            self.image_dissolved_norm *= norm_data
+
             self.image_dissolved_norm = img_utils.interp(
                 self.image_dissolved_norm,
                 self.config.recon.matrix_size // self.config.recon.recon_size,
             )
+
             self.data_dissolved *= norm_data
-            self.image_dissolved_norm *= norm_data
             self.image_dissolved = self.image_dissolved_norm
             io_utils.export_nii(np.abs(self.image_dissolved), "tmp/image_dissolved.nii")
         else:
@@ -1118,19 +1128,9 @@ class Subject(object):
             self.relative_vc_map = corr_calc[0]
             self.correction_map = corr_calc[1]
             self.image_rbc_osc_corr = corr_calc[2]
-            data_array = self.relative_vc_map  # 直接用你的变量
 
-            # 构造 affine（默认单位矩阵，大多数场景可用；如果你有原图 affine 请替换）
-            affine = np.eye(4)
-
-            # 创建 NIfTI 图像
-            nii_img = nib.Nifti1Image(data_array, affine=affine)
-
-            # 保存路径
-            save_path = os.path.join("tmp/relative_vc_map.nii.gz")
-
-            # 保存
-            nib.save(nii_img, save_path)
+            io_utils.export_nii(self.relative_vc_map, "tmp/relative_vc.nii")
+            io_utils.export_nii(self.correction_map, "tmp/osc_correction_factor.nii")
 
     def oscillation_binning(self):
         """Bin oscillation image to colormap bins."""
@@ -1808,9 +1808,7 @@ class Subject(object):
         if self.config.osc_recon.oscillation_analysis:
             pdf_list = []
 
-            base_path = os.path.join(
-                "tmp/{}_report_osc_imaging.pdf".format(self.config.subject_id),
-            )
+            base_path = os.path.join("tmp/report_osc_imaging.pdf")
             report.clinical_osc_imaging(
                 {
                     **self.dict_stats,
@@ -1823,9 +1821,7 @@ class Subject(object):
 
             # report on correction for capillary blood volume
             if self.config.osc_recon.vc_correction:
-                corr_path = os.path.join(
-                    "tmp/{}_osc_imaging_correction.pdf".format(self.config.subject_id),
-                )
+                corr_path = os.path.join("tmp/osc_imaging_correction.pdf")
                 report.clinical_osc_imaging_correction(
                     {
                         **self.dict_stats,
@@ -1836,7 +1832,9 @@ class Subject(object):
                 )
                 pdf_list.append(corr_path)
 
-            final_path = base_path
+            final_path = os.path.join(
+                "tmp/{}_report_osc_imaging.pdf".format(self.config.subject_id),
+            )
             report.combine_pdfs(pdf_list, final_path)
 
     def write_stats_to_csv(self):

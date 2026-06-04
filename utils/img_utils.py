@@ -83,7 +83,7 @@ def rotate_sagittal_to_coronal(image: np.ndarray) -> np.ndarray:
 def flip_and_rotate_image(
     image: np.ndarray,
     orientation: str = constants.Orientation.CORONAL,
-    system_vendor: str = constants.SystemVendor.SIEMENS,
+    system_vendor: str = constants.SystemVendor.SIEMENS.value,
 ) -> np.ndarray:
     """Flip and rotate image based on orientation.
 

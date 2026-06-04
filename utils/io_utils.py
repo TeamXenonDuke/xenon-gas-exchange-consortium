@@ -293,7 +293,11 @@ def read_dis_twix(
     ):  # type: ignore
         logging.error("Gradient delay is not properly set in the config file")
 
-    if config is not None and config.recon.ramp_time is not constants.NONE:
+    if (
+        config is not None
+        and hasattr(config.recon, "ramp_time")
+        and config.recon.ramp_time is not constants.NONE
+    ):
         ramp_time = config.recon.ramp_time
     else:
         ramp_time = twix_utils.get_ramp_time(twix_obj)

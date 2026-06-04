@@ -101,7 +101,6 @@ class Recon(object):
             SNR images
         n_skip_start: int, the number of frames to skip at the beginning
         n_skip_end: int, the number of frames to skip at the end
-        key_radius: int, the key radius for the keyhole image
         recon_size: int, size to which the images are reconstructed
         matrix_size: int, the final matrix size
         traj_type: str, the trajectory type
@@ -144,7 +143,14 @@ class Recon(object):
 
 class OscillationRecon(object):
     def __init__(self):
-        """Initialize the reconstruction parameters."""
+        """Initialize the oscillation reconstruction parameters.
+
+        Attributes:
+            oscillation_analysis: bool, whether to perform oscillation imaging analysis
+            key_radius_pct: int, percentage of points used to recon the keyhole image
+            osc_recon_key: str, the type of reconstruction to perform
+            vc_correction: bool, whether to correction oscillation images for relative capillary blood volume
+        """
         self.oscillation_analysis = False
 
         # Keyhole Radius
