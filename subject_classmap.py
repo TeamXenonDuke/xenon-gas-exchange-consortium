@@ -1057,7 +1057,7 @@ class Subject(object):
 
         # calculate the mask for the RBC image with sufficient SNR, excluding defects
         image_noise = metrics.snr(self.image_rbc, self.mask)[2]
-        self.mask_rbc = np.logical_and(self.mask, self.image_rbc > image_noise)
+        self.mask_rbc = np.logical_and(self.mask_vent, self.image_rbc > image_noise)
 
         # Extract high and low RBC images
         rbc_m_ratio_high = (
@@ -1992,18 +1992,24 @@ class Subject(object):
             "tmp/proton_reg.nii",
             "tmp/rbc2gas_rgb.nii",
         )
-        if self.config.osc_recon.oscillation_analysis:
-            output_files = output_files + (
-                "tmp/{}_report_osc_imaging.pdf".format(self.config.subject_id),
-                "tmp/osc_binned_color.nii",
-            )
-            if self.config.osc_recon.vc_correction:
-                output_files = output_files + ("tmp/osc_binned_color_corr.nii",)
 
         # move files
         subfolder = os.path.join(self.config.data_dir, "gx")
         os.makedirs(subfolder, exist_ok=True)
         io_utils.move_files(output_files, subfolder)
+
+        if self.config.osc_recon.oscillation_analysis:
+            osc_files = (
+                "tmp/{}_report_osc_imaging.pdf".format(self.config.subject_id),
+                "tmp/osc_binned_color.nii",
+            )
+            if self.config.osc_recon.vc_correction:
+                osc_files = osc_files + ("tmp/osc_binned_color_corr.nii",)
+
+            # move files
+            subfolder_osc = os.path.join(self.config.data_dir, "osc_imaging")
+            os.makedirs(subfolder_osc, exist_ok=True)
+            io_utils.move_files(osc_files, subfolder_osc)
 
     def check_git_version(self) -> None:
         """
