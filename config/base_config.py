@@ -56,7 +56,6 @@ class Config(config_dict.ConfigDict):
 
         # Additional options
         self.reference_data_key = constants.ReferenceDataKey.DUKE_REFERENCE.value
-        self.registration_key = constants.RegistrationKey.SKIP.value
         self.bias_key = constants.BiasfieldKey.N4ITK.value
         self.hb_correction_key = constants.HbCorrectionKey.NONE.value
         self.hb = 0.0
