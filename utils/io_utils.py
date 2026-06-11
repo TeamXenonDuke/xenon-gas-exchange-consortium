@@ -146,7 +146,7 @@ def get_dyn_mrd_files(path: str) -> str:
     try:
         return (
             glob.glob(os.path.join(path, "**Calibration***.h5"))
-            + glob.glob(os.path.join(path, "**calibration***.h5")) 
+            + glob.glob(os.path.join(path, "**calibration***.h5"))
             + glob.glob(os.path.join(path, "**Calibration***.mrd"))
             + glob.glob(os.path.join(path, "**calibration***.mrd"))
         )[0]
@@ -242,7 +242,9 @@ def read_dyn_twix(path: str) -> Dict[str, Any]:
     }
 
 
-def read_dis_twix(path: str, config: Optional[ml_collections.ConfigDict] = None) -> Dict[str, Any]:
+def read_dis_twix(
+    path: str, config: Optional[ml_collections.ConfigDict] = None
+) -> Dict[str, Any]:
     """Read 1-point dixon disssolved phase imaging twix file.
 
     Args:
@@ -283,8 +285,22 @@ def read_dis_twix(path: str, config: Optional[ml_collections.ConfigDict] = None)
     data_dict = twix_utils.get_gx_data(twix_obj=twix_obj)
     filename = os.path.basename(path)
 
-    if config or config.recon.del_x is constants.NONE:  # type: ignore
+    if (
+        config is None
+        or config.recon.del_x is constants.NONE
+        or config.recon.del_y is constants.NONE
+        or config.recon.del_z is constants.NONE
+    ):  # type: ignore
         logging.error("Gradient delay is not properly set in the config file")
+
+    if (
+        config is not None
+        and hasattr(config.recon, "ramp_time")
+        and config.recon.ramp_time is not constants.NONE
+    ):
+        ramp_time = config.recon.ramp_time
+    else:
+        ramp_time = twix_utils.get_ramp_time(twix_obj)
 
     return {
         constants.IOFields.AGE: twix_utils.get_patient_age(twix_obj),
@@ -313,7 +329,7 @@ def read_dis_twix(path: str, config: Optional[ml_collections.ConfigDict] = None)
         constants.IOFields.N_SKIP_START: data_dict[constants.IOFields.N_SKIP_START],
         constants.IOFields.ORIENTATION: twix_utils.get_orientation(twix_obj),
         constants.IOFields.PROTOCOL_NAME: twix_utils.get_protocol_name(twix_obj),
-        constants.IOFields.RAMP_TIME: twix_utils.get_ramp_time(twix_obj),
+        constants.IOFields.RAMP_TIME: ramp_time,
         constants.IOFields.REMOVEOS: twix_utils.get_flag_removeOS(twix_obj),
         constants.IOFields.SCAN_DATE: twix_utils.get_scan_date(twix_obj),
         constants.IOFields.SOFTWARE_VERSION: twix_utils.get_software_version(twix_obj),
@@ -326,14 +342,25 @@ def read_dis_twix(path: str, config: Optional[ml_collections.ConfigDict] = None)
     }
 
 
-def read_ute_twix(path: str) -> Dict[str, Any]:
+def read_ute_twix(
+    path: str, config: Optional[ml_collections.ConfigDict] = None
+) -> Dict[str, Any]:
     """Read proton ute imaging twix file.
 
     Args:
         path: str file path of twix file
     Returns: dictionary containing data and metadata extracted from the twix file.
     This includes:
-        TODO
+        - dwell time in seconds
+        - UTE FIDs
+        - Institution at which data was acquired
+        - System vendor on which data was acquired
+        - Ramp time in microseconds
+        - Gradient delays (x, y, z) in microseconds
+        - number of projections to skip at the beginning of the scan
+        - number of projections to skip at the end of the scan
+        - number of frames used to calculate trajectory
+        - orientation of the scan
     """
     try:
         twix_obj = mapvbvd.mapVBVD(path)
@@ -352,15 +379,23 @@ def read_ute_twix(path: str) -> Dict[str, Any]:
         raise ValueError("Cannot get data from twix object.")
     data_dict = twix_utils.get_ute_data(twix_obj=twix_obj)
 
+    if (
+        config is None
+        or config.recon.del_x is constants.NONE
+        or config.recon.del_y is constants.NONE
+        or config.recon.del_z is constants.NONE
+    ):  # type: ignore
+        logging.error("Gradient delay is not properly set in the config file")
+
     return {
         constants.IOFields.SAMPLE_TIME: twix_utils.get_sample_time(twix_obj),
         constants.IOFields.FIDS: data_dict[constants.IOFields.FIDS],
         constants.IOFields.INSTITUTION: twix_utils.get_institution_name(twix_obj),
         constants.IOFields.SYSTEM_VENDOR: twix_utils.get_system_vendor(twix_obj),
         constants.IOFields.RAMP_TIME: twix_utils.get_ramp_time(twix_obj),
-        constants.IOFields.GRAD_DELAY_X: data_dict[constants.IOFields.GRAD_DELAY_X],
-        constants.IOFields.GRAD_DELAY_Y: data_dict[constants.IOFields.GRAD_DELAY_Y],
-        constants.IOFields.GRAD_DELAY_Z: data_dict[constants.IOFields.GRAD_DELAY_Z],
+        constants.IOFields.GRAD_DELAY_X: config.recon.del_x,
+        constants.IOFields.GRAD_DELAY_Y: config.recon.del_y,
+        constants.IOFields.GRAD_DELAY_Z: config.recon.del_z,
         constants.IOFields.N_SKIP_END: data_dict[constants.IOFields.N_SKIP_END],
         constants.IOFields.N_SKIP_START: data_dict[constants.IOFields.N_SKIP_START],
         constants.IOFields.N_FRAMES: data_dict[constants.IOFields.N_FRAMES],
@@ -471,7 +506,6 @@ def read_dis_mrd(path: str, multi_echo: bool) -> Dict[str, Any]:
         constants.IOFields.RAMP_TIME: mrd_utils.get_ramp_time(header),
         constants.IOFields.REMOVEOS: False,
         constants.IOFields.SCAN_DATE: mrd_utils.get_scan_date(header),
-        constants.IOFields.SYSTEM_VENDOR: mrd_utils.get_system_vendor(header),
         constants.IOFields.SOFTWARE_VERSION: "NA",
         constants.IOFields.TE90: mrd_utils.get_TE90(header),
         constants.IOFields.TR: mrd_utils.get_TR_dissolved(header),
@@ -569,7 +603,7 @@ def export_nii_4d(image, path, fov=None):
         fov: float field of view in cm
     """
     # Scale values and clip to ensure they stay in the [0, 255] range
-    color = np.copy(image)*255  
+    color = np.copy(image) * 255
     color = np.clip(color, 0, 255).astype("uint8")
 
     # some fancy and tricky re-arrange
@@ -671,6 +705,7 @@ def move_files(source_paths: list, destination_path: str) -> None:
         if os.path.isfile(path):
             shutil.move(path, os.path.join(destination_path, fname))
 
+
 def check_real_number(input_data):
-    input_data = np.asarray(input_data).squeeze()    # allow scalar or 1-element array
+    input_data = np.asarray(input_data).squeeze()  # allow scalar or 1-element array
     return input_data.shape == () and np.isreal(input_data) and np.isfinite(input_data)
