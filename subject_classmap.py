@@ -471,7 +471,7 @@ class Subject(object):
             decay_factor = signal_utils.calculate_decay_factor(
                 self.data_gas,
                 constants.T2STAR_GAS,
-                self.dict_dyn[constants.IOFields.SAMPLE_TIME],
+                self.dict_dis[constants.IOFields.SAMPLE_TIME],
             )
             self.image_gas = (
                 reconstruction.reconstruct_cs(
@@ -546,7 +546,7 @@ class Subject(object):
             decay_factor = signal_utils.calculate_decay_factor(
                 self.data_dissolved,
                 constants.T2STAR_DISSOLVED_3T,
-                self.dict_dyn[constants.IOFields.SAMPLE_TIME],
+                self.dict_dis[constants.IOFields.SAMPLE_TIME],
             )
 
             self.image_dissolved_norm = reconstruction.reconstruct_cs(
@@ -660,7 +660,7 @@ class Subject(object):
                 data=self.data_dissolved,
                 traj=self.traj_dissolved,
                 bin_indices=self.high_indices,
-                dwell_time=self.dict_dyn[constants.IOFields.SAMPLE_TIME],
+                dwell_time=self.dict_dis[constants.IOFields.SAMPLE_TIME],
                 key_radius=self.key_radius,
             )
             (
@@ -671,7 +671,7 @@ class Subject(object):
                 data=self.data_dissolved,
                 traj=self.traj_dissolved,
                 bin_indices=self.low_indices,
-                dwell_time=self.dict_dyn[constants.IOFields.SAMPLE_TIME],
+                dwell_time=self.dict_dis[constants.IOFields.SAMPLE_TIME],
                 key_radius=self.key_radius,
             )
             self.image_dissolved_high = reconstruction.reconstruct_cs(

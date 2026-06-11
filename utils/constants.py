@@ -684,14 +684,14 @@ class ReferenceDistribution(object):
     REFERENCE_RBC_OSC = {
         "title": "REFERENCE_RBC_OSC",
         "healthy_histogram_osc_dir": "assets/histogram_profiles/osc_imaging/rbc_osc_reference_dist.npy",
-        "threshold_rbc_osc": [-1.58, 2.02, 5.96, 10.28, 15.02],
+        "threshold_rbc_osc": [-1.102, 2.138, 5.746, 9.773, 14.281],
         "reference_stats": {
-            "osc_defect_avg": "1.14",
-            "osc_low_avg": "5.07",
-            "osc_defectlow_avg": "6.21",
-            "osc_high_avg": "11.5",
-            "osc_mean_avg": "5.96",
-            "osc_negative_avg": "1.93",
+            "osc_defect_avg": "1.30",
+            "osc_low_avg": "5.16",
+            "osc_defectlow_avg": "6.46",
+            "osc_high_avg": "12.02",
+            "osc_mean_avg": "5.75",
+            "osc_negative_avg": "1.87",
             "key_radius_ref": "14",
         },
     }
