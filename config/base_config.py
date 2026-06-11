@@ -21,6 +21,7 @@ class Config(config_dict.ConfigDict):
         hb: float, subject hb value in g/dL
         manual_reg_filepath: str, path to manual registration nifti file
         manual_seg_filepath: str, path to the manual segmentation nifti file
+        output_folder: str, name of folder to output gx files
         dicom_proton_dir: str, path to the DICOM proton images
         processes: Process, the evaluation processes
         rbc_m_ratio: float, the RBC to M ratio from spectroscopy
@@ -29,7 +30,7 @@ class Config(config_dict.ConfigDict):
         remove_noisy_projections: bool, whether to remove noisy projections
         segmentation_key: str, the segmentation key (CNN_VENT, MANUAL)
         subject_id: str, the subject id
-        vol_correction_key: str,lung vollume correction key (NONE, RBC_AND_MEMBRANE)
+        vol_correction_key: str,lung volume correction key (NONE, RBC_AND_MEMBRANE)
         corrected_lung_volume: float, target lung volume in L
     """
 
@@ -63,6 +64,7 @@ class Config(config_dict.ConfigDict):
         self.multi_echo = False
         self.registration_key = constants.RegistrationKey.SKIP.value
         self.manual_reg_filepath = ""
+        self.output_folder = "gx"
 
         # Additional options for contamination correction
         self.phase_gas_acq_diss = "None" #degree
