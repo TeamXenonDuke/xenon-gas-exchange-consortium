@@ -33,7 +33,7 @@ def get_patient_age(header: ismrmrd.xsd.ismrmrdschema.ismrmrd.ismrmrdHeader) -> 
         return age
     except:
     	raise ValueError("Could not find age from MRD header")
-        return np.nan
+    	return np.nan
 
 
 def get_patient_sex(header: ismrmrd.xsd.ismrmrdschema.ismrmrd.ismrmrdHeader) -> str:
@@ -57,7 +57,7 @@ def get_patient_sex(header: ismrmrd.xsd.ismrmrdschema.ismrmrd.ismrmrdHeader) -> 
             sex = "F"
         elif sex is None:
             raise ValueError("Could not find sex from MRD header")
-        	sex = np.nan
+            sex = np.nan
         return sex
     except:
         raise ValueError("Could not find sex from MRD header")
@@ -81,7 +81,7 @@ def get_patient_height(header: ismrmrd.xsd.ismrmrdschema.ismrmrd.ismrmrdHeader) 
         return height
     except:
     	raise ValueError("Could not find height from MRD header")
-        return np.nan
+    	return np.nan
         
 
 def get_patient_weight(header: ismrmrd.xsd.ismrmrdschema.ismrmrd.ismrmrdHeader) -> float:
@@ -102,7 +102,7 @@ def get_patient_weight(header: ismrmrd.xsd.ismrmrdschema.ismrmrd.ismrmrdHeader) 
         return weight
     except:
     	raise ValueError("Could not find weight from MRD header")
-        return np.nan
+    	return np.nan
 
 
 def get_subject_id(

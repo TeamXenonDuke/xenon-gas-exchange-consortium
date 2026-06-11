@@ -882,12 +882,15 @@ class Subject(object):
             self.dict_dis[constants.IOFields.AGE],
             self.dict_dis[constants.IOFields.SEX],
             self.dict_dis[constants.IOFields.HEIGHT],
-            volume_type="dlco"),               
-            constants.IOFields.RBCM_REF: metrics.rbcm_ref(
-            self.dict_dis[constants.IOFields.AGE],
-            self.dict_dis[constants.IOFields.SEX],)
+            volume_type="dlco")
             }        
-        self.dict_stats[constants.IOFields.RBCM_PERC] = round(100 * self.rbc_m_ratio/self.dict_stats[constants.IOFields.RBCM_REF])
+        age = self.dict_dis[constants.IOFields.AGE]
+        sex = self.dict_dis[constants.IOFields.SEX]
+        if pd.notna(age) and age != "" and pd.notna(sex) and sex != "":
+            rbcm_ref = metrics.rbcm_ref(age, sex)
+            if pd.notna(rbcm_ref) and rbcm_ref != 0:
+                self.dict_stats[constants.IOFields.RBCM_REF] = rbcm_ref
+                self.dict_stats[constants.IOFields.RBCM_PERC] = round(100 * self.rbc_m_ratio / rbcm_ref)
         if isinstance(self.config.patient_frc, (int, float)):
             FRC_Volume = float(self.config.patient_frc)
             User_Volume_FRC = f"{FRC_Volume}L"
