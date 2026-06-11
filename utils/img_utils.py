@@ -17,8 +17,6 @@ import skimage
 from scipy import ndimage
 import pandas as pd
 
-import pdb
-
 from utils import constants, io_utils
 
 

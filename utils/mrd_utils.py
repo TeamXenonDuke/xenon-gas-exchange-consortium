@@ -32,9 +32,8 @@ def get_patient_age(header: ismrmrd.xsd.ismrmrdschema.ismrmrd.ismrmrdHeader) -> 
         age = scan.year - dob.year - ((scan.month, scan.day) < (dob.month, dob.day))
         return age
     except:
-        return np.nan
-
-    raise ValueError("Could not find age from MRD header")
+    	logging.warning("Could not find age from MRD header")
+    	return np.nan
 
 
 def get_patient_sex(header: ismrmrd.xsd.ismrmrdschema.ismrmrd.ismrmrdHeader) -> str:
@@ -56,10 +55,13 @@ def get_patient_sex(header: ismrmrd.xsd.ismrmrdschema.ismrmrd.ismrmrdHeader) -> 
             sex = "M"
         elif sex == "female":
             sex = "F"
+        elif sex is None:
+            logging.warning("Could not find sex from MRD header")
+            sex = np.nan
         return sex
     except:
+        logging.warning("Could not find sex from MRD header")
         return np.nan
-    raise ValueError("Could not find sex from MRD header")
 
 def get_patient_height(header: ismrmrd.xsd.ismrmrdschema.ismrmrd.ismrmrdHeader) -> float:
     """
@@ -78,9 +80,9 @@ def get_patient_height(header: ismrmrd.xsd.ismrmrdschema.ismrmrd.ismrmrdHeader) 
         height = 100 * header.subjectInformation.patientHeight_m
         return height
     except:
-        return np.nan
-
-    raise ValueError("Could not find height from MRD header")
+    	logging.warning("Could not find height from MRD header")
+    	return np.nan
+        
 
 def get_patient_weight(header: ismrmrd.xsd.ismrmrdschema.ismrmrd.ismrmrdHeader) -> float:
     """
@@ -97,11 +99,14 @@ def get_patient_weight(header: ismrmrd.xsd.ismrmrdschema.ismrmrd.ismrmrdHeader) 
     """
     try:
         weight = header.subjectInformation.patientWeight_kg
+        if weight is None:
+        	logging.warning("Could not find weight from MRD header")
+        	weight = np.nan
         return weight
     except:
-        return np.nan
+    	logging.warning("Could not find weight from MRD header")
+    	return np.nan
 
-    raise ValueError("Could not find weight from MRD header")
 
 def get_subject_id(
     header: ismrmrd.xsd.ismrmrdschema.ismrmrd.ismrmrdHeader,
