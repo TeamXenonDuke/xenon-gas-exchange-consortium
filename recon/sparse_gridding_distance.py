@@ -12,9 +12,10 @@ Background reading:
     Beatty et al. 2005.
 
 This code is based off the code written by Scott Robertson.
-    
+
     Source: https://github.com/ScottHaileRobertson/Non-Cartesian-Reconstruction
 """
+
 import logging
 import math
 from typing import Tuple

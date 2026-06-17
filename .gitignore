@@ -205,7 +205,7 @@ scripts/**
 scripts/.gitkeep
 
 # recon/cs
-recon/cs/**
+#recon/cs/**
 
 # logs
 *.log
@@ -217,3 +217,4 @@ testing/expected/*
 
 make_healthy_hist_profile.py
 visualize_hist.py
+create_reference_histogram-OSC.py

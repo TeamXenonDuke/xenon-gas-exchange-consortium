@@ -28,12 +28,16 @@ def get_or_make_mask_include_trachea(
     """
     base_lung_mask = np.asarray(base_lung_mask).astype(bool)
 
-    user_path = str(getattr(config, "trachea_plus_lung_mask_filepath", "") or "").strip()
+    user_path = str(
+        getattr(config, "trachea_plus_lung_mask_filepath", "") or ""
+    ).strip()
     if user_path:
         try:
             if os.path.exists(user_path):
                 logging.info(f"Loading mask_include_trachea from: {user_path}")
-                loaded = np.squeeze(np.array(nib.load(user_path).get_fdata())).astype(bool)
+                loaded = np.squeeze(np.array(nib.load(user_path).get_fdata())).astype(
+                    bool
+                )
 
                 if loaded.shape != base_lung_mask.shape:
                     raise ValueError(
@@ -50,7 +54,9 @@ def get_or_make_mask_include_trachea(
             )
 
     if not getattr(config, "auto_make_trachea_plus_lung_mask", False):
-        logging.info("auto_make_trachea_plus_lung_mask is False; using base lung mask only.")
+        logging.info(
+            "auto_make_trachea_plus_lung_mask is False; using base lung mask only."
+        )
         return base_lung_mask
 
     # Internal reference nifti location

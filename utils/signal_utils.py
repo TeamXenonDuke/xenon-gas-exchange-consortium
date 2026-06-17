@@ -1,4 +1,5 @@
 """Signal processing util functions."""
+
 import sys
 from typing import Tuple
 import math
@@ -139,6 +140,7 @@ def inverse_boxcox(
     """
     return np.power(boxcox_lambda * data + 1, 1 / boxcox_lambda) - scale_factor
 
+
 def _movmean_conta(x: np.ndarray, n: int) -> np.ndarray:
     """Compute moving mean of x over n points.
 
@@ -149,9 +151,10 @@ def _movmean_conta(x: np.ndarray, n: int) -> np.ndarray:
     Returns:
         np.ndarray: moving mean of shape (n,)
     """
-    #return np.convolve(x, np.ones((n,)) / n, mode="same")
-    return convolve1d(x, np.ones((n,)) / n, mode='reflect')
-    
+    # return np.convolve(x, np.ones((n,)) / n, mode="same")
+    return convolve1d(x, np.ones((n,)) / n, mode="reflect")
+
+
 def remove_gasphase_contamination(
     data_dissolved: np.ndarray,
     data_gas: np.ndarray,
@@ -159,7 +162,7 @@ def remove_gasphase_contamination(
     freq_gas_acq_diss: float,
     phase_gas_acq_diss: float,
     area_gas_acq_diss: float,
-    optimized_conta_phase:float,
+    optimized_conta_phase: float,
     fa_gas: float,
 ) -> np.ndarray:
     """Remove gas phase contamination in dissolved k-space.
@@ -203,7 +206,9 @@ def remove_gasphase_contamination(
         contamination_kspace2 * scale_factor / np.cos(np.pi / 180 * fa_gas)
     )
     # step 4: applying emperical phase optimization
-    contamination_kspace3 = np.exp(1j * np.deg2rad(optimized_conta_phase)) * contamination_kspace3.copy()  
+    contamination_kspace3 = (
+        np.exp(1j * np.deg2rad(optimized_conta_phase)) * contamination_kspace3.copy()
+    )
 
     # step 5: return subtracted contamination
     return data_dissolved - contamination_kspace3
@@ -367,6 +372,35 @@ def fit_sine(data: np.ndarray) -> np.ndarray:
     return func(x, *popt)
 
 
+def osc_fit_sine(
+    y: np.ndarray, x: np.ndarray, n: int = 1
+) -> Tuple[np.ndarray, np.ndarray]:
+    """Fit the data to a sum of n sine waves.
+
+    Args:
+        y (np.ndarray): Data to fit. Shape (n,).
+        x (np.ndarray): x data. Shape (n,).
+        n (int): Number of sine waves to fit to. Defaults to 1.
+    Returns:
+        Tuple of the fitted data of same shape as input data and the fit parameters.
+    """
+
+    def func(x, *args):
+        return args[0] * np.sin(args[1] * x + args[2])
+
+    p0 = _sinnstart(x, y, n)
+    bounds = _sinbounds(n)
+    popt, _ = optimize.curve_fit(
+        func,
+        x,
+        y,
+        p0=p0,
+        bounds=bounds,
+    )
+    # print("Optimal Parameters:", popt)
+    return func(x, *popt), popt
+
+
 def detrend(data: np.ndarray) -> np.ndarray:
     """Remove bi-exponential trend along axis from data.
 
@@ -450,6 +484,98 @@ def awgn(sig: np.ndarray, SNR: float) -> np.ndarray:
     return sig + noise
 
 
+def find_high_low_indices(
+    data: np.ndarray,
+    peak_distance: int,
+    distance_threshold: float = 0.2,
+    same_length: bool = True,
+    method: str = constants.BinningMethods.PEAKS,
+) -> Tuple[np.ndarray, np.ndarray]:
+    """Find indices of high and low signal bins.
+
+    Args:
+        data (np.ndarray): RBC 1-D data of shape (n_projections,)
+        peak_distance (int): distance between peaks in number of points.
+        distance_threshold (float): threshold for neighbouring peaks. Defaults to 0.2.
+            Value must be between 0 and 1 with 0 being taking only the found peaks and 1
+            being taking all points between the peaks.
+        same_length (bool): whether to force high and low bins are of the same length.
+
+    Returns:
+        Tuple of indices of high and low signal bins respectively.
+    """
+    high_indices = np.array([])
+    low_indices = np.array([])
+
+    if method == constants.BinningMethods.PEAKS:
+        high_peaks = find_peaks(data=data, distance=int(0.6 * peak_distance))
+        low_peaks = find_peaks(data=-data, distance=int(0.6 * peak_distance))
+
+        left = np.ceil(peak_distance * distance_threshold / 2).astype(int)
+        right = left + 1
+        for peak in high_peaks:
+            high_indices = np.append(high_indices, np.arange(peak - left, peak + right))
+        for peak in low_peaks:
+            low_indices = np.append(low_indices, np.arange(peak - left, peak + right))
+    elif method == constants.BinningMethods.THRESHOLD:
+        data_norm = (data - np.mean(data)) / np.std(data)
+        high_indices = np.argwhere(data_norm > 0.7).flatten()
+        low_indices = np.argwhere(data_norm < -0.7).flatten()
+    else:
+        raise ValueError(f"Method {method} not implemented.")
+
+    # remove indices that are below zero and above length of the data
+    high_indices = np.delete(high_indices, np.argwhere(high_indices < 0))
+    low_indices = np.delete(low_indices, np.argwhere(low_indices < 0))
+    high_indices = np.delete(high_indices, np.argwhere(high_indices >= len(data)))
+    low_indices = np.delete(low_indices, np.argwhere(low_indices >= len(data)))
+    if same_length:
+        if len(high_indices) > len(low_indices):
+            high_indices = high_indices[: len(low_indices)]
+        elif len(low_indices) > len(high_indices):
+            low_indices = low_indices[: len(high_indices)]
+    return np.sort(high_indices).astype(int), np.sort(low_indices).astype(int)
+
+
+def find_indices_sliding_window(
+    data: np.ndarray,
+    peak_distance: int,
+    distance_threshold: float = 0.2,
+    window_spacing: int = 5,
+) -> list[np.ndarray]:
+    """Find indices of all sliding windows from the high peaks.
+
+    Args:
+        data (np.ndarray): RBC 1-D data of shape (n_projections,)
+        peak_distance (int): distance between peaks in number of points.
+        distance_threshold (float): threshold for neighbouring peaks. Defaults to 0.2.
+            Value must be between 0 and 1 with 0 being taking only the found peaks and 1
+            being taking all points between the peaks.
+        window_spacing (int): spacing between the windows.
+    Returns:
+        List of list of indices respectively.
+    """
+    high_indices = np.array([])
+
+    high_peaks = find_peaks(data=data, distance=int(0.6 * peak_distance))
+
+    left = np.ceil(peak_distance * distance_threshold / 2).astype(int)
+    right = left + 1
+    for peak in high_peaks:
+        high_indices = np.append(high_indices, np.arange(peak - left, peak + right))
+    n_windows = int(np.mean(np.diff(high_peaks))) // window_spacing
+    out_indices = []
+
+    for i in range(n_windows):
+        cur_indices = high_indices + window_spacing * i
+        # remove indices that go are below zero and above length of the data
+        cur_indices = np.delete(cur_indices, np.argwhere(cur_indices < 0))
+        cur_indices = np.delete(cur_indices, np.argwhere(cur_indices >= len(data)))
+        out_indices.append(cur_indices.astype(int))
+
+    return out_indices
+
+
 def get_hb_correction(hb: float) -> Tuple[float, float]:
     """Get scaling factors for hb correction.
 
@@ -475,7 +601,9 @@ def get_hb_correction(hb: float) -> Tuple[float, float]:
     return rbc_hb_correction_factor, membrane_hb_correction_factor
 
 
-def get_vol_correction(vol: float, expected_lung_volume: float) -> Tuple[float, float, float]:
+def get_vol_correction(
+    vol: float, expected_lung_volume: float
+) -> Tuple[float, float, float]:
     """Get scaling factors for volume correction.
     Args:
         vol (float): volume of lung mask in L
@@ -486,9 +614,40 @@ def get_vol_correction(vol: float, expected_lung_volume: float) -> Tuple[float, 
     """
     V2 = expected_lung_volume
 
-    vol_correction_factor_rbc = (vol *( 1 + constants.VolCorrection.ALPHA_RBC) + V2 * (1 - constants.VolCorrection.ALPHA_RBC))/(vol * (1 - constants.VolCorrection.ALPHA_RBC) + V2 * (1 + constants.VolCorrection.ALPHA_RBC))
+    vol_correction_factor_rbc = (
+        vol * (1 + constants.VolCorrection.ALPHA_RBC)
+        + V2 * (1 - constants.VolCorrection.ALPHA_RBC)
+    ) / (
+        vol * (1 - constants.VolCorrection.ALPHA_RBC)
+        + V2 * (1 + constants.VolCorrection.ALPHA_RBC)
+    )
     print("VCF_RBC = " + str(vol_correction_factor_rbc))
-    vol_correction_factor_membrane = (vol *( 1 + constants.VolCorrection.ALPHA_MEM) + V2 * (1 - constants.VolCorrection.ALPHA_MEM))/(vol * (1 - constants.VolCorrection.ALPHA_MEM) + V2 * (1 + constants.VolCorrection.ALPHA_MEM))
+    vol_correction_factor_membrane = (
+        vol * (1 + constants.VolCorrection.ALPHA_MEM)
+        + V2 * (1 - constants.VolCorrection.ALPHA_MEM)
+    ) / (
+        vol * (1 - constants.VolCorrection.ALPHA_MEM)
+        + V2 * (1 + constants.VolCorrection.ALPHA_MEM)
+    )
     print("VCF_mem = " + str(vol_correction_factor_membrane))
 
     return vol_correction_factor_rbc, vol_correction_factor_membrane, V2
+
+
+def calculate_decay_factor(data: np.ndarray, t2star, dwell_time: float) -> np.ndarray:
+    """Calculate decay factor.
+
+    Rounds to 3 decimal places.
+    Args:
+        data (np.ndarray): data to be corrected of shape (n_proj, n_points)
+        t2star (float): T2* in seconds
+        dwell_time (float): dwell time in seconds
+    """
+    k0 = np.abs(data[:, 0])
+    k = np.zeros(data.shape, dtype=complex)
+    relaxation = np.zeros((data.shape[1],))
+    for i in range(data.shape[1]):
+        relaxation[i] = np.exp(-dwell_time * i / t2star)
+    for i in range(data.shape[0]):
+        k[i, :] = k0[i] * relaxation
+    return k

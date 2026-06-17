@@ -15,6 +15,7 @@ from utils import io_utils
 
 import logging
 
+
 def _to_rgb(c):
     """
     _to_rgb(c)
@@ -28,12 +29,14 @@ def _to_rgb(c):
         c = c / 255.0
     return tuple(c.tolist())
 
-def _colors_for_bins(centers: np.ndarray,
-                     thresholds: Optional[List[float]],
-                     xlim: float,
-                     cmap_dict: Optional[Dict[int, List[float]]],
-                     default_color: Tuple[float,float,float]) -> List[Tuple[float,float,float]]:
 
+def _colors_for_bins(
+    centers: np.ndarray,
+    thresholds: Optional[List[float]],
+    xlim: Tuple[float, float],
+    cmap_dict: Optional[Dict[int, List[float]]],
+    default_color: Tuple[float, float, float],
+) -> List[Tuple[float, float, float]]:
     """
     _colors_for_bins(centers, thresholds, xlim, cmap_dict, default_color)
     Assign a color per histogram bin based on which threshold segment its center falls in.
@@ -46,15 +49,16 @@ def _colors_for_bins(centers: np.ndarray,
     if thresholds is None or cmap_dict is None:
         return [default_color] * centers.size
     t = np.sort(np.asarray(thresholds, dtype=float))
-    t = t[(t >= 0) & (t <= xlim)]
-    bounds = np.r_[0.0, t, xlim]
-    seg_idx = np.searchsorted(bounds, centers, side='right') - 1
+    t = t[(t >= xlim[0]) & (t <= xlim[1])]
+    bounds = np.r_[xlim[0], t, xlim[1]]
+    seg_idx = np.searchsorted(bounds, centers, side="right") - 1
     keys = sorted([k for k in cmap_dict.keys() if k != 0])  # skip bin 0 (background)
     if not keys:
         return [default_color] * centers.size
     cmap_list = [_to_rgb(cmap_dict[k]) for k in keys]
-    colors = [cmap_list[min(i, len(cmap_list)-1)] for i in seg_idx]
+    colors = [cmap_list[min(i, len(cmap_list) - 1)] for i in seg_idx]
     return colors
+
 
 def _load_profile(profile_path: Union[str, Path]):
     """
@@ -72,7 +76,9 @@ def _load_profile(profile_path: Union[str, Path]):
         try:
             import scipy.io as sio
         except ImportError as e:
-            raise ImportError("scipy is required to read .mat files (pip install scipy)") from e
+            raise ImportError(
+                "scipy is required to read .mat files (pip install scipy)"
+            ) from e
         z = sio.loadmat(p)
         if "edges" in z and "probs" in z:
             edges = np.asarray(z["edges"]).ravel()
@@ -107,6 +113,7 @@ def _load_profile(profile_path: Union[str, Path]):
         raise ValueError(".npy profile must be 2xB = [centers; probs]")
     else:
         raise ValueError(f"Unsupported profile type: {suf}")
+
 
 def _merge_rgb_and_gray(gray_slice: np.ndarray, rgb_slice: np.ndarray) -> np.ndarray:
     """Combine the gray scale image with the RGB binning via HSV.
@@ -303,7 +310,11 @@ def make_montage(image: np.ndarray, n_slices: int = 16) -> np.ndarray:
 
 
 def plot_montage_grey(
-    image: np.ndarray, path: str, index_start: int, index_skip: int = 1, mask = None,
+    image: np.ndarray,
+    path: str,
+    index_start: int,
+    index_skip: int = 1,
+    mask=None,
 ):
     """Plot a montage of the image in grey scale.
 
@@ -317,9 +328,9 @@ def plot_montage_grey(
         index_start (int): index to start plotting from.
         index_skip (int, optional): indices to skip. Defaults to 1.
     """
-    
+
     # divide by the maximum value
-     # --- Mask-based brightness/contrast scaling ---
+    # --- Mask-based brightness/contrast scaling ---
     image = image.copy()  # make a local copy so original data isn’t modified
 
     if mask is not None and mask.shape == image.shape and np.any(mask):
@@ -334,7 +345,7 @@ def plot_montage_grey(
         else:
             # Clip intensities to the 99th percentile and rescale
             image = np.clip(image, 0.0, clip_val)
-            image = image / clip_val  
+            image = image / clip_val
     else:
         # No valid mask → simple normalization for display
         maxv = np.max(image)
@@ -354,8 +365,13 @@ def plot_montage_grey(
     plt.clf()
     plt.close()
 
+
 def plot_montage_grey_mask(
-    image: np.ndarray,mask: np.ndarray, path: str, index_start: int, index_skip: int = 1
+    image: np.ndarray,
+    mask: np.ndarray,
+    path: str,
+    index_start: int,
+    index_skip: int = 1,
 ):
     """Plot a montage of the image in grey scale.
 
@@ -371,7 +387,7 @@ def plot_montage_grey_mask(
         index_start (int): index to start plotting from.
         index_skip (int, optional): indices to skip. Defaults to 1.
     """
-    
+
     # divide by the maximum value
     image = image / np.max(image)
     # Then highlight image inside the mask
@@ -426,60 +442,16 @@ def plot_montage_color(
     plt.close()
 
 
-def plot_histogram_rbc_osc(
-    data: np.ndarray,
-    path: str,
-    fig_size: Tuple[int, int] = (9, 6),
-    xlim: Tuple[float, float] = (-15, 35),
-    ylim: Tuple[float, float] = (0, 0.2),
-    xticks: List[float] = [-10, 0, 10, 20, 30, 50],
-    yticks: List[float] = [0, 0.05, 0.1, 0.15],
-    plot_ref: bool = True,
-):
-    """Plot histogram of RBC oscillation.
-
-    Args:
-        data (np.ndarray): data to plot histogram of.
-        path (str): path to save the image.
-    """
-    fig, ax = plt.subplots(figsize=fig_size)
-    data = data.flatten()
-    weights = np.ones_like(data) / float(len(data))
-    # plot histogram
-    _, bins, _ = ax.hist(
-        data, bins=50, color=(0, 0.8, 0.8), weights=weights, edgecolor="black"
-    )
-    ax.set_ylabel("Fraction of Voxels", fontsize=35)
-    # define and plot healthy reference line
-    if plot_ref:
-        data_ref = io_utils.import_np(path="data/reference_dist.npy")
-        n, bins, _ = ax.hist(
-            data_ref,
-            bins=bins,
-            color=(1, 1, 1),
-            alpha=0.0,
-            weights=np.ones_like(data_ref) / float(len(data_ref)),
-        )
-        ax.plot(0.5 * (bins[1:] + bins[:-1]), n, "--", color="k", linewidth=4)
-    # set plot parameters
-    plt.xlim(xlim)
-    plt.ylim(ylim)
-    # define ticks
-    plt.xticks(xticks, ["{:.0f}".format(x) for x in xticks], fontsize=40)
-    plt.yticks(yticks, ["{:.2f}".format(x) for x in yticks], fontsize=40)
-    fig.tight_layout()
-    plt.savefig(path)
-    plt.close()
-
-
 def plot_histogram(
     data: np.ndarray,
     path: str,
     color: Tuple[float, float, float],
-    xlim: float,
-    ylim: float,
+    xlim: Tuple[float, float],
+    ylim: Tuple[float, float],
     num_bins: int,
-    refer_fit: Union[Tuple[float, float, float], str, None] = None,  # healthy ref (optional)
+    refer_fit: Union[
+        Tuple[float, float, float], str, None
+    ] = None,  # healthy ref (optional)
     xticks: Optional[List[float]] = None,
     yticks: Optional[List[float]] = None,
     xticklabels: Optional[List[str]] = None,
@@ -501,11 +473,11 @@ def plot_histogram(
     - Optional dashed “healthy” overlay from a Gaussian (A, μ, σ) or a saved profile (.mat/.npz/.npy).
 
     Args:
-      data (ndarray): 1D values; clipped to [0, xlim].
+      data (ndarray): 1D values; clipped to [xlim[0], xlim[1]].
       path (str): Output image path.
       color (tuple): Base RGB (used for outline/fallback).
       xlim, ylim (float): Axis limits (x in data units; y in probability).
-      num_bins (int): Number of bins in [0, xlim].
+      num_bins (int): Number of bins in [xlim[0], xlim[1]].
       refer_fit ((A, μ, σ) | str | None): Gaussian tuple or profile filepath; None = no overlay.
       xticks/yticks (list[float] | None), xticklabels/yticklabels (list[str] | None): Tick spec.
       xlabel/title (str | None): Labels.
@@ -526,14 +498,14 @@ def plot_histogram(
 
     # ----- data prep -----
     d = np.asarray(data, dtype=float).ravel()
-    d = np.clip(d, 0.0, xlim)
-    d = np.append(d, xlim)  # ensure last bin has ≥1 sample
+    d = np.clip(d, xlim[0], xlim[1])
+    d = np.append(d, xlim[1])  # ensure last bin has ≥1 sample
 
     # ----- explicit histogram -----
-    counts, edges = np.histogram(d, bins=num_bins, range=(0.0, xlim))
-    probs   = counts.astype(float) / float(d.size)
+    counts, edges = np.histogram(d, bins=num_bins, range=(xlim[0], xlim[1]))
+    probs = counts.astype(float) / float(d.size)
     centers = 0.5 * (edges[:-1] + edges[1:])
-    widths  = np.diff(edges)
+    widths = np.diff(edges)
 
     if refer_threshold is not None:
         ax.vlines(refer_threshold, ymin=0, ymax=0.1, colors='k', linestyles='--', linewidth=2)
@@ -575,14 +547,18 @@ def plot_histogram(
         if thresh_style:
             style.update(thresh_style)
         for t in thresholds:
-            y_at_t = np.interp(t,x_ref,y_ref)
-            if 0 <= t <= xlim:
-                ax.plot([t, t],[0, y_at_t], **style, zorder=7) #vertical dashed lines to ref curve
-                ax.plot(t, y_at_t,marker='*',markersize=14,color='k',zorder=8) #stars at ref curve
+            y_at_t = np.interp(t, x_ref, y_ref)
+            if xlim[0] <= t <= xlim[1]:
+                ax.plot(
+                    [t, t], [0, y_at_t], **style, zorder=7
+                )  # vertical dashed lines to ref curve
+                ax.plot(
+                    t, y_at_t, marker="*", markersize=14, color="k", zorder=8
+                )  # stars at ref curve
 
     # axes styling
-    ax.set_xlim(0, xlim)
-    ax.set_ylim(0, ylim)
+    ax.set_xlim(xlim[0], xlim[1])
+    ax.set_ylim(ylim[0], ylim[1])
     plt.locator_params(axis="x", nbins=4)
     try:
         plt.xticks(xticks, xticklabels, fontsize=35)
@@ -598,6 +574,7 @@ def plot_histogram(
     fig.tight_layout()
     plt.savefig(path, dpi=300)
     plt.close()
+
 
 def plot_histogram_with_thresholds(
     data: np.ndarray, thresholds: List[float], path: str
@@ -678,3 +655,39 @@ def plot_histogram_with_thresholds(
     ax.tick_params(axis="x", which="major", labelsize=20)
     plt.tight_layout(pad=0.4, w_pad=0.5, h_pad=1.0)
     plt.savefig(path)
+
+
+def plot_data_rbc_k0(
+    t: np.ndarray,
+    data: np.ndarray,
+    path: str,
+    high: np.ndarray = np.array([]),
+    low: np.ndarray = np.array([]),
+    title: str = "",
+):
+    """Plot RBC k0 and binned indices.
+
+    Args:
+        t: time of k0 measurements
+        data: k0 data.
+        path: path to save plot to.
+        high: k0 indices binned as high.
+        low: k0 indices binned as low.
+        title: title of the plot.
+    """
+    fig, ax = plt.subplots(figsize=(9, 6))
+    # plot healthy reference line
+    ax.plot(t, data, "-", color="k", linewidth=5)
+    ax.plot(t[high], data[high], ".", color="C2", markersize=10)
+    ax.plot(t[low], data[low], ".", color="C1", markersize=10)
+    ax.plot(t, np.zeros((len(t), 1)), ".", color="k", linewidth=2)
+    ax.set_ylabel("Intensity (au)", fontsize=30)
+    ax.set_title(title, fontsize=30)
+    # set plot parameters
+    plt.rc("axes", linewidth=4)
+    plt.xticks([], [])
+    plt.yticks(fontsize=30)
+    # set ticks
+    fig.tight_layout()
+    plt.savefig(path)
+    plt.close()
