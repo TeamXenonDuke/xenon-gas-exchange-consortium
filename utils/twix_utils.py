@@ -12,6 +12,7 @@ import numpy as np
 
 from utils import constants
 
+
 def get_patient_age(twix_obj: mapvbvd._attrdict.AttrDict) -> float:
     """
     Get the patient's age.
@@ -26,11 +27,9 @@ def get_patient_age(twix_obj: mapvbvd._attrdict.AttrDict) -> float:
         ValueError: If age information is not found in the twix object.
     """
     try:
-        return twix_obj.hdr.Meas.flPatientAge
+        return round(twix_obj.hdr.Meas.flPatientAge)
     except:
         return np.nan
-
-    raise ValueError("Could not find age from twix object")
 
 
 def get_patient_sex(twix_obj: mapvbvd._attrdict.AttrDict) -> str:
@@ -51,8 +50,6 @@ def get_patient_sex(twix_obj: mapvbvd._attrdict.AttrDict) -> str:
     except:
         return np.nan
 
-    raise ValueError("Could not find sex from twix object")
-
 
 def get_patient_height(twix_obj: mapvbvd._attrdict.AttrDict) -> float:
     """
@@ -72,7 +69,24 @@ def get_patient_height(twix_obj: mapvbvd._attrdict.AttrDict) -> float:
     except:
         return np.nan
 
-    raise ValueError("Could not find height from twix object")
+
+def get_patient_weight(twix_obj: mapvbvd._attrdict.AttrDict) -> float:
+    """
+    Get the patient's weight in centimeters.
+
+    Args:
+        twix_obj: Twix object returned from the mapVBVD function.
+
+    Returns:
+        Patient weight as a float (in kg).
+
+    Raises:
+        ValueError: If weight information is not found in the twix object.
+    """
+    try:
+        return twix_obj.hdr.Meas.flUsedPatientWeight
+    except:
+        return np.nan
 
 
 def get_scan_date(twix_obj: mapvbvd._attrdict.AttrDict) -> str:
@@ -424,9 +438,7 @@ def get_institution_name(twix_obj: mapvbvd._attrdict.AttrDict) -> str:
         return "unknown"
 
 
-def get_system_vendor(
-    twix_obj: mapvbvd._attrdict.AttrDict
-) -> str:
+def get_system_vendor(twix_obj: mapvbvd._attrdict.AttrDict) -> str:
     """Get system vendor from the Twix header.
 
     Args
@@ -434,7 +446,7 @@ def get_system_vendor(
     Returns:
         system vendor (str)
     """
-    try :
+    try:
         return str(twix_obj.hdr.Dicom.Manufacturer)
     except:
         return "Siemens"
@@ -524,13 +536,14 @@ def get_gx_data(twix_obj: mapvbvd._attrdict.AttrDict) -> Dict[str, Any]:
     except:
         raise ValueError("Cannot get data from twix object.")
     return {
-    	constants.IOFields.FIDS: raw_fids,
+        constants.IOFields.FIDS: raw_fids,
         constants.IOFields.FIDS_GAS: data_gas,
-    	constants.IOFields.FIDS_DIS: data_dis,
-    	constants.IOFields.N_FRAMES: n_frames,
+        constants.IOFields.FIDS_DIS: data_dis,
+        constants.IOFields.N_FRAMES: n_frames,
         constants.IOFields.N_SKIP_START: n_skip_start,
         constants.IOFields.N_SKIP_END: n_skip_end,
     }
+
 
 def get_ute_data(twix_obj: mapvbvd._attrdict.AttrDict) -> Dict[str, Any]:
     """Get the UTE FIDs from twix object.
@@ -548,9 +561,6 @@ def get_ute_data(twix_obj: mapvbvd._attrdict.AttrDict) -> Dict[str, Any]:
         2. number of FIDs to use for generating trajectory.
         3. number of FIDs to skip from the beginning. This may be due to a noise frame.
         4. number of FIDs to skip from the end. This may be due to blank frame.
-        5. gradient delay x in microseconds.
-        6. gradient delay y in microseconds.
-        7. gradient delay z in microseconds.
     """
     raw_fids = np.array(twix_obj.image.unsorted().astype(np.cdouble))
 
@@ -581,7 +591,4 @@ def get_ute_data(twix_obj: mapvbvd._attrdict.AttrDict) -> Dict[str, Any]:
         constants.IOFields.N_FRAMES: nframes,
         constants.IOFields.N_SKIP_START: n_skip_start,
         constants.IOFields.N_SKIP_END: n_skip_end,
-        constants.IOFields.GRAD_DELAY_X: -5,
-        constants.IOFields.GRAD_DELAY_Y: -5,
-        constants.IOFields.GRAD_DELAY_Z: -5,
     }

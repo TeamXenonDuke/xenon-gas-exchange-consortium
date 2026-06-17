@@ -12,6 +12,7 @@ from utils import constants
 
 import os
 
+
 class Config(config_dict.ConfigDict):
     """Base config file.
 
@@ -44,8 +45,10 @@ class Config(config_dict.ConfigDict):
         self.bag_volume = "None"
         self.segmentation_key = constants.SegmentationKey.CNN_VENT.value
         self.manual_seg_filepath = ""
-        # default 99th percentile rescaling method
-        self.vent_normalization_method = constants.NormalizationMethods.PERCENTILE_MASKED
+        # Choose NormalizationMethod from PERCENTILE_MASKED, FRAC_VENT, MEAN_ANCHOR (PERCENTILE_MASKED is default)!
+        self.vent_normalization_method = (
+            constants.NormalizationMethods.PERCENTILE_MASKED
+        )
         # auto-generate if filepath missing or file not found
         self.auto_make_trachea_plus_lung_mask = True
         # where to write it if auto-generated
@@ -53,11 +56,10 @@ class Config(config_dict.ConfigDict):
 
         # Additional options
         self.reference_data_key = constants.ReferenceDataKey.DUKE_REFERENCE.value
-        self.registration_key = constants.RegistrationKey.SKIP.value
         self.bias_key = constants.BiasfieldKey.N4ITK.value
         self.hb_correction_key = constants.HbCorrectionKey.NONE.value
-        self.hb = "NA"
-        self.vol_correction_key = constants.VolCorrectionKey.NONE.value 
+        self.hb = 0.0
+        self.vol_correction_key = constants.VolCorrectionKey.NONE.value
         self.corrected_lung_volume = "NA"
         self.dicom_proton_dir = ""
         self.multi_echo = False
@@ -65,19 +67,18 @@ class Config(config_dict.ConfigDict):
         self.manual_reg_filepath = ""
 
         # Additional options for contamination correction
-        self.phase_gas_acq_diss = "None" #degree
+        self.phase_gas_acq_diss = "None"  # degree
         self.area_gas_acq_diss = "None"
 
         # Git/version check options (optional)
         self.git_compare_branch = "origin/main"  # Compare HEAD to this ref (None -> auto origin/HEAD -> origin/main).
-        self.git_always_show = False            # If True log every run; if False log only when compare-branch warnings exist.
-
+        self.git_always_show = False  # If True log every run; if False log only when compare-branch warnings exist.
 
         # Loading the paramater to base_config
         self.processes = Process()
         self.recon = Recon()
-        self.trachea_plus_lung_mask_filepath = "" # optional user override of big mask
-
+        self.trachea_plus_lung_mask_filepath = ""  # optional user override of big mask
+        self.osc_recon = OscillationRecon()
 
 
 class Recon(object):
@@ -87,8 +88,8 @@ class Recon(object):
         del_x: str, the x direction gradient delay in microseconds
         del_y: str, the y direction gradient delay in microseconds
         del_z: str, the z direction gradient delay in microseconds
-        traj_type: str, the trajectory type
-        recon_key: str, the reconstruction key
+        ramp_time: str, gradient ramp time in microseconds
+        recon_key: str, the type of reconstruction to perform
         recon_proton: bool, whether to reconstruct proton images
         remove_contamination: bool, whether to remove gas contamination
         remove_noisy_projections: bool, whether to remove noisy projections
@@ -99,8 +100,10 @@ class Recon(object):
             SNR images
         n_skip_start: int, the number of frames to skip at the beginning
         n_skip_end: int, the number of frames to skip at the end
-        key_radius: int, the key radius for the keyhole image
+        recon_size: int, size to which the images are reconstructed
         matrix_size: int, the final matrix size
+        traj_type: str, the trajectory type
+        traj_scaling_factor: str, scaling factor to apply to trajectories
     """
 
     def __init__(self):
@@ -109,6 +112,9 @@ class Recon(object):
         self.del_x = "None"
         self.del_y = "None"
         self.del_z = "None"
+
+        # Ramp time will read in by default, but may be specified in us
+        self.ramp_time = "None"
 
         # Reconstruction and matrix sizes
         self.recon_size = 64
@@ -122,11 +128,39 @@ class Recon(object):
         # Set initial n_skip_start value as NaN, or user input an expected value
         self.n_skip_start = np.nan
         self.n_skip_end = 0
-        self.optimized_conta_phase = 49.9 #degree
+        self.optimized_conta_phase = 49.9  # degree
         self.remove_contamination = False
         self.remove_noisy_projections = False
         self.gas_contamination_correction = False
         self.traj_type = constants.TrajType.HALTONSPIRAL
+
+        # Scaling is calculated automatically if not reading in trajectories directly
+        # Will default to 1 when reading in trajectories, but may be specified instead
+        # (use 0.903 for Halton Spiral Cincy data)
+        self.traj_scaling_factor = "None"
+
+
+class OscillationRecon(object):
+    def __init__(self):
+        """Initialize the oscillation reconstruction parameters.
+
+        Attributes:
+            oscillation_analysis: bool, whether to perform oscillation imaging analysis
+            key_radius_pct: int, percentage of points used to recon the keyhole image
+            osc_recon_key: str, the type of reconstruction to perform
+            vc_correction: bool, whether to correction oscillation images for relative capillary blood volume
+        """
+        self.oscillation_analysis = False
+
+        # Keyhole Radius
+        self.key_radius_pct = 14
+        # Recon Type
+        # Gridded (Robertson)
+        # Compressed Sensing (Plummer)
+        self.osc_recon_key = constants.ReconKey.ROBERTSON.value
+
+        # Correction for relative capillary blood volume
+        self.vc_correction = False
 
 
 class Process(object):

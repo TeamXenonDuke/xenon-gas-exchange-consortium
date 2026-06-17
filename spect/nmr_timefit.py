@@ -1,11 +1,12 @@
 """NMR time fit class."""
+
 import sys
 from typing import Optional
 
 sys.path.append("..")
 import matplotlib
 
-matplotlib.use("TkAgg")
+matplotlib.use("Agg")
 import numpy as np
 from matplotlib import pyplot as plt
 from scipy.optimize import least_squares

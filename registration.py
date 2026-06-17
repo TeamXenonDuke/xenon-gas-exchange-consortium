@@ -1,4 +1,5 @@
 """Registration module."""
+
 import logging
 from typing import Tuple
 import time
@@ -62,13 +63,13 @@ def register_ants(
     logging.info(f"*** Using ANTsPy ({transform}) to register images ...")
     registration = ants.registration(fixed = ants_static, moving = ants_moving1,
                                      aff_metric = 'mattes', syn_metric = 'mattes',
-                                     type_of_transform = transform, interpolator = "bSpline")
+                                     type_of_transform = transform, interpolator = "nearestNeighbor")
 
     moving1_reg = registration["warpedmovout"].numpy()
 
     # Apply the same transform to moving2
     moving2_ants_reg = ants.apply_transforms(fixed = ants_static, moving = ants_moving2,
-        transformlist = registration["fwdtransforms"], interpolator = "bSpline",)
+        transformlist = registration["fwdtransforms"], interpolator = "nearestNeighbor",)
     moving2_reg = moving2_ants_reg.numpy()
     end_time = time.time()
     tot_time = end_time - start_time

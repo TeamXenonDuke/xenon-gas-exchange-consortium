@@ -1,14 +1,19 @@
 """Scripts to run gas exchange mapping pipeline."""
 
-import logging
-logging.getLogger("fontTools").setLevel(logging.WARNING)
-
 import numpy as np
 from absl import app, flags
 from ml_collections import config_flags
 
 from config import base_config
 from subject_classmap import Subject
+
+import logging
+
+for n in list(logging.root.manager.loggerDict):
+    if n.startswith("fontTools"):
+        logging.getLogger(n).setLevel(logging.WARNING)
+        logging.getLogger(n).disabled = True
+        logging.getLogger(n).propagate = False
 
 FLAGS = flags.FLAGS
 
@@ -26,6 +31,13 @@ def gx_mapping_reconstruction(config: base_config.Config):
         config (config_dict.ConfigDict): config dict
     """
     subject = Subject(config=config)
+    if config.vent_normalization_method not in [
+        "percentile_masked",
+        "frac_vent",
+        "mean_anchor",
+    ]:
+        msg = f"You choose a wrong normalization method: {config.vent_normalization_method}! It has to be: PERCENTILE_MASKED, FRAC_VENT, or MEAN_ANCHOR"
+        raise ValueError(msg)
     try:
         subject.read_twix_files()
     except:
@@ -39,7 +51,7 @@ def gx_mapping_reconstruction(config: base_config.Config):
     subject.preprocess()
     subject.reconstruction_gas()
     subject.reconstruction_dissolved()
-    if config.recon.recon_proton :
+    if config.recon.recon_proton:
         if getattr(subject, "dict_ute", None):
             subject.reconstruction_ute()
         elif config.dicom_proton_dir:
@@ -59,6 +71,10 @@ def gx_mapping_reconstruction(config: base_config.Config):
     subject.vol_correction()
     subject.dissolved_analysis()
     subject.dissolved_binning()
+    if config.osc_recon.oscillation_analysis:
+        subject.reconstruction_rbc_oscillation()
+        subject.oscillation_analysis()
+        subject.oscillation_binning()
     subject.get_statistics()
     subject.get_info()
     subject.save_subject_to_mat()
@@ -79,15 +95,25 @@ def gx_mapping_readin(config: base_config.Config):
         config (config_dict.ConfigDict): config dict
     """
     subject = Subject(config=config)
+    if config.vent_normalization_method not in [
+        "percentile_masked",
+        "frac_vent",
+        "mean_anchor",
+    ]:
+        msg = f"You choose a wrong normalization method: {config.vent_normalization_method}! It has to be: PERCENTILE_MASKED, FRAC_VENT, or MEAN_ANCHOR"
+        raise ValueError(msg)
     subject.read_mat_file()
     if FLAGS.force_segmentation:
         subject.segmentation()
     subject.gas_binning()
     subject.dixon_decomposition()
     subject.hb_correction()
-    subject.vol_correction()    
+    subject.vol_correction()
     subject.dissolved_analysis()
     subject.dissolved_binning()
+    if config.osc_recon.oscillation_analysis:
+        subject.oscillation_analysis()
+        subject.oscillation_binning()
     subject.get_statistics()
     subject.get_info()
     subject.save_subject_to_mat()
