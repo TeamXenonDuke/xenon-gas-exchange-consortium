@@ -1,0 +1,153 @@
+
+@page {
+    size: 14in 10in;   /* width height */
+    margin: 20mm;
+}
+
+body {
+  background-color: white;
+  font-family: Arial;
+  color: black;
+  font-weight: normal;
+}
+.title-container {
+  width: 1133px;
+}
+#big-title {
+  width: 400px;
+  font-size: 20pt;
+  margin: 10px 10px;
+  float: left;
+  font-weight: normal;
+}
+#date-title {
+  width: 400px;
+  font-size: 12pt;
+  margin: 15px 30px;
+  text-align: right;
+  float: right;
+  font-weight: normal;
+}
+
+.hist-container {
+  width: 240px;
+  height: 620px;
+  margin: 0px;
+  clear: left;
+  padding: 0px;
+  border: 0px;
+  float: left;
+  position: relative;
+  top: 0px;
+  left: 0px;
+}
+.hist-tile {
+  position: relative;
+  display: block;
+  width: 100%;
+  padding: 0px;
+  margin: 0px;
+  border: 0px;
+  float: left;
+}
+.map-container {
+  width: 700px;
+  height: 620px;
+  padding: 0px;
+  border: 0px;
+  margin: 0px;
+  float: left;
+  background: black;
+  margin-right: -1px;
+  position: relative;
+}
+.map-tile {
+  display: inline-block;
+  background: black;
+  width: 680px;
+  color: white;
+  border: 0px;
+  padding: 0px;
+  overflow: hidden;
+  float: none;
+}
+.colorbar-tile {
+  position: absolute;
+  top: 60px;
+  right: 5px;
+  height: 160px;
+  width: 20px;
+}
+.space {
+  height: 35px;
+}
+.hist-label {
+  position: absolute;
+  top: 18px;
+  left: 40px;
+  color: #353131;
+  margin: 0;
+  font-weight: 900;
+  font-size: 9pt;
+  line-height: 1.1;
+}
+.hist-label p {
+  margin: 0;
+  padding: 0;
+}
+.predict-values {
+  position: relative;
+  bottom: 5px;
+  left: 0px;
+  text-align: center;
+  color: white;
+  background: black;
+}
+ 
+.table-container {
+  width: 240px;
+  height: 620px;
+  font-size: 12pt;
+  float: left;
+  background-color: #353131;
+}
+table {
+  table-layout: auto;
+  height: 100%;
+  width: 100%;
+  font-size: 10pt;
+  line-height: 1.5;
+}
+td,
+th {
+  border: 2.04px solid #353131;
+  font-weight: normal;
+  text-align: left;
+  padding: 4px;
+  padding-top: 8px;
+  padding-bottom: 10px;
+}
+tr.title{
+  background-color: #6a6e6a;
+  color: white;
+}
+tr.ven {
+  background-color: #cce5ff;
+}
+tr.membrane {
+  background-color: #ccffcc;
+}
+tr.rbc {
+  background-color: #ffcccc;
+}
+tr.basic {
+  background-color: #e0e0e0;
+}
+tr.title {
+  color: white;
+  background-color: #606060;
+}
+th, td {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}

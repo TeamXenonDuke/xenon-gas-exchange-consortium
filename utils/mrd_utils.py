@@ -1,4 +1,5 @@
 """MRD util functions."""
+
 import logging
 import sys
 from typing import Any, Dict
@@ -8,6 +9,7 @@ import numpy as np
 
 sys.path.append("..")
 from utils import constants
+
 
 def get_patient_age(header: ismrmrd.xsd.ismrmrdschema.ismrmrd.ismrmrdHeader) -> int:
     """
@@ -63,7 +65,10 @@ def get_patient_sex(header: ismrmrd.xsd.ismrmrdschema.ismrmrd.ismrmrdHeader) -> 
         logging.warning("Could not find sex from MRD header")
         return np.nan
 
-def get_patient_height(header: ismrmrd.xsd.ismrmrdschema.ismrmrd.ismrmrdHeader) -> float:
+
+def get_patient_height(
+    header: ismrmrd.xsd.ismrmrdschema.ismrmrd.ismrmrdHeader,
+) -> float:
     """
     Get the patient's height in centimeters.
 
@@ -84,7 +89,10 @@ def get_patient_height(header: ismrmrd.xsd.ismrmrdschema.ismrmrd.ismrmrdHeader) 
     	return np.nan
         
 
-def get_patient_weight(header: ismrmrd.xsd.ismrmrdschema.ismrmrd.ismrmrdHeader) -> float:
+
+def get_patient_weight(
+    header: ismrmrd.xsd.ismrmrdschema.ismrmrd.ismrmrdHeader,
+) -> float:
     """
     Get the patient's weight in kg.
 
@@ -106,6 +114,7 @@ def get_patient_weight(header: ismrmrd.xsd.ismrmrdschema.ismrmrd.ismrmrdHeader) 
     except:
     	logging.warning("Could not find weight from MRD header")
     	return np.nan
+
 
 
 def get_subject_id(
@@ -174,6 +183,7 @@ def get_sample_time(dataset: ismrmrd.hdf5.Dataset) -> float:
     acq_header = dataset.read_acquisition(0).getHead()
     return acq_header.sample_time_us * 1e-6
 
+
 def get_sample_time_gas_exchange(dataset: ismrmrd.hdf5.Dataset) -> float:
     """
     Get the sample (dwell) time from the MRD dataset.
@@ -195,6 +205,7 @@ def get_sample_time_gas_exchange(dataset: ismrmrd.hdf5.Dataset) -> float:
 
     raise RuntimeError("No valid acquisitions found to determine sample time.")
 
+
 def get_sample_time_bonus_spectra(dataset: ismrmrd.hdf5.Dataset) -> float:
     """
     Get the sample (dwell) time for bonus spectra from the MRD dataset.
@@ -212,7 +223,7 @@ def get_sample_time_bonus_spectra(dataset: ismrmrd.hdf5.Dataset) -> float:
         acq = dataset.read_acquisition(i)
         head = acq.getHead()
 
-        if head.measurement_uid: 
+        if head.measurement_uid:
             return head.sample_time_us * 1e-6
 
     raise RuntimeError("No bonus spectra acquisitions found to determine sample time.")
@@ -335,6 +346,7 @@ def get_flipangle_gas(header: ismrmrd.xsd.ismrmrdschema.ismrmrd.ismrmrdHeader) -
     """
     return header.sequenceParameters.flipAngle_deg[0]
 
+
 def get_prep_pulses(
     header: ismrmrd.xsd.ismrmrdschema.ismrmrd.ismrmrdHeader,
 ) -> str:
@@ -345,9 +357,7 @@ def get_prep_pulses(
     Returns:
         prep_pulse (string)
     """
-    var_names = [
-        up.name for up in header.userParameters.userParameterString
-    ]
+    var_names = [up.name for up in header.userParameters.userParameterString]
     # Check if PREP_PULSES exists
     if constants.IOFields.PREP_PULSES not in var_names:
         return "prep_pulses does not exist in the MRD file."
@@ -355,10 +365,10 @@ def get_prep_pulses(
     prep_pulses = str(
         header.userParameters.userParameterString[
             var_names.index(constants.IOFields.PREP_PULSES)
-        ]
-        .value
+        ].value
     )
     return prep_pulses
+
 
 def get_FOV(header: ismrmrd.xsd.ismrmrdschema.ismrmrd.ismrmrdHeader) -> float:
     """Get the FOV in cm.
@@ -395,7 +405,7 @@ def get_orientation(header: ismrmrd.xsd.ismrmrdschema.ismrmrd.ismrmrdHeader) -> 
         ].value
     except:
         logging.info("Unable to find orientation from twix object, returning coronal.")
-    
+
     orientation = orientation.lower() if orientation else ""
 
     supported_vendors = {
@@ -499,7 +509,6 @@ def get_gx_data(dataset: ismrmrd.hdf5.Dataset, multi_echo: bool) -> Dict[str, An
     raw_traj = []
     bonus_spectra_fids = []
 
-
     contrast_labels = []
     bs_contrast_labels = []
 
@@ -509,7 +518,7 @@ def get_gx_data(dataset: ismrmrd.hdf5.Dataset, multi_echo: bool) -> Dict[str, An
     for i in range(0, int(n_projections)):
         acquisition_header = dataset.read_acquisition(i).getHead()
 
-        bonus_spectra_flag = acquisition_header.measurement_uid;
+        bonus_spectra_flag = acquisition_header.measurement_uid
 
         if bonus_spectra_flag:
             bonus_spectra_fids.append(dataset.read_acquisition(i).data[0].flatten())
@@ -533,9 +542,9 @@ def get_gx_data(dataset: ismrmrd.hdf5.Dataset, multi_echo: bool) -> Dict[str, An
     set_labels_truncated = np.asarray(set_labels)
     raw_traj = np.asarray(raw_traj)
 
-    if(set_included):
+    if set_included:
         unique_set_labels = np.unique(set_labels_truncated)
-        
+
         gas_fids_all = []
         dis_fids_all = []
         gas_trajectories_all = []
@@ -543,16 +552,20 @@ def get_gx_data(dataset: ismrmrd.hdf5.Dataset, multi_echo: bool) -> Dict[str, An
 
         for set_label in unique_set_labels:
             gas_fids_set = raw_fids_truncated[
-                (contrast_labels_truncated == constants.ContrastLabels.GAS) & (set_labels_truncated == set_label)
+                (contrast_labels_truncated == constants.ContrastLabels.GAS)
+                & (set_labels_truncated == set_label)
             ]
             dis_fids_set = raw_fids_truncated[
-                (contrast_labels_truncated == constants.ContrastLabels.DISSOLVED) & (set_labels_truncated == set_label)
+                (contrast_labels_truncated == constants.ContrastLabels.DISSOLVED)
+                & (set_labels_truncated == set_label)
             ]
             gas_traj_set = raw_traj[
-                (contrast_labels_truncated == constants.ContrastLabels.GAS) & (set_labels_truncated == set_label)
+                (contrast_labels_truncated == constants.ContrastLabels.GAS)
+                & (set_labels_truncated == set_label)
             ]
             dis_traj_set = raw_traj[
-                (contrast_labels_truncated == constants.ContrastLabels.DISSOLVED) & (set_labels_truncated == set_label)
+                (contrast_labels_truncated == constants.ContrastLabels.DISSOLVED)
+                & (set_labels_truncated == set_label)
             ]
 
             if gas_fids_set.size > 0 and not np.all(gas_fids_set == 0):
@@ -562,14 +575,13 @@ def get_gx_data(dataset: ismrmrd.hdf5.Dataset, multi_echo: bool) -> Dict[str, An
                 dis_fids_all.append(np.expand_dims(dis_fids_set, axis=-1))
                 dis_trajectories_all.append(np.expand_dims(dis_traj_set, axis=-1))
 
-
         gas_fids_all = np.concatenate(gas_fids_all, axis=-1)
         dis_fids_all = np.concatenate(dis_fids_all, axis=-1)
         gas_trajectories_all = np.concatenate(gas_trajectories_all, axis=-1)
         dis_trajectories_all = np.concatenate(dis_trajectories_all, axis=-1)
-      
-        if (multi_echo):
-            all_traj = [gas_trajectories_all , dis_trajectories_all];
+
+        if multi_echo:
+            all_traj = [gas_trajectories_all, dis_trajectories_all]
             return {
                 constants.IOFields.FIDS: raw_fids_truncated,
                 constants.IOFields.FIDS_GAS: gas_fids_all,
@@ -577,24 +589,24 @@ def get_gx_data(dataset: ismrmrd.hdf5.Dataset, multi_echo: bool) -> Dict[str, An
                 constants.IOFields.TRAJ: all_traj,
             }
         else:
-            all_traj = [gas_trajectories_all[...,0] , dis_trajectories_all[...,0]];
+            all_traj = [gas_trajectories_all[..., 0], dis_trajectories_all[..., 0]]
             return {
                 constants.IOFields.FIDS: raw_fids_truncated,
-                constants.IOFields.FIDS_GAS: gas_fids_all[...,0],
-                constants.IOFields.FIDS_DIS: dis_fids_all[...,0],
+                constants.IOFields.FIDS_GAS: gas_fids_all[..., 0],
+                constants.IOFields.FIDS_DIS: dis_fids_all[..., 0],
                 constants.IOFields.TRAJ: all_traj,
             }
 
     else:
         gas_traj = raw_traj[
-                contrast_labels_truncated == constants.ContrastLabels.GAS, :, :
-            ];
+            contrast_labels_truncated == constants.ContrastLabels.GAS, :, :
+        ]
 
         dis_traj = raw_traj[
-                contrast_labels_truncated == constants.ContrastLabels.DISSOLVED, :, :
-            ];
+            contrast_labels_truncated == constants.ContrastLabels.DISSOLVED, :, :
+        ]
 
-        all_traj = [gas_traj , dis_traj];
+        all_traj = [gas_traj, dis_traj]
 
         return {
             constants.IOFields.FIDS: raw_fids_truncated,
@@ -606,7 +618,6 @@ def get_gx_data(dataset: ismrmrd.hdf5.Dataset, multi_echo: bool) -> Dict[str, An
             ],
             constants.IOFields.TRAJ: all_traj,
         }
-
 
 
 def get_ute_data(dataset: ismrmrd.hdf5.Dataset) -> Dict[str, Any]:

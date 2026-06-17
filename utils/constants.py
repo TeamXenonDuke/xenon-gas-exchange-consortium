@@ -8,10 +8,11 @@ FOVINFLATIONSCALE3D = 1000.0
 GRYOMAGNETIC_RATIO = 11.777  # MHz/T
 T2STAR_GAS = 1.8e-2  # seconds
 T2STAR_RBC_3T = 1.044575 * 1e-3  # seconds
-T2STAR_MEMBRANE_3T = 0.988588  * 1e-3  # seconds
+T2STAR_MEMBRANE_3T = 0.988588 * 1e-3  # seconds
+T2STAR_DISSOLVED_3T = 1.0 * 1e-3  # seconds
 
 
-KCO_ALPHA = 22.6 # membrane coefficient
+KCO_ALPHA = 22.6  # membrane coefficient
 KCO_BETA = 7.42  # RBC coefficient
 VA_ALPHA = 1.58
 
@@ -30,7 +31,7 @@ class IOFields(object):
     GLI_KCO = "gli_kco"
     GLI_DLCO = "gli_dlco"
     BANDWIDTH = "bandwidth"
-    USER_LUNG_VOLUME_VALUE ="user_lung_volume_value"
+    USER_LUNG_VOLUME_VALUE = "user_lung_volume_value"
     BIASFIELD_KEY = "biasfield_key"
     BONUS_SPECTRA_LABELS = "bonus_spectra_labels"
     CONTRAST_LABELS = "contrast_labels"
@@ -85,7 +86,7 @@ class IOFields(object):
     TRAJ = "traj"
     SYSTEM_VENDOR = "system_vendor"
     VOL_CORRECTION_KEY = "vol_correction_key"
-    VOL_CORRECTION_FACTOR_MEMBRANE  = "vol_correction_factor_membrane"
+    VOL_CORRECTION_FACTOR_MEMBRANE = "vol_correction_factor_membrane"
     VOL_CORRECTION_FACTOR_RBC = "vol_correction_factor_rbc"
     VENT_NORMALIZATION_METHOD = "vent_normalization_method"
     CORRECTED_LUNG_VOLUME = "corrected_lung_volume"
@@ -93,10 +94,12 @@ class IOFields(object):
     RBCM_REF = "rbcm_ref"
     RBCM_PERC = "rbcm_perc"
 
+
 class PrepPulses(enum.Enum):
     """Preparation pulse flags."""
-    
+
     PREP_PULSES = "true"
+
 
 class CNNPaths(object):
     """Paths to saved model files."""
@@ -269,10 +272,11 @@ class StatsIOFields(object):
     """Statistic IO Fields."""
 
     INFLATION = "inflation"
-    INFLATION_PCT='inflation_percentage'
-    INFLATION_AVG='inflation_avg'
-    INFLATION_DISPLAY='inflation_display'
+    INFLATION_PCT = "inflation_percentage"
+    INFLATION_AVG = "inflation_avg"
+    INFLATION_DISPLAY = "inflation_display"
     RBC_M_RATIO = "rbc_m_ratio"
+    N_POINTS = "n_points"
     RBC_SNR = "rbc_snr"
     MEMBRANE_SNR = "membrane_snr"
     VENT_SNR = "vent_snr"
@@ -299,22 +303,40 @@ class StatsIOFields(object):
     RDP_BA = "rdp_ba"
     ALVEOLAR_VOLUME = "alveolar_volume"
 
+    RBC_HIGH_SNR = "rbc_high_snr"
+    RBC_LOW_SNR = "rbc_low_snr"
+    DISSOLVED_SNR = "dissolved_snr"
+    OSC_DEFECT_PCT = "osc_defect"
+    OSC_LOW_PCT = "osc_low"
+    OSC_DEFECTLOW_PCT = "osc_defectlow"
+    OSC_HIGH_PCT = "osc_high"
+    OSC_MEAN = "osc_mean"
+    OSC_NEGATIVE_PCT = "osc_negative"
+    KEY_RADIUS = "key_radius"
+
+    OSC_DEFECT_PCT_CORR = "osc_defect_corr"
+    OSC_LOW_PCT_CORR = "osc_low_corr"
+    OSC_DEFECTLOW_PCT_CORR = "osc_defectlow_corr"
+    OSC_HIGH_PCT_CORR = "osc_high_corr"
+    OSC_MEAN_CORR = "osc_mean_corr"
+    OSC_NEGATIVE_PCT_CORR = "osc_negative_corr"
+
 
 class VENTHISTOGRAMFields(object):
     """Ventilation histogram fields."""
 
     COLOR = (0.4196, 0.6824, 0.8392)
-    XLIM = 1.0
-    XLIM_MEAN_ANCHOR = 2.0
-    YLIM = 0.07
-    YLIM_FRAC_VENT = 0.15
-    YLIM_MEAN_ANCHOR = 0.08
+    XLIM = (0.0, 1.0)
+    XLIM_MEAN_ANCHOR = (0.0, 2.0)
+    YLIM = (0.0, 0.07)
+    YLIM_FRAC_VENT = (0.0, 0.15)
+    YLIM_MEAN_ANCHOR = (0.0, 0.08)
     NUMBINS = 50
-    XTICKS = np.linspace(0, XLIM, 4)
-    XTICKS_MEAN_ANCHOR = np.linspace(0, XLIM_MEAN_ANCHOR, 4)
-    YTICKS = np.linspace(0, YLIM, 5)
-    YTICKS_FRAC_VENT = np.linspace(0, YLIM_FRAC_VENT, 5)
-    YTICKS_MEAN_ANCHOR = np.linspace(0, YLIM_MEAN_ANCHOR, 5)
+    XTICKS = np.linspace(XLIM[0], XLIM[1], 4)
+    XTICKS_MEAN_ANCHOR = np.linspace(XLIM_MEAN_ANCHOR[0], XLIM_MEAN_ANCHOR[1], 4)
+    YTICKS = np.linspace(YLIM[0], YLIM[1], 5)
+    YTICKS_FRAC_VENT = np.linspace(YLIM_FRAC_VENT[0], YLIM_FRAC_VENT[1], 5)
+    YTICKS_MEAN_ANCHOR = np.linspace(YLIM_MEAN_ANCHOR[0], YLIM_MEAN_ANCHOR[1], 5)
     XTICKLABELS = ["{:.2f}".format(x) for x in XTICKS]
     XTICKLABELS_MEAN_ANCHOR = ["{:.2f}".format(x) for x in XTICKS_MEAN_ANCHOR]
     YTICKLABELS = ["{:.2f}".format(x) for x in YTICKS]
@@ -327,11 +349,11 @@ class RBCHISTOGRAMFields(object):
     """Ventilation histogram fields."""
 
     COLOR = (247.0 / 255, 96.0 / 255, 111.0 / 255)
-    XLIM = 0.012
-    YLIM = 0.1
+    XLIM = (0.0, 0.012)
+    YLIM = (0.0, 0.1)
     NUMBINS = 50
-    XTICKS = np.linspace(0, XLIM, 4)
-    YTICKS = np.linspace(0, YLIM, 5)
+    XTICKS = np.linspace(XLIM[0], XLIM[1], 4)
+    YTICKS = np.linspace(YLIM[0], YLIM[1], 5)
     XTICKLABELS = ["{:.2f}".format(x * 1e2) for x in XTICKS]
     YTICKLABELS = ["{:.2f}".format(x) for x in YTICKS]
     TITLE = "RBC:Gas x 100"
@@ -341,34 +363,33 @@ class MEMBRANEHISTOGRAMFields(object):
     """Membrane histogram fields."""
 
     COLOR = (0.4, 0.7608, 0.6471)
-    XLIM = 0.025
-    YLIM = 0.18
+    XLIM = (0.0, 0.025)
+    YLIM = (0.0, 0.18)
     NUMBINS = 70
-    XTICKS = np.linspace(0, XLIM, 4)
-    YTICKS = np.linspace(0, YLIM, 5)
+    XTICKS = np.linspace(XLIM[0], XLIM[1], 4)
+    YTICKS = np.linspace(YLIM[0], YLIM[1], 5)
     XTICKLABELS = ["{:.2f}".format(x * 1e2) for x in XTICKS]
     YTICKLABELS = ["{:.2f}".format(x) for x in YTICKS]
     TITLE = "Membrane:Gas x 100"
 
 
-class PDFOPTIONS(object):
-    """PDF Options dict."""
+class OSCHISTOGRAMFields(object):
+    """RBC oscillation imaging histogram fields."""
 
-    VEN_PDF_OPTIONS = {
-        "page-width": 256,  # 320,
-        "page-height": 160,  # 160,
-        "margin-top": 1,
-        "margin-right": 0.1,
-        "margin-bottom": 0.1,
-        "margin-left": 0.1,
-        "dpi": 300,
-        "encoding": "UTF-8",
-        "enable-local-file-access": None,
-    }
+    COLOR = (0.0, 0.8, 0.8)
+    XLIM = (-15, 35)
+    YLIM = (0, 0.2)
+    NUMBINS = 50
+    XTICKS = np.linspace(XLIM[0], XLIM[1], 5)
+    YTICKS = np.linspace(YLIM[0], YLIM[1], 5)
+    XTICKLABELS = ["{:.0f}".format(x) for x in XTICKS]
+    YTICKLABELS = ["{:.2f}".format(x) for x in YTICKS]
+    TITLE = "RBC Oscillations (%)"
 
 
 class NormalizationMethods(object):
     """Image normalization methods."""
+
     # For increasing the image contrast
     MAX = "max"  # Normalize by the global maximum intensity in the image (increase contrast, not currently used)
     PERCENTILE = "percentile"  # Normalize by a given percentile of the entire image (increase proton contrast)
@@ -377,7 +398,7 @@ class NormalizationMethods(object):
     # For histogram normalization
     PERCENTILE_MASKED = "percentile_masked"  # Normalize by a given percentile computed only within the mask
     FRAC_VENT = "frac_vent"  # Normalize to estimate fractional ventilation using bag volume and voxel size
-    MEAN_ANCHOR = "mean_anchor" # MEAN_ANCHOR: normalize to unit-mean inside mask (like MEAN), then clip high outliers at the masked 99th percentile to stabilize scaling.
+    MEAN_ANCHOR = "mean_anchor"  # MEAN_ANCHOR: normalize to unit-mean inside mask (like MEAN), then clip high outliers at the masked 99th percentile to stabilize scaling.
 
 
 class CMAP(object):
@@ -415,6 +436,16 @@ class CMAP(object):
         8: [197.0 / 255.0, 27.0 / 255.0, 125.0 / 255.0],
     }
 
+    RBC_OSC_BIN2COLOR = {
+        0: [0, 0, 0],
+        1: [1, 0, 0],
+        2: [1, 0.7143, 0],
+        3: [0.4, 0.7, 0.4],
+        4: [0, 1, 0],
+        5: [0, 0.57, 0.71],
+        6: [0, 0, 1],
+    }
+
 
 class HbCorrection(object):
     """Coefficients for hb correction scaling factor equations.
@@ -430,11 +461,12 @@ class HbCorrection(object):
 
 class VolCorrection(object):
     """Coefficients for volume correction scaling factor equations
-    
+
     Reference DOI: 10.1183/13993003.00289-2020
     """
+
     ALPHA_RBC = -0.15963  # slope of trend in rbc equation
-    ALPHA_MEM = -0.38665   # slope of trend in membrane equation
+    ALPHA_MEM = -0.38665  # slope of trend in membrane equation
 
 
 class ContrastLabels(object):
@@ -461,65 +493,101 @@ class PipelineVersion(object):
 class ReferenceDistribution(object):
     """Reference distributions for binning based on RF excitation.
 
-    Reference: Sup's reference distribution paper when published """
+    Reference: Sup's reference distribution paper when published"""
 
     REFERENCE_218_PPM = {
-    "title": "REFERENCE_218_PPM",
-    "healthy_histogram_vent_dir" : "assets/histogram_profiles/0_ppm/vent_hist_profile.npy",
-    "healthy_histogram_vent_frac_dir" : "assets/histogram_profiles/0_ppm/frac_vent_dist.npy",
-    "healthy_histogram_vent_mean_anchor_dir" : "assets/histogram_profiles/0_ppm/vent_mean_anchor_dist.npy",
-    "healthy_histogram_rbc_dir" : "assets/histogram_profiles/218_ppm/rbc_hist_profile.npy",
-    "healthy_histogram_membrane_dir" : "assets/histogram_profiles/218_ppm/mem_hist_profile.npy",
-    "threshold_vent": [0.3891, 0.5753, 0.7203, 0.8440, 0.9539],
-    "threshold_vent_mean_anchor": [0.5656, 0.8138, 1.0138, 1.1871, 1.3428],
-    "thresholds_fractional_ventilation": [0.126229, 0.198441, 0.271045, 0.343936, 0.417054],
-    "reference_fractional_ventilation_fit_vent": (0.0654281965334782, 0.27119297933193004, 0.07271780094487755),
-    "threshold_rbc": [0.001393, 0.002891, 0.004772, 0.006991, 0.009518],
-    "threshold_membrane": [0.004881, 0.006522, 0.008603, 0.011216, 0.014466, 0.018471, 0.023370],
-    "reference_fit_vent": (0.04074, 0.7085, 0.1408),
-    "reference_fit_rbc": (0.06106, 0.004942, 0.002060),
-    "reference_fit_membrane": (0.0700, 0.008871, 0.002420),
-    "reference_stats": {
-        "vent_defect_avg": "2",
-        "vent_defect_std": "",
-        "vent_low_avg": "14",
-        "vent_low_std": "",
-        "vent_high_avg": "16",
-        "vent_high_std": "",
-        "membrane_defect_avg": "2",
-        "membrane_defect_std": "0",
-        "membrane_low_avg": "14",
-        "membrane_low_std": "0",
-        "membrane_high_avg": "2",
-        "membrane_high_std": "0",
-        "rbc_defect_avg": "2",
-        "rbc_defect_std": "",
-        "rbc_low_avg": "14",
-        "rbc_low_std": "",
-        "rbc_high_avg": "16",
-        "rbc_high_std": "",
-        "rbc_m_ratio_avg": "0.55",
-        "rbc_m_ratio_std": "0.12",
-        "inflation_avg": "3.4",
-        "inflation_std": "0.33",
-        "inflation_percentage":"0.0",
-        "inflation_display":"0.0",
-        }
+        "title": "REFERENCE_218_PPM",
+        "healthy_histogram_vent_dir": "assets/histogram_profiles/0_ppm/vent_hist_profile.npy",
+        "healthy_histogram_vent_frac_dir": "assets/histogram_profiles/0_ppm/frac_vent_dist.npy",
+        "healthy_histogram_vent_mean_anchor_dir": "assets/histogram_profiles/0_ppm/vent_mean_anchor_dist.npy",
+        "healthy_histogram_rbc_dir": "assets/histogram_profiles/218_ppm/rbc_hist_profile.npy",
+        "healthy_histogram_membrane_dir": "assets/histogram_profiles/218_ppm/mem_hist_profile.npy",
+        "threshold_vent": [0.3891, 0.5753, 0.7203, 0.8440, 0.9539],
+        "threshold_vent_mean_anchor": [0.5656, 0.8138, 1.0138, 1.1871, 1.3428],
+        "thresholds_fractional_ventilation": [
+            0.126229,
+            0.198441,
+            0.271045,
+            0.343936,
+            0.417054,
+        ],
+        "reference_fractional_ventilation_fit_vent": (
+            0.0654281965334782,
+            0.27119297933193004,
+            0.07271780094487755,
+        ),
+        "threshold_rbc": [0.001393, 0.002891, 0.004772, 0.006991, 0.009518],
+        "threshold_membrane": [
+            0.004881,
+            0.006522,
+            0.008603,
+            0.011216,
+            0.014466,
+            0.018471,
+            0.023370,
+        ],
+        "reference_fit_vent": (0.04074, 0.7085, 0.1408),
+        "reference_fit_rbc": (0.06106, 0.004942, 0.002060),
+        "reference_fit_membrane": (0.0700, 0.008871, 0.002420),
+        "reference_stats": {
+            "vent_defect_avg": "2",
+            "vent_defect_std": "",
+            "vent_low_avg": "14",
+            "vent_low_std": "",
+            "vent_high_avg": "16",
+            "vent_high_std": "",
+            "membrane_defect_avg": "2",
+            "membrane_defect_std": "0",
+            "membrane_low_avg": "14",
+            "membrane_low_std": "0",
+            "membrane_high_avg": "2",
+            "membrane_high_std": "0",
+            "rbc_defect_avg": "2",
+            "rbc_defect_std": "",
+            "rbc_low_avg": "14",
+            "rbc_low_std": "",
+            "rbc_high_avg": "16",
+            "rbc_high_std": "",
+            "rbc_m_ratio_avg": "0.55",
+            "rbc_m_ratio_std": "0.12",
+            "inflation_avg": "3.4",
+            "inflation_std": "0.33",
+            "inflation_percentage": "0.0",
+            "inflation_display": "0.0",
+        },
     }
 
     REFERENCE_208_PPM = {
         "title": "REFERENCE_208_PPM",
-        "healthy_histogram_vent_dir" : "assets/histogram_profiles/0_ppm/vent_hist_profile.npy",
-        "healthy_histogram_vent_frac_dir" : "assets/histogram_profiles/0_ppm/frac_vent_dist.npy",
-        "healthy_histogram_vent_mean_anchor_dir" : "assets/histogram_profiles/0_ppm/vent_mean_anchor_dist.npy",
-        "healthy_histogram_rbc_dir" : "assets/histogram_profiles/208_ppm/rbc_hist_profile.npy",
-        "healthy_histogram_membrane_dir" : "assets/histogram_profiles/208_ppm/mem_hist_profile.npy",
+        "healthy_histogram_vent_dir": "assets/histogram_profiles/0_ppm/vent_hist_profile.npy",
+        "healthy_histogram_vent_frac_dir": "assets/histogram_profiles/0_ppm/frac_vent_dist.npy",
+        "healthy_histogram_vent_mean_anchor_dir": "assets/histogram_profiles/0_ppm/vent_mean_anchor_dist.npy",
+        "healthy_histogram_rbc_dir": "assets/histogram_profiles/208_ppm/rbc_hist_profile.npy",
+        "healthy_histogram_membrane_dir": "assets/histogram_profiles/208_ppm/mem_hist_profile.npy",
         "threshold_vent": [0.3891, 0.5753, 0.7203, 0.8440, 0.9539],
         "threshold_vent_mean_anchor": [0.5656, 0.8138, 1.0138, 1.1871, 1.3428],
-        "thresholds_fractional_ventilation": [0.126229, 0.198441, 0.271045, 0.343936, 0.417054],
-        "reference_fractional_ventilation_fit_vent": (0.0654281965334782, 0.27119297933193004, 0.07271780094487755),
+        "thresholds_fractional_ventilation": [
+            0.126229,
+            0.198441,
+            0.271045,
+            0.343936,
+            0.417054,
+        ],
+        "reference_fractional_ventilation_fit_vent": (
+            0.0654281965334782,
+            0.27119297933193004,
+            0.07271780094487755,
+        ),
         "threshold_rbc": [0.001351, 0.002804, 0.004629, 0.006781, 0.009232],
-        "threshold_membrane": [0.005320, 0.007108, 0.009377, 0.012224, 0.015766, 0.020132, 0.025471],
+        "threshold_membrane": [
+            0.005320,
+            0.007108,
+            0.009377,
+            0.012224,
+            0.015766,
+            0.020132,
+            0.025471,
+        ],
         "reference_fit_vent": (0.04074, 0.7085, 0.1408),
         "reference_fit_rbc": (0.06106, 0.004794, 0.001998),
         "reference_fit_membrane": (0.0700, 0.009668, 0.002638),
@@ -546,24 +614,42 @@ class ReferenceDistribution(object):
             "rbc_m_ratio_std": "0.11",
             "inflation_avg": "3.4",
             "inflation_std": "0.33",
-            "inflation_percentage":"0.0",
-            "inflation_display":"0.0",
-            }
-        }
-    
+            "inflation_percentage": "0.0",
+            "inflation_display": "0.0",
+        },
+    }
+
     REFERENCE_MANUAL = {
         "title": "MANUAL",
-        "healthy_histogram_vent_dir" : "assets/histogram_profiles/0_ppm/vent_hist_profile.npy",
-        "healthy_histogram_vent_frac_dir" : "assets/histogram_profiles/0_ppm/frac_vent_dist.npy",
-        "healthy_histogram_vent_mean_anchor_dir" : "assets/histogram_profiles/0_ppm/vent_mean_anchor_dist.npy",
-        "healthy_histogram_rbc_dir" : "assets/histogram_profiles/218_ppm/rbc_hist_profile.npy",
-        "healthy_histogram_membrane_dir" : "assets/histogram_profiles/218_ppm/mem_hist_profile.npy",
+        "healthy_histogram_vent_dir": "assets/histogram_profiles/0_ppm/vent_hist_profile.npy",
+        "healthy_histogram_vent_frac_dir": "assets/histogram_profiles/0_ppm/frac_vent_dist.npy",
+        "healthy_histogram_vent_mean_anchor_dir": "assets/histogram_profiles/0_ppm/vent_mean_anchor_dist.npy",
+        "healthy_histogram_rbc_dir": "assets/histogram_profiles/218_ppm/rbc_hist_profile.npy",
+        "healthy_histogram_membrane_dir": "assets/histogram_profiles/218_ppm/mem_hist_profile.npy",
         "threshold_vent": [0.3891, 0.5753, 0.7203, 0.8440, 0.9539],
-        "thresholds_fractional_ventilation": [0.126229, 0.198441, 0.271045, 0.343936, 0.417054],
+        "thresholds_fractional_ventilation": [
+            0.126229,
+            0.198441,
+            0.271045,
+            0.343936,
+            0.417054,
+        ],
         "threshold_vent_mean_anchor": [0.5656, 0.8138, 1.0138, 1.1871, 1.3428],
-        "reference_fractional_ventilation_fit_vent": (0.0654281965334782, 0.27119297933193004, 0.07271780094487755),
+        "reference_fractional_ventilation_fit_vent": (
+            0.0654281965334782,
+            0.27119297933193004,
+            0.07271780094487755,
+        ),
         "threshold_rbc": [0.001393, 0.002891, 0.004772, 0.006991, 0.009518],
-        "threshold_membrane": [0.004881, 0.006522, 0.008603, 0.011216, 0.014466, 0.018471, 0.023370],
+        "threshold_membrane": [
+            0.004881,
+            0.006522,
+            0.008603,
+            0.011216,
+            0.014466,
+            0.018471,
+            0.023370,
+        ],
         "reference_fit_vent": (0.04074, 0.7085, 0.1408),
         "reference_fit_rbc": (0.06106, 0.004942, 0.002060),
         "reference_fit_membrane": (0.0700, 0.008871, 0.002420),
@@ -590,8 +676,22 @@ class ReferenceDistribution(object):
             "rbc_m_ratio_std": "0.12",
             "inflation_avg": "3.4",
             "inflation_std": "0.33",
-            "inflation_percentage":"0.0",
-            "inflation_display":"0.0",
-            }
-        }
+            "inflation_percentage": "0.0",
+            "inflation_display": "0.0",
+        },
+    }
 
+    REFERENCE_RBC_OSC = {
+        "title": "REFERENCE_RBC_OSC",
+        "healthy_histogram_osc_dir": "assets/histogram_profiles/osc_imaging/rbc_osc_reference_dist.npy",
+        "threshold_rbc_osc": [-1.102, 2.138, 5.746, 9.773, 14.281],
+        "reference_stats": {
+            "osc_defect_avg": "1.30",
+            "osc_low_avg": "5.16",
+            "osc_defectlow_avg": "6.46",
+            "osc_high_avg": "12.02",
+            "osc_mean_avg": "5.75",
+            "osc_negative_avg": "1.87",
+            "key_radius_ref": "14",
+        },
+    }

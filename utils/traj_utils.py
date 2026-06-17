@@ -439,7 +439,7 @@ def get_scaling_factor(
     Returns:
         (float) The scaling factor.
 
-    NOTE: for some reason, cincinnati (CCHMC) requires a unique scaling factor
+    NOTE: cincinnati (CCHMC) requires a unique scaling factor
     """
     return n_points / recon_size
 

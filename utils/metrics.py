@@ -1,4 +1,5 @@
 """Metrics for evaluating images."""
+
 import heapq
 import math
 import sys
@@ -16,6 +17,7 @@ from utils import constants
 import pandas as pd
 import logging
 import numpy as np
+
 
 def _get_dilation_kernel(x: int) -> int:
     """Get dilation kernel for binary dilation in 1-dimension."""
@@ -106,7 +108,7 @@ def GLI_volume(age: float, sex: str, height: float, volume_type: str = "frc") ->
     """
     if pd.isna(age) or pd.isna(sex) or pd.isna(height):
         return np.nan
-    lookup_df = pd.read_pickle('./assets/lut/gli_new.pkl')
+    lookup_df = pd.read_pickle("./assets/lut/gli_new.pkl")
 
     # Ensure sex is upper case, and volume_type is lower case
     sex = sex.upper()
@@ -118,16 +120,20 @@ def GLI_volume(age: float, sex: str, height: float, volume_type: str = "frc") ->
         "fvc": "fvc_predicted",
         "va": "va_predicted",
         "kco": "kcotr_predicted",
-        "dlco": "dlco_predicted"
+        "dlco": "dlco_predicted",
     }
     if volume_type not in column_map:
         raise ValueError(f"volume_type must be one of {list(column_map.keys())}")
-    
+
     column_name = column_map[volume_type]
 
     # Helper to get predicted value at specific age and height
     def get_predicted(a, h):
-        row = lookup_df[(lookup_df['age'] == a) & (lookup_df['height'] == h) & (lookup_df['sex'] == sex)]
+        row = lookup_df[
+            (lookup_df["age"] == a)
+            & (lookup_df["height"] == h)
+            & (lookup_df["sex"] == sex)
+        ]
         if not row.empty:
             return row[column_name].values[0]
         else:
@@ -175,10 +181,10 @@ def GLI_volume(age: float, sex: str, height: float, volume_type: str = "frc") ->
             wh0 = 1 - wh1
 
             predicted_value = (
-                val00 * wa0 * wh0 +
-                val01 * wa0 * wh1 +
-                val10 * wa1 * wh0 +
-                val11 * wa1 * wh1
+                val00 * wa0 * wh0
+                + val01 * wa0 * wh1
+                + val10 * wa1 * wh0
+                + val11 * wa1 * wh1
             )
             return predicted_value
 
@@ -186,14 +192,15 @@ def GLI_volume(age: float, sex: str, height: float, volume_type: str = "frc") ->
     logging.warning("\n" + "#" * 40)
     logging.warning("Age or height is outside the GLI estimated range")
     logging.warning("#" * 40 + "\n")
-    
+
     return np.nan
+
 
 def get_bag_volume(fvc_volume: float) -> float:
     """
     Given FVC volume, calculate the bag volume as 20% of FVC,
     rounded to the nearest 0.25 increment.
-    
+
     Args:
         fvc_volume (float): The FVC volume in liters.
 
@@ -204,6 +211,7 @@ def get_bag_volume(fvc_volume: float) -> float:
     # Round to the nearest 0.25
     bag_volume_rounded = round(bag_volume * 4) / 4.0
     return bag_volume_rounded
+
 
 def process_date() -> str:
     """Return the current date in YYYY-MM-DD format."""
@@ -299,7 +307,9 @@ def dlco(
         rbc_mean: float. The mean RBC in healthy subjects.
     """
 
-    kco_v = kco(image_membrane, image_rbc, mask_vent, frequency, membrane_mean, rbc_mean)
+    kco_v = kco(
+        image_membrane, image_rbc, mask_vent, frequency, membrane_mean, rbc_mean
+    )
     va_v = alveolar_volume(image_gas, mask, fov)
     dlco_v = kco_v * va_v
     return dlco_v
@@ -317,7 +327,9 @@ def alveolar_volume(image: np.ndarray, mask: np.ndarray, fov: float) -> float:
         Alveolar volume in L.
     """
     kv = constants.VA_ALPHA
-    vv = inflation_volume(mask, fov) * (1.0 - bin_percentage(image, np.asarray([1]), mask) / 100)
+    vv = inflation_volume(mask, fov) * (
+        1.0 - bin_percentage(image, np.asarray([1]), mask) / 100
+    )
     va = kv * vv
     return va
 
@@ -342,17 +354,19 @@ def kco(
         KCO_ALPHA: membrane coefficient
         KCO_BETA: rbc coefficient
     """
-    if 206<= frequency <= 210:
-        mem = mean(image_membrane, mask)*0.918
-        rbc = mean(image_rbc, mask)*1.031
-    else: 
+    if 206 <= frequency <= 210:
+        mem = mean(image_membrane, mask) * 0.918
+        rbc = mean(image_rbc, mask) * 1.031
+    else:
         mem = mean(image_membrane, mask)
         rbc = mean(image_rbc, mask)
 
-    membrane_rel = mem / membrane_mean # relative mean membrane
-    rbc_rel = rbc / rbc_mean # relative mean RBC
+    membrane_rel = mem / membrane_mean  # relative mean membrane
+    rbc_rel = rbc / rbc_mean  # relative mean RBC
     membrane_rel = 1.0 / membrane_rel if membrane_rel > 1 else membrane_rel
-    kco_v = 1 / (1 / (constants.KCO_ALPHA * membrane_rel) + 1 / (constants.KCO_BETA * rbc_rel))
+    kco_v = 1 / (
+        1 / (constants.KCO_ALPHA * membrane_rel) + 1 / (constants.KCO_BETA * rbc_rel)
+    )
     return kco_v
 
 
@@ -363,7 +377,7 @@ def rdp_ba(
     """
     Compute the RBC defect bias from apical (top) to basilar (bottom) regions across both lungs.
 
-    This metric (ΔRDP_BA) is designed to quantify how RBC defects are distributed spatially 
+    This metric (ΔRDP_BA) is designed to quantify how RBC defects are distributed spatially
     from the top to the bottom of the lungs using binarized RBC images (bin 1 or 2 indicates RBC defect).
     It focuses only on the middle 40%-80% of valid axial slices to avoid extreme slices with noisy segmentation.
 
@@ -378,12 +392,12 @@ def rdp_ba(
     """
     data_images = image_rbc_binned
 
-    # number of split 
+    # number of split
     ns = 3
 
-    total_mean=[]
+    total_mean = []
     valid_slices = []  # Store indices where mask is non-zero
-    lung_area = []        # store lung‐mask area for each valid slice
+    lung_area = []  # store lung‐mask area for each valid slice
 
     for ij in range(mask.shape[2]):
         mask_current = ndimage.rotate(mask[:, :, ij], 0)
@@ -407,71 +421,83 @@ def rdp_ba(
         mask_current = ndimage.rotate(mask[:, :, ij], 0)
 
         mask_current = mask_current.astype(np.uint8)
-        
-        output=cv2.connectedComponentsWithStats(mask_current,4)
+
+        output = cv2.connectedComponentsWithStats(mask_current, 4)
 
         num_labels = output[0]
         labels_im = output[1]
-        stats=output[2]
-        centroid=output[3]
+        stats = output[2]
+        centroid = output[3]
 
-        if(num_labels<=2):
+        if num_labels <= 2:
             continue
 
-        area=stats[:,4]
+        area = stats[:, 4]
         # Delete the background label.
-        area=area[1:]
+        area = area[1:]
 
         # Choose the label with largest and second largest except background
-        index_label=np.array(heapq.nlargest(2, range(len(area)), key=area.__getitem__))+1
+        index_label = (
+            np.array(heapq.nlargest(2, range(len(area)), key=area.__getitem__)) + 1
+        )
 
         # Find which is left or right
         index_1 = index_label[0]
         index_2 = index_label[1]
-        if (centroid[index_1,0]<centroid[index_2,0]):
-            left_label=index_1
-            right_label=index_2
+        if centroid[index_1, 0] < centroid[index_2, 0]:
+            left_label = index_1
+            right_label = index_2
         else:
-            left_label=index_2
-            right_label=index_1
+            left_label = index_2
+            right_label = index_1
 
-        top_left= stats[left_label,1]
-        height_left = stats[left_label,3]
+        top_left = stats[left_label, 1]
+        height_left = stats[left_label, 3]
 
-        top_right= stats[right_label,1]
-        height_right = stats[right_label,3]
+        top_right = stats[right_label, 1]
+        height_right = stats[right_label, 3]
 
-        [m,n] = mask_current.shape
+        [m, n] = mask_current.shape
         # Initialize sum_all and num_all correctly
         sum_all = np.zeros(ns * 2)
         num_all = np.zeros(ns * 2)
 
         # Create ns equally spaced intervals for splitting
-        split_indices_left = np.linspace(top_left, top_left + height_left, ns+1, dtype=int)
-        split_indices_right = np.linspace(top_right, top_right + height_right, ns+1, dtype=int)
+        split_indices_left = np.linspace(
+            top_left, top_left + height_left, ns + 1, dtype=int
+        )
+        split_indices_right = np.linspace(
+            top_right, top_right + height_right, ns + 1, dtype=int
+        )
 
         for i in range(m):
             for j in range(n):
                 if labels_im[i, j] == left_label:
                     for nlf in range(ns):
-                        lower_l_left, upper_l_left = split_indices_left[nlf], split_indices_left[nlf+1]
+                        lower_l_left, upper_l_left = (
+                            split_indices_left[nlf],
+                            split_indices_left[nlf + 1],
+                        )
                         if lower_l_left <= i < upper_l_left:
-                            if data_images[i, j, ij] in [1,2]:
+                            if data_images[i, j, ij] in [1, 2]:
                                 num_all[nlf] += data_images[i, j, ij]
                             sum_all[nlf] += data_images[i, j, ij]
 
                 elif labels_im[i, j] == right_label:
                     for nlf in range(ns):
-                        lower_l_right, upper_l_right = split_indices_right[nlf], split_indices_right[nlf+1]
+                        lower_l_right, upper_l_right = (
+                            split_indices_right[nlf],
+                            split_indices_right[nlf + 1],
+                        )
                         if lower_l_right <= i < upper_l_right:
-                            if data_images[i, j, ij] in [1,2]:
+                            if data_images[i, j, ij] in [1, 2]:
                                 num_all[nlf + ns] += data_images[i, j, ij]
                             sum_all[nlf + ns] += data_images[i, j, ij]
 
-        mean=[]
+        mean = []
         for nlf in range(ns * 2):
-            if(sum_all[nlf]!=0):
-                mean.append(num_all[nlf]/sum_all[nlf])
+            if sum_all[nlf] != 0:
+                mean.append(num_all[nlf] / sum_all[nlf])
             else:
                 mean.append(np.nan)
 
@@ -484,11 +510,48 @@ def rdp_ba(
     top = total_mean[0]+total_mean[1]+total_mean[3]+total_mean[4]
     b_t = (bottom - top/2) / 2 * 100
     return b_t
-    
-def rbcm_ref(age:int, sex:str)-> float:
+
+
+def relative_vc_map(
+    age: int,
+    sex: str,
+    height: float,
+    rbc_img: np.ndarray,
+    rbc_ref: float,
+    alveolar_volume: float,
+    hemoglobin: float,
+):
+    """Get a map of the voxel-wise relative capillary blood volume.
+
+    Args:
+        age (int): age of the subject in years.
+        sex (str): F if female, M if male
+        height (float): height of subject in cm
+        rbc_img: np.ndarray. RBC image normalized to gas image
+        rbc_ref (float): reference mean for rbc/gas image.
+        alveolar_volume (float): measured subject alveolar volume in L.
+        hemoglobin (float): subject hemoglobin concentration in g/dL.
+    """
+
+    alveolar_volume_ref = GLI_volume(
+        age,
+        sex,
+        height,
+        volume_type="va",
+    )
+    VA = np.divide(alveolar_volume, alveolar_volume_ref)
+    if hemoglobin > 0.0:
+        HB = np.divide(hemoglobin, constants.HbCorrection.HB_REF)
+    else:
+        HB = 1.0
+    RBC = np.divide(rbc_img, rbc_ref)
+
+    return VA * HB * RBC
+
+
+def rbcm_ref(age: int, sex: str) -> float:
     sex_num = 0
     if sex == "M":
         sex_num = 1 
     rbcm = 0.6476 - 0.00443 * age + 0.1202 * sex_num
     return rbcm
-
