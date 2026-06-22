@@ -31,9 +31,9 @@ def gx_mapping_reconstruction(config: base_config.Config):
         config (config_dict.ConfigDict): config dict
     """
     subject = Subject(config=config)
-    if config.vent_normalization_method not in ["glb_99", "glb_fv", "glb_ma"]:
+    if config.vent_normalization_method not in ["glb_99", "glb_fv", "glb_ma","threshold_ma"]:
         msg = (
-            f"You choose a wrong normalization method: {config.vent_normalization_method}! It has to be: GLB_99, GLB_FV, or GLB_MA"
+            f"You choose a wrong normalization method: {config.vent_normalization_method}! It has to be: GLB_99, GLB_FV, GLB_MA, or THRESHOLD_MA"
         )
         raise ValueError(msg)
     try:
@@ -93,9 +93,9 @@ def gx_mapping_readin(config: base_config.Config):
         config (config_dict.ConfigDict): config dict
     """
     subject = Subject(config=config)
-    if config.vent_normalization_method not in ["glb_99", "glb_fv", "glb_ma"]:
+    if config.vent_normalization_method not in ["glb_99", "glb_fv", "glb_ma","threshold_ma"]:
         msg = (
-            f"You choose a wrong normalization method: {config.vent_normalization_method}! It has to be: GLB_99, GLB_FV, or GLB_MA"
+            f"You choose a wrong normalization method: {config.vent_normalization_method}! It has to be: GLB_99, GLB_FV, GLB_MA, or THRESHOLD_MA"
         )
         raise ValueError(msg)
     subject.read_mat_file()
