@@ -354,6 +354,8 @@ def plot_montage_grey(
     # stack the image to make it 4D (x, y, z, 3)
     image = np.stack((image, image, image), axis=-1)
     # plot the montage
+    if index_skip == 0:
+    	index_skip = 1
     index_end = index_start + index_skip * 16
     montage = make_montage(
         image[:, :, index_start:index_end:index_skip, :], n_slices=16
@@ -397,6 +399,8 @@ def plot_montage_grey_mask(
     # stack the image to make it 4D (x, y, z, 3)
     image = np.stack((image, image, image), axis=-1)
     # plot the montage
+    if index_skip == 0:
+    	index_skip = 1
     index_end = index_start + index_skip * 16
     montage = make_montage(
         image[:, :, index_start:index_end:index_skip, :], n_slices=16
@@ -430,6 +434,8 @@ def plot_montage_color(
         n_slices (int, optional): number of slices to plot. Defaults to 16.
     """
     # plot the montage
+    if index_skip == 0:
+    	index_skip = 1
     index_end = index_start + index_skip * n_slices
     montage = make_montage(
         image[:, :, index_start:index_end:index_skip, :], n_slices=n_slices

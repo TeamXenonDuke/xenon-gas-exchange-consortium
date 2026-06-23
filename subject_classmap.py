@@ -17,19 +17,19 @@ import registration
 import segmentation
 from config import base_config
 from utils import (
-    binning,
-    constants,
-    img_utils,
-    io_utils,
-    metrics,
-    plot,
-    recon_utils,
-    report,
-    signal_utils,
-    spect_utils,
-    traj_utils,
-    git_utils,
-    mask_include_trachea,
+	binning,
+	constants,
+	img_utils,
+	io_utils,
+	metrics,
+	plot,
+	recon_utils,
+	report,
+	signal_utils,
+	spect_utils,
+	traj_utils,
+	git_utils,
+	mask_include_trachea,
 )
 
 
