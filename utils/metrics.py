@@ -502,12 +502,13 @@ def rdp_ba(
                 mean.append(np.nan)
 
         total_mean.append(mean)
-    total_mean = np.array(total_mean)
-    total_mean = np.nanmean(total_mean, axis=0)
-
-    bottom = total_mean[2] + total_mean[5]
-    top = total_mean[0] + total_mean[1] + total_mean[3] + total_mean[4]
-    b_t = (bottom - top / 2) / 2 * 100
+    total_mean=np.array(total_mean)
+    total_mean=np.nanmean(total_mean,axis=0)
+    if np.any(np.isnan(total_mean)):
+        return 0
+    bottom = total_mean[2]+total_mean[5]
+    top = total_mean[0]+total_mean[1]+total_mean[3]+total_mean[4]
+    b_t = (bottom - top/2) / 2 * 100
     return b_t
 
 
@@ -551,6 +552,6 @@ def relative_vc_map(
 def rbcm_ref(age: int, sex: str) -> float:
     sex_num = 0
     if sex == "M":
-        sex_num == 1
+        sex_num = 1 
     rbcm = 0.6476 - 0.00443 * age + 0.1202 * sex_num
     return rbcm

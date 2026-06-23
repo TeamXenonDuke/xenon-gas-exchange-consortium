@@ -17,10 +17,7 @@ import skimage
 from scipy import ndimage
 import pandas as pd
 
-import pdb
-
 from utils import constants, io_utils, metrics
-
 
 def remove_small_objects(mask: np.ndarray, scale: float = 0.1):
     """Remove small unconnected voxels in the mask.
