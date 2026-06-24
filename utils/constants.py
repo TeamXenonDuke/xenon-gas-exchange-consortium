@@ -8,8 +8,9 @@ FOVINFLATIONSCALE3D = 1000.0
 GRYOMAGNETIC_RATIO = 11.777  # MHz/T
 T2STAR_GAS = 1.8e-2  # seconds
 T2STAR_RBC_3T = 1.044575 * 1e-3  # seconds
-T2STAR_MEMBRANE_3T = 0.988588 * 1e-3  # seconds
+T2STAR_MEMBRANE_3T = 0.988588  * 1e-3  # seconds
 T2STAR_DISSOLVED_3T = 1.0 * 1e-3  # seconds
+THRESHOLD_MA = 55.34 / 100.0 # The original paper used 60%, but 55.34% better matched the VDP obtained using linear binning in healthy subjects.
 
 
 KCO_ALPHA = 22.6  # membrane coefficient
@@ -327,21 +328,27 @@ class VENTHISTOGRAMFields(object):
 
     COLOR = (0.4196, 0.6824, 0.8392)
     XLIM = (0.0, 1.0)
-    XLIM_MEAN_ANCHOR = (0.0, 2.0)
+    XLIM_GLB_MA = (0.0, 2.0)
+    XLIM_GLB_MA_NB = (0.0, 2.5)
     YLIM = (0.0, 0.07)
-    YLIM_FRAC_VENT = (0.0, 0.15)
-    YLIM_MEAN_ANCHOR = (0.0, 0.08)
+    YLIM_GLB_FV = (0.0, 0.15)
+    YLIM_GLB_MA = (0.0, 0.08)
+    YLIM_GLB_MA_NB = (0.0, 0.07)
     NUMBINS = 50
     XTICKS = np.linspace(XLIM[0], XLIM[1], 4)
-    XTICKS_MEAN_ANCHOR = np.linspace(XLIM_MEAN_ANCHOR[0], XLIM_MEAN_ANCHOR[1], 4)
+    XTICKS_GLB_MA = np.linspace(XLIM_GLB_MA[0], XLIM_GLB_MA[1], 4)
+    XTICKS_GLB_MA_NB = np.linspace(XLIM_GLB_MA_NB[0], XLIM_GLB_MA_NB[1], 4)
     YTICKS = np.linspace(YLIM[0], YLIM[1], 5)
-    YTICKS_FRAC_VENT = np.linspace(YLIM_FRAC_VENT[0], YLIM_FRAC_VENT[1], 5)
-    YTICKS_MEAN_ANCHOR = np.linspace(YLIM_MEAN_ANCHOR[0], YLIM_MEAN_ANCHOR[1], 5)
+    YTICKS_GLB_FV = np.linspace(YLIM_GLB_FV[0], YLIM_GLB_FV[1], 5)
+    YTICKS_GLB_MA = np.linspace(YLIM_GLB_MA[0], YLIM_GLB_MA[1], 5)
+    YTICKS_GLB_MA_NB = np.linspace(YLIM_GLB_MA_NB[0], YLIM_GLB_MA_NB[1], 5)
     XTICKLABELS = ["{:.2f}".format(x) for x in XTICKS]
-    XTICKLABELS_MEAN_ANCHOR = ["{:.2f}".format(x) for x in XTICKS_MEAN_ANCHOR]
+    XTICKLABELS_GLB_MA = ["{:.2f}".format(x) for x in XTICKS_GLB_MA]
+    XTICKLABELS_GLB_MA_NB = ["{:.2f}".format(x) for x in XTICKS_GLB_MA_NB]
     YTICKLABELS = ["{:.2f}".format(x) for x in YTICKS]
-    YTICKLABELS_FRAC_VENT = ["{:.2f}".format(x) for x in YTICKS_FRAC_VENT]
-    YTICKLABELS_MEAN_ANCHOR = ["{:.2f}".format(x) for x in YTICKS_MEAN_ANCHOR]
+    YTICKLABELS_GLB_FV = ["{:.2f}".format(x) for x in YTICKS_GLB_FV]
+    YTICKLABELS_GLB_MA = ["{:.2f}".format(x) for x in YTICKS_GLB_MA]
+    YTICKLABELS_GLB_MA_NB = ["{:.2f}".format(x) for x in YTICKS_GLB_MA_NB]
     TITLE = "Ventilation"
 
 
@@ -396,10 +403,10 @@ class NormalizationMethods(object):
     MEAN = "mean"  # Normalize by the mean intensity within the mask (deep learning segmetation)
 
     # For histogram normalization
-    PERCENTILE_MASKED = "percentile_masked"  # Normalize by a given percentile computed only within the mask
-    FRAC_VENT = "frac_vent"  # Normalize to estimate fractional ventilation using bag volume and voxel size
-    MEAN_ANCHOR = "mean_anchor"  # MEAN_ANCHOR: normalize to unit-mean inside mask (like MEAN), then clip high outliers at the masked 99th percentile to stabilize scaling.
-
+    GLB_99 = "glb_99"  # Normalize by general linear binning with 99th percentile rescaling
+    GLB_FV = "glb_fv"  # Normalize to estimate fractional ventilation using bag volume and voxel size
+    GLB_MA = "glb_ma" # Normalize to unit-mean inside mask (like MEAN), then clip high outliers at the masked 99th percentile to stabilize scaling.
+    THRESHOLD_MA = "threshold_ma"  # Use mean-anchor normalization, then apply thresholding instead of linear binning to separate ventilation-defect and healthy voxels.
 
 class CMAP(object):
     """Maps of binned values to color values."""
@@ -500,10 +507,14 @@ class ReferenceDistribution(object):
         "healthy_histogram_vent_dir": "assets/histogram_profiles/0_ppm/vent_hist_profile.npy",
         "healthy_histogram_vent_frac_dir": "assets/histogram_profiles/0_ppm/frac_vent_dist.npy",
         "healthy_histogram_vent_mean_anchor_dir": "assets/histogram_profiles/0_ppm/vent_mean_anchor_dist.npy",
+        "healthy_histogram_vent_nb_dir": "assets/histogram_profiles/0_ppm/vent_hist_profile_nb.npy",
+        "healthy_histogram_vent_mean_anchor_nb_dir" : "assets/histogram_profiles/0_ppm/vent_mean_anchor_dist_nb.npy",
         "healthy_histogram_rbc_dir": "assets/histogram_profiles/218_ppm/rbc_hist_profile.npy",
         "healthy_histogram_membrane_dir": "assets/histogram_profiles/218_ppm/mem_hist_profile.npy",
         "threshold_vent": [0.3891, 0.5753, 0.7203, 0.8440, 0.9539],
         "threshold_vent_mean_anchor": [0.5656, 0.8138, 1.0138, 1.1871, 1.3428],
+        "threshold_vent_nb": [0.1399, 0.2848, 0.4683, 0.6868, 0.9377],
+        "threshold_vent_mean_anchor_nb": [0.3307,0.5989, 0.9537, 1.3982, 1.9348],
         "thresholds_fractional_ventilation": [
             0.126229,
             0.198441,
@@ -559,25 +570,19 @@ class ReferenceDistribution(object):
 
     REFERENCE_208_PPM = {
         "title": "REFERENCE_208_PPM",
-        "healthy_histogram_vent_dir": "assets/histogram_profiles/0_ppm/vent_hist_profile.npy",
-        "healthy_histogram_vent_frac_dir": "assets/histogram_profiles/0_ppm/frac_vent_dist.npy",
-        "healthy_histogram_vent_mean_anchor_dir": "assets/histogram_profiles/0_ppm/vent_mean_anchor_dist.npy",
-        "healthy_histogram_rbc_dir": "assets/histogram_profiles/208_ppm/rbc_hist_profile.npy",
-        "healthy_histogram_membrane_dir": "assets/histogram_profiles/208_ppm/mem_hist_profile.npy",
+        "healthy_histogram_vent_dir" : "assets/histogram_profiles/0_ppm/vent_hist_profile.npy",
+        "healthy_histogram_vent_frac_dir" : "assets/histogram_profiles/0_ppm/frac_vent_dist.npy",
+        "healthy_histogram_vent_mean_anchor_dir" : "assets/histogram_profiles/0_ppm/vent_mean_anchor_dist.npy",
+        "healthy_histogram_vent_nb_dir" : "assets/histogram_profiles/0_ppm/vent_hist_profile_nb.npy",
+        "healthy_histogram_vent_mean_anchor_nb_dir" : "assets/histogram_profiles/0_ppm/vent_mean_anchor_dist_nb.npy",
+        "healthy_histogram_rbc_dir" : "assets/histogram_profiles/208_ppm/rbc_hist_profile.npy",
+        "healthy_histogram_membrane_dir" : "assets/histogram_profiles/208_ppm/mem_hist_profile.npy",
         "threshold_vent": [0.3891, 0.5753, 0.7203, 0.8440, 0.9539],
         "threshold_vent_mean_anchor": [0.5656, 0.8138, 1.0138, 1.1871, 1.3428],
-        "thresholds_fractional_ventilation": [
-            0.126229,
-            0.198441,
-            0.271045,
-            0.343936,
-            0.417054,
-        ],
-        "reference_fractional_ventilation_fit_vent": (
-            0.0654281965334782,
-            0.27119297933193004,
-            0.07271780094487755,
-        ),
+        "threshold_vent_nb": [0.1399, 0.2848, 0.4683, 0.6868, 0.9377],
+        "threshold_vent_mean_anchor_nb": [0.3307,0.5989, 0.9537, 1.3982, 1.9348],
+        "thresholds_fractional_ventilation": [0.126229, 0.198441, 0.271045, 0.343936, 0.417054],
+        "reference_fractional_ventilation_fit_vent": (0.0654281965334782, 0.27119297933193004, 0.07271780094487755),
         "threshold_rbc": [0.001351, 0.002804, 0.004629, 0.006781, 0.009232],
         "threshold_membrane": [
             0.005320,
@@ -621,25 +626,19 @@ class ReferenceDistribution(object):
 
     REFERENCE_MANUAL = {
         "title": "MANUAL",
-        "healthy_histogram_vent_dir": "assets/histogram_profiles/0_ppm/vent_hist_profile.npy",
-        "healthy_histogram_vent_frac_dir": "assets/histogram_profiles/0_ppm/frac_vent_dist.npy",
-        "healthy_histogram_vent_mean_anchor_dir": "assets/histogram_profiles/0_ppm/vent_mean_anchor_dist.npy",
-        "healthy_histogram_rbc_dir": "assets/histogram_profiles/218_ppm/rbc_hist_profile.npy",
-        "healthy_histogram_membrane_dir": "assets/histogram_profiles/218_ppm/mem_hist_profile.npy",
+        "healthy_histogram_vent_dir" : "assets/histogram_profiles/0_ppm/vent_hist_profile.npy",
+        "healthy_histogram_vent_frac_dir" : "assets/histogram_profiles/0_ppm/frac_vent_dist.npy",
+        "healthy_histogram_vent_mean_anchor_dir" : "assets/histogram_profiles/0_ppm/vent_mean_anchor_dist.npy",
+        "healthy_histogram_vent_nb_dir" : "assets/histogram_profiles/0_ppm/vent_hist_profile_nb.npy",
+        "healthy_histogram_vent_mean_anchor_nb_dir" : "assets/histogram_profiles/0_ppm/vent_mean_anchor_dist_nb.npy",
+        "healthy_histogram_rbc_dir" : "assets/histogram_profiles/218_ppm/rbc_hist_profile.npy",
+        "healthy_histogram_membrane_dir" : "assets/histogram_profiles/218_ppm/mem_hist_profile.npy",
         "threshold_vent": [0.3891, 0.5753, 0.7203, 0.8440, 0.9539],
-        "thresholds_fractional_ventilation": [
-            0.126229,
-            0.198441,
-            0.271045,
-            0.343936,
-            0.417054,
-        ],
         "threshold_vent_mean_anchor": [0.5656, 0.8138, 1.0138, 1.1871, 1.3428],
-        "reference_fractional_ventilation_fit_vent": (
-            0.0654281965334782,
-            0.27119297933193004,
-            0.07271780094487755,
-        ),
+        "threshold_vent_nb": [0.1399, 0.2848, 0.4683, 0.6868, 0.9377],
+        "threshold_vent_mean_anchor_nb": [0.3307,0.5989, 0.9537, 1.3982, 1.9348],
+        "thresholds_fractional_ventilation": [0.126229, 0.198441, 0.271045, 0.343936, 0.417054],
+        "reference_fractional_ventilation_fit_vent": (0.0654281965334782, 0.27119297933193004, 0.07271780094487755),
         "threshold_rbc": [0.001393, 0.002891, 0.004772, 0.006991, 0.009518],
         "threshold_membrane": [
             0.004881,

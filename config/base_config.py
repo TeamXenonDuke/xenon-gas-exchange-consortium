@@ -45,10 +45,8 @@ class Config(config_dict.ConfigDict):
         self.bag_volume = "None"
         self.segmentation_key = constants.SegmentationKey.CNN_VENT.value
         self.manual_seg_filepath = ""
-        # Choose NormalizationMethod from PERCENTILE_MASKED, FRAC_VENT, MEAN_ANCHOR (PERCENTILE_MASKED is default)!
-        self.vent_normalization_method = (
-            constants.NormalizationMethods.PERCENTILE_MASKED
-        )
+        # Choose NormalizationMethod from GLB_99 (default), GLB_FV, GLB_MA, THRESHOLD_MA
+        self.vent_normalization_method = constants.NormalizationMethods.GLB_99
         # auto-generate if filepath missing or file not found
         self.auto_make_trachea_plus_lung_mask = True
         # where to write it if auto-generated
