@@ -1300,13 +1300,13 @@ class Subject(object):
         age = self.dict_dis[constants.IOFields.AGE]
         sex = self.dict_dis[constants.IOFields.SEX]
         if pd.notna(age) and age != "" and pd.notna(sex) and sex != "":
-        	rbcm_ref = metrics.rbcm_ref(age, sex)
-        	if pd.notna(rbcm_ref) and rbcm_ref != 0:
-        		self.dict_stats[constants.IOFields.RBCM_REF] = rbcm_ref
-        		self.dict_stats[constants.IOFields.RBCM_PERC] = round(100 * self.rbc_m_ratio / rbcm_ref)
+            rbcm_ref = metrics.rbcm_ref(age, sex)
+            if pd.notna(rbcm_ref) and rbcm_ref != 0:
+                self.dict_stats[constants.IOFields.RBCM_REF] = rbcm_ref
+                self.dict_stats[constants.IOFields.RBCM_PERC] = round(100 * self.rbc_m_ratio / rbcm_ref)
         else:
-        	self.dict_stats[constants.IOFields.RBCM_REF] = "NA"
-        	self.dict_stats[constants.IOFields.RBCM_PERC] = "NA"
+            self.dict_stats[constants.IOFields.RBCM_REF] = "NA"
+            self.dict_stats[constants.IOFields.RBCM_PERC] = "NA"
         if isinstance(self.config.patient_frc, (int, float)):
             FRC_Volume = float(self.config.patient_frc)
             User_Volume_FRC = f"{FRC_Volume}L"
