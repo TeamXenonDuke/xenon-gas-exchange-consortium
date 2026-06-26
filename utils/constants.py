@@ -10,7 +10,7 @@ T2STAR_GAS = 1.8e-2  # seconds
 T2STAR_RBC_3T = 1.044575 * 1e-3  # seconds
 T2STAR_MEMBRANE_3T = 0.988588  * 1e-3  # seconds
 T2STAR_DISSOLVED_3T = 1.0 * 1e-3  # seconds
-THRESHOLD_MA = 55.34 / 100.0 # The original paper used 60%, but 55.34% better matched the VDP obtained using linear binning in healthy subjects.
+THRESHOLD_MA = 60 / 100.0 # Here we use 60% which is used by other consortiums, 55.3% is the value from Sup's mehod.
 
 
 KCO_ALPHA = 22.6  # membrane coefficient
