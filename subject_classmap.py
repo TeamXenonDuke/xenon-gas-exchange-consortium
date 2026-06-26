@@ -1995,7 +1995,7 @@ class Subject(object):
         )
 
         # move files
-        subfolder = os.path.join(self.config.data_dir, "gx")
+        subfolder = os.path.join(self.config.data_dir,self.config.output_folder)
         os.makedirs(subfolder, exist_ok=True)
         io_utils.move_files(output_files, subfolder)
 
