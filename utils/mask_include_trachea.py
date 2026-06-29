@@ -79,7 +79,7 @@ def get_or_make_mask_include_trachea(
 
     # Default output dir: <data_dir>/gx
     data_dir = str(getattr(config, "data_dir", "") or "").strip() or "."
-    out_dir = os.path.join(data_dir, "gx")
+    out_dir = os.path.join(data_dir,str(getattr(config, "output_folder", "") or "").strip() or ".")
     os.makedirs(out_dir, exist_ok=True)
 
     # Default output name: mask_include_trachea.nii
