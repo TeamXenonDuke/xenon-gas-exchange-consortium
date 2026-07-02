@@ -19,6 +19,7 @@ import pandas as pd
 
 from utils import constants, io_utils, metrics
 
+
 def remove_small_objects(mask: np.ndarray, scale: float = 0.1):
     """Remove small unconnected voxels in the mask.
 
@@ -312,7 +313,7 @@ def normalize(
         sig_vol_rat = tcv_gas_vol / signal_total
         GLB_FV = (image * sig_vol_rat) / voxel_vol
         nifti_img = nb.Nifti1Image(GLB_FV, affine=np.eye(4))
-        nifti_img.to_filename('tmp/GLB_FV_output.nii')
+        nifti_img.to_filename("tmp/GLB_FV_output.nii")
         GLB_FV_mask = GLB_FV[mask == 1]
         flat_array = GLB_FV_mask.flatten()
         mean = np.mean(flat_array)
@@ -474,9 +475,9 @@ def calculate_corrected_rbc_oscillation(
     )
     corrected_oscillations = (
         np.multiply(
-            correction_map, (raw_oscillations - np.min(raw_oscillations) - 0.01)
+            correction_map, (raw_oscillations - np.min(raw_oscillations[mask]) - 0.01)
         )
-        + np.min(raw_oscillations)
+        + np.min(raw_oscillations[mask])
         + 0.01
     )
     return (relative_vc_map, correction_map, corrected_oscillations)
