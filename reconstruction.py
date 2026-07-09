@@ -98,9 +98,12 @@ def reconstruct_cs(
     num_normal = 8
     # set device
     devnum = 0
-    device = sp.Device(devnum)
-    if devnum == -1:
+    try: 
+        device = sp.Device(devnum)
+        logging.info("Using GPU for compressed sensing reconstruction")
+    except Exception: 
         device = sp.cpu_device
+        logging.info("Defaulting to CPU for compressed sensing reconstruction")
     xp = device.xp
     # create sensitivity map
     sense_map = np.ones(
