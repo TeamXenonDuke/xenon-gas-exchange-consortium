@@ -13,6 +13,8 @@ pyMapVBVD==0.6.1
 PyPDF2==3.0.1
 scikit_image==0.22.0
 scipy==1.13.1
+sigpy==0.1.27
+sympy==1.14.0
 tensorflow; sys_platform == "linux" # for WSL installation
 tensorflow_macos==2.16.2; sys_platform == "darwin" # for macOS
 typing_extensions==4.13.2; sys_platform == "linux" # WSL issue where missing or needed an update
