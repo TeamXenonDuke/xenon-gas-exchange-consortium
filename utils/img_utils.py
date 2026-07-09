@@ -473,13 +473,19 @@ def calculate_corrected_rbc_oscillation(
     raw_oscillations = calculate_rbc_oscillation(
         image_high, image_low, image_total, mask, method
     )
-    corrected_oscillations = (
-        np.multiply(
-            correction_map, (raw_oscillations - np.min(raw_oscillations[mask]) - 0.01)
+    if np.min(raw_oscillations[mask]) > -4.02:  # -3 SD healthy reference osc threshold
+        corrected_oscillations = (
+            np.multiply(
+                correction_map,
+                (raw_oscillations - np.min(raw_oscillations[mask]) + 0.01),
+            )
+            + np.min(raw_oscillations[mask])
+            - 0.01
         )
-        + np.min(raw_oscillations[mask])
-        + 0.01
-    )
+    else:
+        corrected_oscillations = (
+            np.multiply(correction_map, (raw_oscillations + 4.02 + 0.01)) - 4.02 - 0.01
+        )
     return (relative_vc_map, correction_map, corrected_oscillations)
 
 
