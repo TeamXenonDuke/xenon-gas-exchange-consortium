@@ -1318,10 +1318,15 @@ class Subject(object):
 
     def move_output_files(self):
         """Move output files into dedicated directory."""
-        # define files to move
+        # Keep only the current subject's .mat file in tmp, remove any others left behind from previously processed subjects.
+        current_mat = "tmp/{}.mat".format(self.config.subject_id)
+        for stale_mat in glob.glob("tmp/*.mat"):
+            if stale_mat != current_mat:
+                os.remove(stale_mat)
+
+        # define files to move into permanent patient folder 
         output_files = (
             "tmp/{}_config_gx_imaging.json".format(self.config.subject_id),
-            "tmp/{}.mat".format(self.config.subject_id),
             "tmp/{}_report.pdf".format(self.config.subject_id),
             "tmp/{}_stats.csv".format(self.config.subject_id),
             "tmp/gas_highreso.nii",
@@ -1329,10 +1334,13 @@ class Subject(object):
             "tmp/mask_reg.nii",
             "tmp/membrane2gas_rgb.nii",
             "tmp/proton_reg.nii",
-            "tmp/rbc2gas_rgb.nii",
-        )
+            "tmp/rbc2gas_rgb.nii",       
+        )  
         # move files
-        subfolder = os.path.join(self.config.data_dir, "gx")
+        try:
+            subfolder = os.path.join(self.config.data_dir,self.config.output_folder)
+        except:
+            subfolder = os.path.join(self.config.data_dir, "gx")
         os.makedirs(subfolder, exist_ok=True)
         io_utils.move_files(output_files, subfolder)
 
