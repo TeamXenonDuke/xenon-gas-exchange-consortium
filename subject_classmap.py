@@ -1978,12 +1978,18 @@ class Subject(object):
             "tmp/{}_config_gx_imaging.json".format(self.config.subject_id),
         )
 
+    def clear_temp_file(self):
+        """Clear the temp file in between patients being processed"""
+        for filename in os.listdir("tmp"):
+            filepath = os.path.join("tmp", filename)
+            if os.path.isfile(filepath):
+                os.remove(filepath)
+
     def move_output_files(self):
         """Move output files into dedicated directory."""
         # define files to move
         output_files = (
             "tmp/{}_config_gx_imaging.json".format(self.config.subject_id),
-            "tmp/{}.mat".format(self.config.subject_id),
             "tmp/{}_report.pdf".format(self.config.subject_id),
             "tmp/{}_stats.csv".format(self.config.subject_id),
             "tmp/gas_highreso.nii",
