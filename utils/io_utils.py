@@ -565,7 +565,7 @@ def read_dicom(path: str, shape_gas: Tuple[int, int, int]) -> np.ndarray:
         file_with_path = os.path.join(path, files[i])
         RefDs = pydicom.dcmread(file_with_path)
         slice_num = int(RefDs.InstanceNumber)
-        ds = pydicom.read_file(file_with_path)
+        ds = pydicom.dcmread(file_with_path)
         dicom[:, :, slice_num - 1] = ds.pixel_array
 
     image = dicom.astype("float64")
