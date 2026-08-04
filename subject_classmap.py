@@ -1981,6 +1981,8 @@ class Subject(object):
     def clear_temp_file(self):
         """Clear the temp file in between patients being processed"""
         for filename in os.listdir("tmp"):
+            if filename == ".gitkeep":
+                continue
             filepath = os.path.join("tmp", filename)
             if os.path.isfile(filepath):
                 os.remove(filepath)
