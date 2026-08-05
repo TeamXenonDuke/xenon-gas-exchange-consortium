@@ -152,7 +152,7 @@ conda activate <name-of-conda-environment>
 
 #### 3.1.1 Accepted file inputs
 
-The pipeline accepts Siemens twix (.dat) or ISMRMRD (.h5) files for standard proton UTE, 1-point Dixon, and (optionally) calibration scans. Alternatively, if a subject scan has already been processed through the pipeline and you wish to reprocess the previously constructed images, you can run the pipeline on the subject's .mat file. ISMRMRD files must be named and formatted according to the <sup>129</sup>Xe MRI clinical trials consortium specifications: [https://github.com/Xe-MRI-CTC/xemrd-specification](https://github.com/Xe-MRI-CTC/xemrd-specification)
+The pipeline accepts Siemens twix (.dat) or ISMRMRD (.h5) files for standard proton UTE, 1-point Dixon, and (optionally) calibration scans. ISMRMRD files must be named and formatted according to the <sup>129</sup>Xe MRI clinical trials consortium specifications: [https://github.com/Xe-MRI-CTC/xemrd-specification](https://github.com/Xe-MRI-CTC/xemrd-specification)
 
 More information on consortium protocol for the proton UTE, 1-point Dixon, and calibration scans can be found in the following reference:
 
@@ -176,14 +176,6 @@ Run the full pipeline with:
 
 ```bash
 python main.py --config <path-to-config-file>
-```
-
-#### Running previously processed subject scan from .mat file
-
-If a subject scan has already been processed through the pipeline and you wish to reprocess the previously constructed images, you can run the pipeline on the subject's .mat file with:
-
-```bash
-python main.py --config <path-to-config-file> --force_readin
 ```
 
 ### 3.2. Team Xenon Worflow for Duke Data Processing
