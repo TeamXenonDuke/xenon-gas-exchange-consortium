@@ -17,19 +17,19 @@ import registration
 import segmentation
 from config import base_config
 from utils import (
-	binning,
-	constants,
-	img_utils,
-	io_utils,
-	metrics,
-	plot,
-	recon_utils,
-	report,
-	signal_utils,
-	spect_utils,
-	traj_utils,
-	git_utils,
-	mask_include_trachea,
+    binning,
+    constants,
+    img_utils,
+    io_utils,
+    metrics,
+    plot,
+    recon_utils,
+    report,
+    signal_utils,
+    spect_utils,
+    traj_utils,
+    git_utils,
+    mask_include_trachea,
 )
 
 
@@ -115,6 +115,8 @@ class Subject(object):
         self.mask = np.array([0.0])
         self.mask_vent = np.array([0.0])
         self.mask_rbc = np.array([0.0])
+        self.n_dis_spikes_detected = 0.0
+        self.n_gas_spikes_detected = 0.0
         self.rbc_m_ratio = 0.0
         self.rbc_m_ratio_high = 0.0
         self.rbc_m_ratio_low = 0.0
@@ -336,13 +338,27 @@ class Subject(object):
         )
 
         # remove noisy FIDs
+        gas_indices = recon_utils.get_noisy_projections(
+            data=self.data_gas,
+        )
+        dissolved_indices = recon_utils.get_noisy_projections(
+            data=self.data_dissolved,
+        )
+        self.n_gas_spikes_detected = np.sum(~gas_indices)
+        self.n_dis_spikes_detected = np.sum(~dissolved_indices)
         if self.config.recon.remove_noisy_projections:
-            self.data_gas, self.traj_gas = pp.remove_noisy_projections(
-                self.data_gas, self.traj_gas
+            indices = gas_indices & dissolved_indices
+            self.data_gas, self.traj_gas = recon_utils.apply_indices_mask(
+                data=self.data_gas,
+                traj=self.traj_gas,
+                indices=indices,
             )
-            self.data_dissolved, self.traj_dissolved = pp.remove_noisy_projections(
-                self.data_dissolved, self.traj_dissolved
+            self.data_dissolved, self.traj_dissolved = recon_utils.apply_indices_mask(
+                data=self.data_dissolved,
+                traj=self.traj_dissolved,
+                indices=indices,
             )
+            print(f"Total number of views removed: {np.sum(~indices)}")
 
         # rescale trajectories
         self.traj_dissolved *= self.traj_scaling_factor
@@ -804,14 +820,20 @@ class Subject(object):
 
             mask, self.image_proton_reg = np.abs(
                 registration.register_ants(
-                    abs(self.image_gas_highreso), self.mask_proton, self.image_proton, self.config.registration_key
+                    abs(self.image_gas_highreso),
+                    self.mask_proton,
+                    self.image_proton,
+                    self.config.registration_key,
                 )
             )
         elif self.config.registration_key == constants.RegistrationKey.PROTON2GAS.value:
             logging.info("Run registration algorithm, vent is fixed, proton is moving")
             self.image_proton_reg, mask = np.abs(
                 registration.register_ants(
-                    abs(self.image_gas_highreso), self.image_proton, self.mask, self.config.registration_key
+                    abs(self.image_gas_highreso),
+                    self.image_proton,
+                    self.mask,
+                    self.config.registration_key,
                 )
             )
 
@@ -884,21 +906,29 @@ class Subject(object):
     def gas_binning(self):
         """Bin gas images to colormap bins."""
 
-        if self.config.vent_normalization_method == constants.NormalizationMethods.GLB_99:
+        if (
+            self.config.vent_normalization_method
+            == constants.NormalizationMethods.GLB_99
+        ):
             self.image_gas_binned = binning.linear_bin(
                 image=self._normalize_vent(self.image_gas_cor),
                 mask=self.mask,
                 thresholds=self.reference_data[
-                    'threshold_vent_nb'
-                    if self.config.bias_key == constants.BiasfieldKey.SKIP.value
-                    else 'threshold_vent'
+                    (
+                        "threshold_vent_nb"
+                        if self.config.bias_key == constants.BiasfieldKey.SKIP.value
+                        else "threshold_vent"
+                    )
                 ],
             )
             self.mask_vent = np.logical_and(self.image_gas_binned > 1, self.mask)
             gas_nifti_img = nib.Nifti1Image(self.image_gas_binned, affine=np.eye(4))
             gas_nifti_img.to_filename("tmp/image_gas_binned.nii")
 
-        elif self.config.vent_normalization_method == constants.NormalizationMethods.GLB_FV:
+        elif (
+            self.config.vent_normalization_method
+            == constants.NormalizationMethods.GLB_FV
+        ):
             self.image_gas_binned = binning.linear_bin(
                 image=self._normalize_vent(self.image_gas_cor),  # big mask here
                 mask=self.mask,
@@ -907,26 +937,34 @@ class Subject(object):
             self.mask_vent = np.logical_and(self.image_gas_binned > 1, self.mask)
 
             gas_nifti_img = nib.Nifti1Image(self.image_gas_binned, affine=np.eye(4))
-            gas_nifti_img.to_filename('tmp/image_gas_binned_GLB_FV.nii')
-        elif self.config.vent_normalization_method == constants.NormalizationMethods.GLB_MA:
+            gas_nifti_img.to_filename("tmp/image_gas_binned_GLB_FV.nii")
+        elif (
+            self.config.vent_normalization_method
+            == constants.NormalizationMethods.GLB_MA
+        ):
             self.image_gas_binned = binning.linear_bin(
                 image=self._normalize_vent(self.image_gas_cor),
                 mask=self.mask,
                 thresholds=self.reference_data[
-                    'threshold_vent_mean_anchor_nb'
-                    if self.config.bias_key == constants.BiasfieldKey.SKIP.value
-                    else 'threshold_vent_mean_anchor'
+                    (
+                        "threshold_vent_mean_anchor_nb"
+                        if self.config.bias_key == constants.BiasfieldKey.SKIP.value
+                        else "threshold_vent_mean_anchor"
+                    )
                 ],
             )
             self.mask_vent = np.logical_and(self.image_gas_binned > 1, self.mask)
             gas_nifti_img = nib.Nifti1Image(self.image_gas_binned, affine=np.eye(4))
-            gas_nifti_img.to_filename('tmp/image_gas_binned.nii')
-        elif self.config.vent_normalization_method == constants.NormalizationMethods.THRESHOLD_MA:
+            gas_nifti_img.to_filename("tmp/image_gas_binned.nii")
+        elif (
+            self.config.vent_normalization_method
+            == constants.NormalizationMethods.THRESHOLD_MA
+        ):
             self.image_gas_binned = binning.threshold(
-            image=self._normalize_vent(self.image_gas_cor),
-            mask=self.mask,
-            threshold= constants.THRESHOLD_MA,
-        )
+                image=self._normalize_vent(self.image_gas_cor),
+                mask=self.mask,
+                threshold=constants.THRESHOLD_MA,
+            )
             self.mask_vent = np.logical_and(self.image_gas_binned > 1, self.mask)
             gas_nifti_img = nib.Nifti1Image(self.image_gas_binned, affine=np.eye(4))
             gas_nifti_img.to_filename("tmp/image_gas_binned.nii")
@@ -1303,7 +1341,9 @@ class Subject(object):
             rbcm_ref = metrics.rbcm_ref(age, sex)
             if pd.notna(rbcm_ref) and rbcm_ref != 0:
                 self.dict_stats[constants.IOFields.RBCM_REF] = rbcm_ref
-                self.dict_stats[constants.IOFields.RBCM_PERC] = round(100 * self.rbc_m_ratio / rbcm_ref)
+                self.dict_stats[constants.IOFields.RBCM_PERC] = round(
+                    100 * self.rbc_m_ratio / rbcm_ref
+                )
         else:
             self.dict_stats[constants.IOFields.RBCM_REF] = "NA"
             self.dict_stats[constants.IOFields.RBCM_PERC] = "NA"
@@ -1502,22 +1542,8 @@ class Subject(object):
             constants.IOFields.VOL_CORRECTION_FACTOR_RBC: self.vol_correction_factor_rbc,
             constants.IOFields.KERNEL_SHARPNESS: self.config.recon.kernel_sharpness_hr,
             constants.IOFields.N_SKIP_START: self.config.recon.n_skip_start,
-            constants.IOFields.N_DIS_REMOVED: len(
-                self.dict_dis[constants.IOFields.FIDS_DIS]
-            )
-            - np.sum(
-                recon_utils.get_noisy_projections(
-                    data=self.dict_dis[constants.IOFields.FIDS_DIS]
-                )
-            ),
-            constants.IOFields.N_GAS_REMOVED: len(
-                self.dict_dis[constants.IOFields.FIDS_GAS]
-            )
-            - np.sum(
-                recon_utils.get_noisy_projections(
-                    data=self.dict_dis[constants.IOFields.FIDS_GAS]
-                )
-            ),
+            constants.IOFields.N_DIS_REMOVED: self.n_dis_spikes_detected,
+            constants.IOFields.N_GAS_REMOVED: self.n_gas_spikes_detected,
             constants.IOFields.REMOVE_NOISE: self.config.recon.remove_noisy_projections,
             constants.IOFields.SHAPE_FIDS: self.dict_dis[constants.IOFields.FIDS].shape,
             constants.IOFields.SHAPE_IMAGE: self.image_gas_highreso.shape,
@@ -1643,7 +1669,12 @@ class Subject(object):
             thresholds=self._vent_hist_thresholds(),
             band_colors=constants.CMAP.VENT_BIN2COLOR,  # per-segment bar colors (bin 0 ignored)
             outline="data",
-            refer_threshold = constants.THRESHOLD_MA if self.config.vent_normalization_method == constants.NormalizationMethods.THRESHOLD_MA else None,
+            refer_threshold=(
+                constants.THRESHOLD_MA
+                if self.config.vent_normalization_method
+                == constants.NormalizationMethods.THRESHOLD_MA
+                else None
+            ),
         )
         plot.plot_histogram(
             data=np.abs(self.image_rbc2gas)[
@@ -1950,8 +1981,19 @@ class Subject(object):
             "tmp/gas_rgb.nii",
         )
 
-        if self.config.vent_normalization_method == constants.NormalizationMethods.GLB_FV: 
-            io_utils.export_nii(img_utils.normalize(self.image_gas_cor,self.mask_include_trachea, bag_volume=self.config.bag_volume, method=constants.NormalizationMethods.GLB_FV), "tmp/GLB_FV.nii")
+        if (
+            self.config.vent_normalization_method
+            == constants.NormalizationMethods.GLB_FV
+        ):
+            io_utils.export_nii(
+                img_utils.normalize(
+                    self.image_gas_cor,
+                    self.mask_include_trachea,
+                    bag_volume=self.config.bag_volume,
+                    method=constants.NormalizationMethods.GLB_FV,
+                ),
+                "tmp/GLB_FV.nii",
+            )
         if self.config.osc_recon.oscillation_analysis:
             io_utils.export_nii_4d(
                 plot.map_grey_to_rgb(
@@ -2004,9 +2046,9 @@ class Subject(object):
 
         # move files
         try:
-        	subfolder = os.path.join(self.config.data_dir,self.config.output_folder)
+            subfolder = os.path.join(self.config.data_dir, self.config.output_folder)
         except:
-        	subfolder = os.path.join(self.config.data_dir, "gx")
+            subfolder = os.path.join(self.config.data_dir, "gx")
         os.makedirs(subfolder, exist_ok=True)
         io_utils.move_files(output_files, subfolder)
 
@@ -2119,11 +2161,18 @@ class Subject(object):
 
         if method == constants.NormalizationMethods.GLB_FV:
             return f.YTICKLABELS_GLB_FV
-        elif method in (constants.NormalizationMethods.GLB_MA, constants.NormalizationMethods.THRESHOLD_MA):
+        elif method in (
+            constants.NormalizationMethods.GLB_MA,
+            constants.NormalizationMethods.THRESHOLD_MA,
+        ):
             if self.config.bias_key == constants.BiasfieldKey.SKIP.value:
-                    return f.YTICKLABELS_GLB_MA_NB  # define in constants if you want custom labels
+                return (
+                    f.YTICKLABELS_GLB_MA_NB
+                )  # define in constants if you want custom labels
             else:
-                    return f.YTICKLABELS_GLB_MA  # define in constants if you want custom labels
+                return (
+                    f.YTICKLABELS_GLB_MA
+                )  # define in constants if you want custom labels
         else:
             return f.YTICKLABELS
 
@@ -2143,9 +2192,14 @@ class Subject(object):
 
         if method == constants.NormalizationMethods.GLB_FV:
             return f.YLIM_GLB_FV
-        elif method in (constants.NormalizationMethods.GLB_MA, constants.NormalizationMethods.THRESHOLD_MA):
+        elif method in (
+            constants.NormalizationMethods.GLB_MA,
+            constants.NormalizationMethods.THRESHOLD_MA,
+        ):
             if self.config.bias_key == constants.BiasfieldKey.SKIP.value:
-                return f.YLIM_GLB_MA_NB  # define in constants if you want a custom range
+                return (
+                    f.YLIM_GLB_MA_NB
+                )  # define in constants if you want a custom range
             else:
                 return f.YLIM_GLB_MA  # define in constants if you want a custom range
         else:
@@ -2159,9 +2213,14 @@ class Subject(object):
         f = constants.VENTHISTOGRAMFields
         method = self.config.vent_normalization_method
 
-        if method in (constants.NormalizationMethods.GLB_MA, constants.NormalizationMethods.THRESHOLD_MA):
+        if method in (
+            constants.NormalizationMethods.GLB_MA,
+            constants.NormalizationMethods.THRESHOLD_MA,
+        ):
             if self.config.bias_key == constants.BiasfieldKey.SKIP.value:
-                return f.XLIM_GLB_MA_NB  # define in constants if you want a custom range
+                return (
+                    f.XLIM_GLB_MA_NB
+                )  # define in constants if you want a custom range
             else:
                 return f.XLIM_GLB_MA  # define in constants if you want a custom range
         else:
@@ -2175,7 +2234,10 @@ class Subject(object):
         f = constants.VENTHISTOGRAMFields
         method = self.config.vent_normalization_method
 
-        if method in (constants.NormalizationMethods.GLB_MA, constants.NormalizationMethods.THRESHOLD_MA):
+        if method in (
+            constants.NormalizationMethods.GLB_MA,
+            constants.NormalizationMethods.THRESHOLD_MA,
+        ):
             if self.config.bias_key == constants.BiasfieldKey.SKIP.value:
                 return f.XTICKS_GLB_MA_NB  # define in constants
             else:
@@ -2191,7 +2253,10 @@ class Subject(object):
         f = constants.VENTHISTOGRAMFields
         method = self.config.vent_normalization_method
 
-        if method in (constants.NormalizationMethods.GLB_MA, constants.NormalizationMethods.THRESHOLD_MA):
+        if method in (
+            constants.NormalizationMethods.GLB_MA,
+            constants.NormalizationMethods.THRESHOLD_MA,
+        ):
             if self.config.bias_key == constants.BiasfieldKey.SKIP.value:
                 return f.XTICKLABELS_GLB_MA_NB  # define in constants
             else:
