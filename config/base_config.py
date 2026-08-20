@@ -147,7 +147,6 @@ class OscillationRecon(object):
         Attributes:
             oscillation_analysis: bool, whether to perform oscillation imaging analysis
             key_radius_pct: int, percentage of points used to recon the keyhole image
-            osc_recon_key: str, the type of reconstruction to perform
             vc_correction: bool, whether to correction oscillation images for relative capillary blood volume
         """
         self.oscillation_analysis = False
@@ -155,9 +154,6 @@ class OscillationRecon(object):
         # Keyhole Radius
         self.key_radius_pct = 14
         # Recon Type
-        # Gridded (Robertson)
-        # Compressed Sensing (Plummer)
-        self.osc_recon_key = constants.ReconKey.ROBERTSON.value
 
         # Correction for relative capillary blood volume
         self.vc_correction = False
