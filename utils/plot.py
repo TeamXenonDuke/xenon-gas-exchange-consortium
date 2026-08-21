@@ -11,7 +11,7 @@ import cv2
 import matplotlib.pyplot as plt
 import numpy as np
 
-from utils import io_utils
+from utils import io_utils, constants
 
 import logging
 
@@ -355,7 +355,7 @@ def plot_montage_grey(
     image = np.stack((image, image, image), axis=-1)
     # plot the montage
     if index_skip == 0:
-    	index_skip = 1
+        index_skip = 1
     index_end = index_start + index_skip * 16
     montage = make_montage(
         image[:, :, index_start:index_end:index_skip, :], n_slices=16
@@ -400,7 +400,7 @@ def plot_montage_grey_mask(
     image = np.stack((image, image, image), axis=-1)
     # plot the montage
     if index_skip == 0:
-    	index_skip = 1
+        index_skip = 1
     index_end = index_start + index_skip * 16
     montage = make_montage(
         image[:, :, index_start:index_end:index_skip, :], n_slices=16
@@ -435,7 +435,7 @@ def plot_montage_color(
     """
     # plot the montage
     if index_skip == 0:
-    	index_skip = 1
+        index_skip = 1
     index_end = index_start + index_skip * n_slices
     montage = make_montage(
         image[:, :, index_start:index_end:index_skip, :], n_slices=n_slices
@@ -467,9 +467,9 @@ def plot_histogram(
     thresholds: Optional[List[float]] = None,
     thresh_style: dict = None,
     band_colors: Optional[Dict[int, List[float]]] = None,  # per-segment bar colors
-    outline: str = "data",                                  # "data" or "none"
-    outline_style: Optional[dict] = None,                   # solid outline style
-    healthy_style: Optional[dict] = None,                   # dashed healthy-ref style
+    outline: str = "data",  # "data" or "none"
+    outline_style: Optional[dict] = None,  # solid outline style
+    healthy_style: Optional[dict] = None,  # dashed healthy-ref style
     refer_threshold: float = None,
 ):
     """
@@ -514,17 +514,28 @@ def plot_histogram(
     widths = np.diff(edges)
 
     if refer_threshold is not None:
-        ax.vlines(refer_threshold, ymin=0, ymax=0.1, colors='k', linestyles='--', linewidth=2)
+        ax.vlines(
+            refer_threshold, ymin=0, ymax=0.1, colors="k", linestyles="--", linewidth=2
+        )
         bar_colors = [
-            (1.0, 0.0, 0.0) if c < refer_threshold else (0.0, 1.0, 0.0)
-            for c in centers
+            (1.0, 0.0, 0.0) if c < refer_threshold else (0.0, 1.0, 0.0) for c in centers
         ]
     else:
         # colored bars
-        bar_colors = _colors_for_bins(centers, thresholds, xlim, band_colors, default_color=_to_rgb(color))
+        bar_colors = _colors_for_bins(
+            centers, thresholds, xlim, band_colors, default_color=_to_rgb(color)
+        )
 
-    ax.bar(centers, probs, width=widths, align="center",
-           color=bar_colors, edgecolor="black", linewidth=1.0, zorder=2)
+    ax.bar(
+        centers,
+        probs,
+        width=widths,
+        align="center",
+        color=bar_colors,
+        edgecolor="black",
+        linewidth=1.0,
+        zorder=2,
+    )
 
     # solid outline of THIS histogram
     if outline and outline.lower() == "data":
@@ -661,6 +672,126 @@ def plot_histogram_with_thresholds(
     ax.tick_params(axis="x", which="major", labelsize=20)
     plt.tight_layout(pad=0.4, w_pad=0.5, h_pad=1.0)
     plt.savefig(path)
+
+
+def vent_hist_ticklabels(method: str, bias: bool):
+    """
+    Choose the axis tick *labels* for the ventilation histogram based on the
+    current ventilation normalization method.
+
+    - Default behavior: use the standard ventilation histogram labels.
+    """
+    f = constants.VENTHISTOGRAMFields
+
+    if method == constants.NormalizationMethods.GLB_FV:
+        return f.XTICKLABELS, f.YTICKLABELS_GLB_FV
+    elif (
+        method == constants.NormalizationMethods.THRESHOLD_MA
+        or method == constants.NormalizationMethods.GLB_MA
+    ):
+        if bias == True:
+            return f.XTICKLABELS_GLB_MA, f.YTICKLABELS_GLB_MA
+        elif bias == False:
+            return f.XTICKLABELS_GLB_MA_NB, f.YTICKLABELS_GLB_MA_NB
+    else:
+        return f.XTICKLABELS, f.YTICKLABELS
+
+
+def vent_hist_lim(method: str, bias: bool):
+    """
+    Choose the axis limits for the ventilation histogram based on the
+    current ventilation normalization method.
+
+    - Default behavior: use the standard ventilation histogram y-limits.
+    """
+    f = constants.VENTHISTOGRAMFields
+
+    if method == constants.NormalizationMethods.GLB_FV:
+        return f.XLIM, f.YLIM_GLB_FV
+    elif (
+        method == constants.NormalizationMethods.THRESHOLD_MA
+        or method == constants.NormalizationMethods.GLB_MA
+    ):
+        if bias == True:
+            return f.XLIM_GLB_MA, f.YLIM_GLB_MA
+        elif bias == False:
+            return f.XLIM_GLB_MA_NB, f.YLIM_GLB_MA_NB
+    else:
+        return f.XLIM, f.YLIM
+
+
+def vent_hist_ticks(method: str, bias: bool):
+    """
+    Choose the tick *positions* for the ventilation histogram based on the
+    current ventilation normalization method.
+
+    Important:
+    - The returned value MUST be a list/array of tick locations (not a scalar).
+    - Use method-specific ticks when the histogram scale differs (FRAC_VENT, and
+        optionally MEAN_ANCHOR).
+    - Default behavior: use the standard ventilation histogram tick positions.
+    """
+    f = constants.VENTHISTOGRAMFields
+
+    if method == constants.NormalizationMethods.GLB_FV:
+        return f.XTICKS, f.YTICKS_GLB_FV
+    elif (
+        method == constants.NormalizationMethods.THRESHOLD_MA
+        or method == constants.NormalizationMethods.GLB_MA
+    ):
+        if bias == True:
+            return f.XTICKS_GLB_MA, f.YTICKS_GLB_MA
+        elif bias == False:
+            return f.XTICKS_GLB_MA_NB, f.YTICKS_GLB_MA_NB
+    else:
+        return f.XTICKS, f.YTICKS
+
+
+def vent_hist_thresholds(method: str, reference_data: dict, bias: bool):
+    """
+    Return the bin thresholds for the current normalization method.
+    """
+    if method == constants.NormalizationMethods.GLB_99:
+        if bias == True:
+            return reference_data["threshold_vent"]
+        elif bias == False:
+            return reference_data["threshold_vent_nb"]
+
+    elif method == constants.NormalizationMethods.GLB_FV:
+        return reference_data["thresholds_fractional_ventilation"]
+
+    elif method == constants.NormalizationMethods.GLB_MA:
+        if bias == True:
+            return reference_data["threshold_vent_mean_anchor"]
+        elif bias == False:
+            return reference_data["threshold_vent_mean_anchor_nb"]
+
+    elif method == constants.NormalizationMethods.THRESHOLD_MA:
+        return None
+
+
+def vent_hist_reference_fit(method: str, reference_data: dict, bias: bool):
+    """
+    Return the reference histogram fit/profile (the [0] element) for the current
+    ventilation normalization method.
+    """
+    if method == constants.NormalizationMethods.GLB_99:
+        if bias == True:
+            return reference_data["healthy_histogram_vent_dir"]
+        elif bias == False:
+            return reference_data["healthy_histogram_vent_nb_dir"]
+
+    elif method == constants.NormalizationMethods.GLB_FV:
+        return reference_data["healthy_histogram_vent_frac_dir"]
+
+    elif method == constants.NormalizationMethods.GLB_MA:
+        if bias == True:
+            return reference_data["healthy_histogram_vent_mean_anchor_dir"]
+        if bias == False:
+            return reference_data["healthy_histogram_vent_mean_anchor_nb_dir"]
+
+    elif method == constants.NormalizationMethods.THRESHOLD_MA:
+        return None
 
 
 def plot_data_rbc_k0(
