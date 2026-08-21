@@ -116,6 +116,8 @@ class Subject(object):
         self.mask = np.array([0.0])
         self.mask_vent = np.array([0.0])
         self.mask_rbc = np.array([0.0])
+        self.n_dis_spikes_detected = 0.0
+        self.n_gas_spikes_detected = 0.0
         self.rbc_m_ratio = 0.0
         self.rbc_m_ratio_high = 0.0
         self.rbc_m_ratio_low = 0.0
@@ -337,13 +339,27 @@ class Subject(object):
         )
 
         # remove noisy FIDs
+        gas_indices = recon_utils.get_noisy_projections(
+            data=self.data_gas,
+        )
+        dissolved_indices = recon_utils.get_noisy_projections(
+            data=self.data_dissolved,
+        )
+        self.n_gas_spikes_detected = np.sum(~gas_indices)
+        self.n_dis_spikes_detected = np.sum(~dissolved_indices)
         if self.config.recon.remove_noisy_projections:
-            self.data_gas, self.traj_gas = pp.remove_noisy_projections(
-                self.data_gas, self.traj_gas
+            indices = gas_indices & dissolved_indices
+            self.data_gas, self.traj_gas = recon_utils.apply_indices_mask(
+                data=self.data_gas,
+                traj=self.traj_gas,
+                indices=indices,
             )
-            self.data_dissolved, self.traj_dissolved = pp.remove_noisy_projections(
-                self.data_dissolved, self.traj_dissolved
+            self.data_dissolved, self.traj_dissolved = recon_utils.apply_indices_mask(
+                data=self.data_dissolved,
+                traj=self.traj_dissolved,
+                indices=indices,
             )
+            print(f"Total number of views removed: {np.sum(~indices)}")
 
         # rescale trajectories
         self.traj_dissolved *= self.traj_scaling_factor
@@ -937,7 +953,6 @@ class Subject(object):
             )
             gas_nifti_img = nib.Nifti1Image(self.image_gas_binned, affine=np.eye(4))
             gas_nifti_img.to_filename("tmp/image_gas_binned_GLB_FV.nii")
-
         elif (
             self.config.vent_normalization_method
             == constants.NormalizationMethods.GLB_MA
@@ -955,7 +970,6 @@ class Subject(object):
             )
             gas_nifti_img = nib.Nifti1Image(self.image_gas_binned, affine=np.eye(4))
             gas_nifti_img.to_filename("tmp/image_gas_binned.nii")
-
         elif (
             self.config.vent_normalization_method
             == constants.NormalizationMethods.THRESHOLD_MA
@@ -1543,22 +1557,8 @@ class Subject(object):
             constants.IOFields.VOL_CORRECTION_FACTOR_RBC: self.vol_correction_factor_rbc,
             constants.IOFields.KERNEL_SHARPNESS: self.config.recon.kernel_sharpness_hr,
             constants.IOFields.N_SKIP_START: self.config.recon.n_skip_start,
-            constants.IOFields.N_DIS_REMOVED: len(
-                self.dict_dis[constants.IOFields.FIDS_DIS]
-            )
-            - np.sum(
-                recon_utils.get_noisy_projections(
-                    data=self.dict_dis[constants.IOFields.FIDS_DIS]
-                )
-            ),
-            constants.IOFields.N_GAS_REMOVED: len(
-                self.dict_dis[constants.IOFields.FIDS_GAS]
-            )
-            - np.sum(
-                recon_utils.get_noisy_projections(
-                    data=self.dict_dis[constants.IOFields.FIDS_GAS]
-                )
-            ),
+            constants.IOFields.N_DIS_REMOVED: self.n_dis_spikes_detected,
+            constants.IOFields.N_GAS_REMOVED: self.n_gas_spikes_detected,
             constants.IOFields.REMOVE_NOISE: self.config.recon.remove_noisy_projections,
             constants.IOFields.SHAPE_FIDS: self.dict_dis[constants.IOFields.FIDS].shape,
             constants.IOFields.SHAPE_IMAGE: self.image_gas_highreso.shape,

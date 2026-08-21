@@ -1,4 +1,5 @@
 """Reconstruction util functions."""
+
 import sys
 
 sys.path.append("..")
@@ -11,7 +12,7 @@ def get_noisy_projections(
     data: np.ndarray,
     snr_threshold: float = 0.7,
     tail: float = 10,
-) -> Tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
+) -> np.ndarray:
     """Remove noisy FID rays in the k space data by finding indices mask.
 
     Remove noisy FIDs in the kspace data and their corresponding trajectories.
@@ -69,6 +70,7 @@ def flatten_traj(traj: np.ndarray) -> np.ndarray:
         np.ndarray: flattened trajectory of shape (n_projections * n_points, 3)
     """
     return traj.reshape((traj.shape[0] * traj.shape[1], 3))
+
 
 def skip_from_flipangle(fa_dis: float) -> int:
     """Calculate the number of frames to skip at the beginning based on dissolved flip angle.
