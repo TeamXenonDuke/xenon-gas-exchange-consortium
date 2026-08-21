@@ -615,7 +615,7 @@ class Subject(object):
         )
 
         # reconstruction
-        if self.config.osc_recon.osc_recon_key == constants.ReconKey.ROBERTSON.value:
+        if self.config.recon.recon_key == constants.ReconKey.ROBERTSON.value:
             # prepare data and traj for reconstruction
             data_dis_high, traj_dis_high = pp.prepare_data_and_traj_keyhole(
                 data=data_dissolved_norm,
@@ -665,7 +665,7 @@ class Subject(object):
                 orientation=self.dict_dis[constants.IOFields.ORIENTATION],
                 system_vendor=self.dict_dis[constants.IOFields.SYSTEM_VENDOR],
             )
-        elif self.config.osc_recon.osc_recon_key == constants.ReconKey.PLUMMER.value:
+        elif self.config.recon.recon_key == constants.ReconKey.PLUMMER.value:
             # prepare data and traj for reconstruction
             norm_data = np.linalg.norm(self.data_dissolved)
             self.data_dissolved /= norm_data
