@@ -17,8 +17,7 @@ def _skew_standardized(x: np.ndarray) -> float:
 
 
 def otsu_hysteresis_mask_from_nifti(
-    input_image: np.ndarray,
-    params: Optional[dict] = None
+    input_image: np.ndarray, params: Optional[dict] = None
 ) -> np.ndarray:
     """Return boolean mask (same shape) from a NIfTI image on disk."""
 
@@ -52,8 +51,8 @@ def otsu_hysteresis_mask_from_nifti(
     low_factor = float(np.clip(low_factor, low_clip, high_clip))
     t_low = t_high * low_factor
 
-    seeds = (data >= t_high)
-    region = (data >= t_low)
+    seeds = data >= t_high
+    region = data >= t_low
 
     lab = label(region, connectivity=1)
     seed_ids = np.unique(lab[seeds])
@@ -64,14 +63,6 @@ def otsu_hysteresis_mask_from_nifti(
     closed = binary_closing(connected, ball(radius))
 
     return closed.astype(bool)
-
-
-def save_mask_like(input_path: str, mask_bool: np.ndarray, output_path: str) -> None:
-    """Save mask as uint8 NIfTI using affine/header from input_path."""
-    nii = nib.load(input_path)
-    out = nib.Nifti1Image(mask_bool.astype(np.uint8), affine=nii.affine, header=nii.header)
-    os.makedirs(os.path.dirname(output_path), exist_ok=True)
-    nib.save(out, output_path)
 
 
 def union_masks(mask_a: np.ndarray, mask_b: np.ndarray) -> np.ndarray:
