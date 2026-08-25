@@ -27,6 +27,7 @@ class IOFields(object):
     SEX = "sex"
     HEIGHT = "height"
     WEIGHT = "weight"
+    BMI = "bmi"
     GLI_FRC = "gli_frc"
     GLI_VA = "gli_va"
     GLI_KCO = "gli_kco"
