@@ -1579,6 +1579,7 @@ class Subject(object):
             constants.IOFields.SEX: self.dict_dis[constants.IOFields.SEX],
             constants.IOFields.HEIGHT: self.dict_dis[constants.IOFields.HEIGHT],
             constants.IOFields.WEIGHT: self.dict_dis[constants.IOFields.WEIGHT],
+            constants.IOFields.BMI: self.dict_dis[constants.IOFields.WEIGHT]/((self.dict_dis[constants.IOFields.HEIGHT]/100)**2),
             constants.IOFields.VENT_NORMALIZATION_METHOD: self.config.vent_normalization_method,
         }
         return self.dict_info
