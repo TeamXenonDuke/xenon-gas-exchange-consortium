@@ -14,14 +14,14 @@ body {
   width: 1133px;
 }
 #big-title {
-  width: 400px;
+  width: 500px;
   font-size: 20pt;
   margin: 10px 10px;
   float: left;
   font-weight: normal;
 }
 #date-title {
-  width: 400px;
+  width: 350px;
   font-size: 12pt;
   margin: 15px 30px;
   text-align: right;
