@@ -61,7 +61,6 @@ class Config(config_dict.ConfigDict):
         self.vol_correction_key = constants.VolCorrectionKey.NONE.value
         self.corrected_lung_volume = "NA"
         self.dicom_proton_dir = ""
-        self.multi_echo = False
         self.registration_key = constants.RegistrationKey.SKIP.value
         self.manual_reg_filepath = ""
         self.output_folder = "gx"
