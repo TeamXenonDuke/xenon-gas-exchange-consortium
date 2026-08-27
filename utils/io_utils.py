@@ -440,12 +440,11 @@ def read_dyn_mrd(path: str) -> Dict[str, Any]:
     }
 
 
-def read_dis_mrd(path: str, multi_echo: bool) -> Dict[str, Any]:
+def read_dis_mrd(path: str) -> Dict[str, Any]:
     """Read 1-point dixon disssolved phase imaging mrd file.
 
     Args:
         path: str file path of mrd file
-        multi_echo: option to perform multi echo
     Returns: dictionary containing data and metadata extracted from the mrd file.
     This includes:
         - Age: Patient age as a float.
@@ -477,7 +476,7 @@ def read_dis_mrd(path: str, multi_echo: bool) -> Dict[str, Any]:
     except:
         raise ValueError("Invalid mrd file.")
 
-    data_dict = mrd_utils.get_gx_data(dataset, multi_echo)
+    data_dict = mrd_utils.get_gx_data(dataset)
     return {
         constants.IOFields.AGE: mrd_utils.get_patient_age(header),
         constants.IOFields.SEX: mrd_utils.get_patient_sex(header),
