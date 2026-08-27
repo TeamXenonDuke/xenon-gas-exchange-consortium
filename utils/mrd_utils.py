@@ -490,7 +490,7 @@ def get_TR_dissolved(header: ismrmrd.xsd.ismrmrdschema.ismrmrd.ismrmrdHeader) ->
 	return (tr_gas_to_dissolved + tr_dissolved_to_gas) * 1e-3
 
 
-def get_gx_data(dataset: ismrmrd.hdf5.Dataset, multi_echo: bool) -> Dict[str, Any]:
+def get_gx_data(dataset: ismrmrd.hdf5.Dataset) -> Dict[str, Any]:
 	"""Get the FID acquisition data from dixon MRD file.
 
 	Args:
@@ -580,22 +580,13 @@ def get_gx_data(dataset: ismrmrd.hdf5.Dataset, multi_echo: bool) -> Dict[str, An
 		gas_trajectories_all = np.concatenate(gas_trajectories_all, axis=-1)
 		dis_trajectories_all = np.concatenate(dis_trajectories_all, axis=-1)
 
-		if multi_echo:
-			all_traj = [gas_trajectories_all, dis_trajectories_all]
-			return {
-				constants.IOFields.FIDS: raw_fids_truncated,
-				constants.IOFields.FIDS_GAS: gas_fids_all,
-				constants.IOFields.FIDS_DIS: dis_fids_all,
-				constants.IOFields.TRAJ: all_traj,
-			}
-		else:
-			all_traj = [gas_trajectories_all[..., 0], dis_trajectories_all[..., 0]]
-			return {
-				constants.IOFields.FIDS: raw_fids_truncated,
-				constants.IOFields.FIDS_GAS: gas_fids_all[..., 0],
-				constants.IOFields.FIDS_DIS: dis_fids_all[..., 0],
-				constants.IOFields.TRAJ: all_traj,
-			}
+		all_traj = [gas_trajectories_all[..., 0], dis_trajectories_all[..., 0]]
+		return {
+			constants.IOFields.FIDS: raw_fids_truncated,
+			constants.IOFields.FIDS_GAS: gas_fids_all[..., 0],
+			constants.IOFields.FIDS_DIS: dis_fids_all[..., 0],
+			constants.IOFields.TRAJ: all_traj,
+		}
 
 	else:
 		gas_traj = raw_traj[
