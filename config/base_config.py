@@ -49,7 +49,7 @@ class Config(config_dict.ConfigDict):
         # Choose NormalizationMethod from GLB_99 (default), GLB_FV, GLB_MA, THRESHOLD_MA
         self.vent_normalization_method = constants.NormalizationMethods.GLB_99
         # auto-generate if filepath missing or file not found
-        self.auto_make_trachea_plus_lung_mask = True
+        self.auto_make_trachea_plus_lung_mask = False  # True
         # where to write it if auto-generated
         self.trachea_plus_lung_mask_output_dir = self.data_dir
 
@@ -114,10 +114,10 @@ class Recon(object):
         self.del_z = "None"
 
         # Ramp time will read in by default, but may be specified in us
-        self.ramp_time = "None"
+        self.ramp_time = 90  # "None"
 
         # Reconstruction and matrix sizes
-        self.recon_size = 64
+        self.recon_size = 128
         self.matrix_size = 128
 
         # Additional options
@@ -152,7 +152,7 @@ class OscillationRecon(object):
         self.oscillation_analysis = False
 
         # Keyhole Radius
-        self.key_radius_pct = 14
+        self.key_radius_pct = 9  # 14
 
         # Correction for relative capillary blood volume
         self.vc_correction = False
