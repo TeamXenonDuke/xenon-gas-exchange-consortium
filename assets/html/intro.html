@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 <!DOCTYPE html>
 <html>
   <head>
@@ -278,3 +279,285 @@
     </div>
   </body>
 </html>
+=======
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta
+      name="description"
+      content="Gas Exchange Report with 129Xe MRI-technical report"
+    />
+    <meta name="author" content="Sakib Kabir" />
+    <link
+      href="https://fonts.googleapis.com/css?family=Roboto&display=swap"
+      rel="stylesheet"
+    />
+    <link href="../assets/css/report_reset.css" rel="stylesheet" />
+    <link href="../assets/css/report_intro.css" rel="stylesheet" />
+    <title>Introduction Page</title>
+  </head>
+
+  <body>
+    <div class="title-container">
+      <p>Gas Exchange Summary of Subject: {subject_id}</p>
+    </div>
+
+    <div class="table-container">
+      <table>
+        <caption>
+          Parameters
+        </caption>
+        <colgroup>
+          <col class="white" />
+          <col class="silver" />
+        </colgroup>
+
+        <tr class="basic">
+          <td>
+            <p>Scan Date</p>
+          </td>
+          <td>{scan_date}</td>
+        </tr>
+
+        <tr class="basic">
+          <td>
+            <p>Processing Date</p>
+          </td>
+          <td>{process_date}</td>
+        </tr>
+
+        <tr class="basic">
+          <td>
+            <p>Software Version</p>
+          </td>
+          <td>{software_version}</td>
+        </tr>
+
+        <tr class="basic">
+          <td>
+            <p>Pipeline Version</p>
+          </td>
+          <td>{pipeline_version}</td>
+        </tr>
+
+        <tr class="basic">
+          <td>
+            <p>Magnetic Field Strength</p>
+          </td>
+          <td>{field_strength} T</td>
+        </tr>
+
+        <tr class="basic">
+          <td>
+            <p>Field of View (cm)</p>
+          </td>
+          <td>{fov}x{fov}x{fov}</td>
+        </tr>
+
+        <tr class="basic">
+          <td>
+            <p>Sample time</p>
+          </td>
+          <td>{sample_time} us</td>
+        </tr>
+
+        <tr class="basic">
+          <td>
+            <p>RF Excitation</p>
+          </td>
+          <td>{xe_dissolved_offset_frequency} ppm</td>
+        </tr>
+
+        <tr class="basic">
+          <td>
+            <p>Repetition Time (TR) Dissolved</p>
+          </td>
+          <td>{tr_dis} ms</td>
+        </tr>
+
+        <tr class="basic">
+          <td>
+            <p>TE90</p>
+          </td>
+          <td>{te90} us</td>
+        </tr>
+
+        <tr class="basic">
+          <td>
+            <p>Dissolved Flip Angle</p>
+          </td>
+          <td>{fa_dis} degree</td>
+        </tr>
+
+        <tr class="basic">
+          <td>
+            <p>Gas Flip Angle</p>
+          </td>
+          <td>{fa_gas} degree</td>
+        </tr>
+
+        <tr class="basic">
+          <td>
+            <p>Views and Base Resolution (Vent)</p>
+          </td>
+          <td>{shape_fids}</td>
+        </tr>
+
+        <tr class="basic">
+          <td>
+            <p>Resampled Resolution (Volume)</p>
+          </td>
+          <td>{shape_image}</td>
+        </tr>
+
+        <tr class="basic">
+          <td>
+            <p>Skipped Dissolved FIDs</p>
+          </td>
+          <td>{n_skip_start}</td>
+        </tr>
+
+        <tr class="basic">
+          <td>
+            <p>Remove noisy FIDs</p>
+          </td>
+          <td>{remove_noise}</td>
+        </tr>
+
+        <tr class="basic">
+          <td>
+            <p>Detected Spike Noise FIDs (Gas)</p>
+          </td>
+          <td>{n_gas_removed}</td>
+        </tr>
+
+        <tr class="basic">
+          <td>
+            <p>Detected Spike Noise FIDs (Dissolved)</p>
+          </td>
+          <td>{n_dis_removed}</td>
+        </tr>
+      </table>
+    </div>
+
+    <div class="table-container2">
+      <table>
+        <caption>
+          Parameters
+        </caption>
+        <colgroup>
+          <col class="white" />
+          <col class="silver" />
+        </colgroup>
+
+        <tr class="basic">
+          <td>
+            <p>Bandwidth</p>
+          </td>
+          <td>{bandwidth} Hz/pixel</td>
+        </tr>
+
+        <tr class="basic">
+          <td>
+            <p>Kernel Sharpness</p>
+          </td>
+          <td>{kernel_sharpness}</td>
+        </tr>
+
+        <tr class="basic">
+          <td>
+            <p>Gradient Delay Applied</p>
+          </td>
+          <td>x: {grad_delay_x}, y: {grad_delay_y}, z:{grad_delay_z}</td>
+        </tr>
+
+        <tr class="basic">
+          <td>
+            <p>Ramp Time Used</p>
+          </td>
+          <td>{ramp_time}</td>
+        </tr>
+
+        <tr class="basic">
+          <td>
+            <p>Flip correction</p>
+          </td>
+          <td>{flip_angle_factor}</td>
+        </tr>
+
+        <tr class="basic">
+          <td>
+            <p>T2* correction membrane</p>
+          </td>
+          <td>{t2_correction_factor_membrane}</td>
+        </tr>
+        <tr class="basic">
+          <td>
+            <p>T2* correction RBC</p>
+          </td>
+          <td>{t2_correction_factor_rbc}</td>
+        </tr>
+        <tr class="basic">
+          <td>
+            <p>Hb Correction</p>
+          </td>
+          <td>{hb_correction_key}</td>
+        </tr>
+
+        <tr class="basic">
+          <td>
+            <p>Hb Correction Value (g/dL)</p>
+          </td>
+          <td>{hb}</td>
+        </tr>
+        <tr class="basic">
+          <td>
+            <p>Volume Correction</p>
+          </td>
+          <td>{vol_correction_key}</td>
+        </tr>
+       <tr class="basic">
+          <td>
+            <p>Lung Volume Correction Target (L)</p>
+          </td>
+          <td>{corrected_lung_volume}</td>
+        </tr>
+       <tr class="basic">
+          <td>
+            <p>Vent Normalization Method</p>
+          </td>
+          <td>{vent_normalization_method}</td>
+        </tr>
+        <tr class="basic">
+          <td>
+            <p>Reference Data</p>
+          </td>
+          <td>{reference_data_key}</td>
+        </tr>
+
+        <tr class="basic">
+          <td>
+            <p>Demographics</p>
+          </td>
+          <td>{age}yo. / {sex} / {height}cm / {weight}kg / {bmi}kg/m2</td>
+        </tr>
+
+        <tr class="basic">
+          <td>
+            <p>Patient FRC/ Bag Volume</p>
+          </td>
+          <td>{user_lung_volume_value}</td>
+        </tr>
+
+        <tr class="basic">
+          <td>
+            <p>Git branch</p>
+          </td>
+          <td>{git_branch}</td>
+        </tr>
+      </table>
+    </div>
+  </body>
+</html>
+>>>>>>> 3a915e749e8632b5eabecbac76a69e6078eba552
