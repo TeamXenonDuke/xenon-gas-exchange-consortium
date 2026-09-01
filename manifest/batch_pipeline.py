@@ -234,6 +234,8 @@ def csv_setting(value: Any) -> str:
     """Convert a config value to an editable CSV cell."""
     if value is None or (isinstance(value, float) and math.isnan(value)):
         return ""
+    if isinstance(value, str) and value.strip().lower() in {"none", "nan"}:
+        return ""
     if isinstance(value, bool):
         return str(value).lower()
     return str(value)
