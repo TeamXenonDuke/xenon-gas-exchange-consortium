@@ -25,6 +25,13 @@ subject and writes each subject to `batch_status.csv` as `planned`. It leaves
 the manual RBC:M and manual-mask settings unset. Discovered subjects use Plummer
 reconstruction, with oscillation analysis and VC correction enabled:
 
+The generated CSV also expands the active defaults for reconstruction, output
+folder, segmentation, registration, bias-field correction, reference data,
+ventilation normalization, and trajectory settings. This makes the generated
+manifest directly reviewable and editable. Fields that require subject-specific
+confirmation (`rbc_m_ratio`, `manual_seg_filepath`, `hb`, and lung-volume
+correction) remain blank.
+
 ```bash
 python manifest/batch_pipeline.py --discover
 ```

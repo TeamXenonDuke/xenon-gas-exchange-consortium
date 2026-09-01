@@ -230,6 +230,42 @@ def write_discovered_manifest(rows: list[dict[str, str]]) -> None:
         writer.writerows(rows)
 
 
+def csv_setting(value: Any) -> str:
+    """Convert a config value to an editable CSV cell."""
+    if value is None or (isinstance(value, float) and math.isnan(value)):
+        return ""
+    if isinstance(value, bool):
+        return str(value).lower()
+    return str(value)
+
+
+def populate_discovered_defaults(row: dict[str, str], data_dir: Path) -> None:
+    """Expand non-subject-specific runtime defaults into a discovered CSV row."""
+    config = build_config(row, data_dir)
+    row.update(
+        recon_proton=csv_setting(config.recon.recon_proton),
+        recon_key=csv_setting(config.recon.recon_key),
+        scan_type=csv_setting(config.recon.scan_type),
+        del_x=csv_setting(config.recon.del_x),
+        del_y=csv_setting(config.recon.del_y),
+        del_z=csv_setting(config.recon.del_z),
+        ramp_time=csv_setting(config.recon.ramp_time),
+        oscillation_analysis=csv_setting(config.osc_recon.oscillation_analysis),
+        output_folder=csv_setting(config.output_folder),
+        vc_correction=csv_setting(config.osc_recon.vc_correction),
+        segmentation_key=csv_setting(config.segmentation_key),
+        registration_key=csv_setting(config.registration_key),
+        bias_key=csv_setting(config.bias_key),
+        reference_data_key=csv_setting(config.reference_data_key),
+        vent_normalization_method=csv_setting(config.vent_normalization_method),
+        n_skip_start=csv_setting(config.recon.n_skip_start),
+        n_skip_end=csv_setting(config.recon.n_skip_end),
+        traj_type=csv_setting(config.recon.traj_type),
+        traj_scaling_factor=csv_setting(config.recon.traj_scaling_factor),
+        multi_echo=csv_setting(config.multi_echo),
+    )
+
+
 def discover_subject_rows(
     data_root: Path, del_x: float, del_y: float, del_z: float
 ) -> list[dict[str, str]]:
@@ -277,6 +313,7 @@ def discover_subject_rows(
                 del_z=str(del_z),
                 ramp_time=str(discover_ramp_time(subject_dir)),
             )
+        populate_discovered_defaults(row, subject_dir)
         rows.append(row)
 
     return rows
