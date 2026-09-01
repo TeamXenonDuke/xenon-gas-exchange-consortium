@@ -6,6 +6,7 @@ from ml_collections import config_flags
 
 from config import base_config
 from subject_classmap import Subject
+from utils import constants
 
 import logging
 
@@ -22,6 +23,21 @@ flags.DEFINE_boolean("force_recon", False, "force reconstruction for the subject
 flags.DEFINE_boolean("force_readin", False, "force read in .mat for the subject")
 flags.DEFINE_bool("force_segmentation", False, "run segmentation again.")
 flags.DEFINE_string("folder", None, "relative path to subject data folder.")
+
+
+def apply_manifest_demographics(subject: Subject, config: base_config.Config) -> None:
+    """Apply nonblank batch-manifest demographics after input metadata is loaded."""
+    overrides = getattr(config, "manifest_demographics", {})
+    field_map = {
+        "age": constants.IOFields.AGE,
+        "sex": constants.IOFields.SEX,
+        "height_cm": constants.IOFields.HEIGHT,
+        "weight_kg": constants.IOFields.WEIGHT,
+    }
+    for key, io_field in field_map.items():
+        if key in overrides:
+            subject.dict_dis[io_field] = overrides[key]
+            logging.info("Using manifest %s override: %s", key, overrides[key])
 
 
 def gx_mapping_reconstruction(config: base_config.Config):
@@ -45,6 +61,7 @@ def gx_mapping_reconstruction(config: base_config.Config):
             subject.read_mrd_files()
         except:
             raise ValueError("Cannot read in raw data files.")
+    apply_manifest_demographics(subject, config)
     subject.calculate_rbc_m_ratio()
     logging.info("Reconstructing images")
     subject.preprocess()
@@ -101,6 +118,7 @@ def gx_mapping_readin(config: base_config.Config):
         )
         raise ValueError(msg)
     subject.read_mat_file()
+    apply_manifest_demographics(subject, config)
     if FLAGS.force_segmentation:
         subject.segmentation()
     subject.gas_binning()

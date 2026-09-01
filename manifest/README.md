@@ -32,6 +32,17 @@ manifest directly reviewable and editable. Fields that require subject-specific
 confirmation (`rbc_m_ratio`, `manual_seg_filepath`, `hb`, and lung-volume
 correction) remain blank.
 
+`recon_size` and `key_radius_pct` are included for each discovered subject, so
+they can be reviewed or overridden directly in the CSV.
+
+For Twix inputs, age, sex, height, and weight are also copied into the generated
+CSV when available in the Dixon header. If the header does not provide a complete
+set, those cells remain blank rather than receiving audit defaults. The existing
+pipeline uses raw-input (or `.mat`) demographics when those CSV cells are blank.
+Any nonblank CSV demographic value takes priority and is used during processing,
+including age, sex, and height in VC correction; weight is retained in outputs
+but is not an input to the current VC-correction calculation.
+
 ```bash
 python manifest/batch_pipeline.py --discover
 ```

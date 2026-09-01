@@ -34,12 +34,14 @@ DISCOVERED_MANIFEST_FIELDS = [
     "corrected_lung_volume",
     "recon_proton",
     "recon_key",
+    "recon_size",
     "scan_type",
     "del_x",
     "del_y",
     "del_z",
     "ramp_time",
     "oscillation_analysis",
+    "key_radius_pct",
     "output_folder",
     "vc_correction",
     "segmentation_key",
@@ -247,12 +249,14 @@ def populate_discovered_defaults(row: dict[str, str], data_dir: Path) -> None:
     row.update(
         recon_proton=csv_setting(config.recon.recon_proton),
         recon_key=csv_setting(config.recon.recon_key),
+        recon_size=csv_setting(config.recon.recon_size),
         scan_type=csv_setting(config.recon.scan_type),
         del_x=csv_setting(config.recon.del_x),
         del_y=csv_setting(config.recon.del_y),
         del_z=csv_setting(config.recon.del_z),
         ramp_time=csv_setting(config.recon.ramp_time),
         oscillation_analysis=csv_setting(config.osc_recon.oscillation_analysis),
+        key_radius_pct=csv_setting(config.osc_recon.key_radius_pct),
         output_folder=csv_setting(config.output_folder),
         vc_correction=csv_setting(config.osc_recon.vc_correction),
         segmentation_key=csv_setting(config.segmentation_key),
@@ -316,6 +320,22 @@ def discover_subject_rows(
                 ramp_time=str(discover_ramp_time(subject_dir)),
             )
         populate_discovered_defaults(row, subject_dir)
+        demographics, demographics_source = resolve_demographics(
+            row, subject_dir, "twix"
+        )
+        if demographics_source == "twix_header":
+            row.update(
+                age=csv_setting(demographics["age"]),
+                sex=csv_setting(demographics["sex"]),
+                height_cm=csv_setting(demographics["height_cm"]),
+                weight_kg=csv_setting(demographics["weight_kg"]),
+            )
+        else:
+            logging.warning(
+                "Could not read demographics from a Twix header for %s; leaving "
+                "demographic CSV cells blank.",
+                subject_dir,
+            )
         rows.append(row)
 
     return rows
@@ -413,6 +433,22 @@ def build_config(
     rbc_m_ratio = optional_float(row.get("rbc_m_ratio", ""))
     if rbc_m_ratio is not None:
         config.rbc_m_ratio = rbc_m_ratio
+
+    # Nonblank demographics are explicit CSV overrides for raw-input metadata.
+    demographics_override: dict[str, Any] = {}
+    age = optional_int(row.get("age", ""))
+    if age is not None:
+        demographics_override["age"] = age
+    sex = row.get("sex", "").strip()
+    if sex:
+        demographics_override["sex"] = sex
+    height_cm = optional_float(row.get("height_cm", ""))
+    if height_cm is not None:
+        demographics_override["height_cm"] = height_cm
+    weight_kg = optional_float(row.get("weight_kg", ""))
+    if weight_kg is not None:
+        demographics_override["weight_kg"] = weight_kg
+    config.manifest_demographics = demographics_override
 
     # Supplying hemoglobin activates the project-standard Hb correction.
     hb = optional_float(row.get("hb", ""))
