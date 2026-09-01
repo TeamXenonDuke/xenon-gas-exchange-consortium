@@ -244,6 +244,92 @@ def csv_setting(value: Any) -> str:
     return str(value)
 
 
+def find_manual_seg_filepath(subject_dir: Path) -> Optional[Path]:
+    """Locate the manual ventilation mask beside raw Twix or MRD data.
+
+    A corrected mask is preferred across all raw-data directories before using
+    an uncorrected mask. This lets a subject contain both Twix and MRD inputs
+    without accidentally choosing an older uncorrected mask first.
+    """
+    raw_dirs = sorted(
+        {
+            path.parent
+            for path in subject_dir.rglob("*")
+            if path.is_file() and path.suffix.lower() in {".dat", ".h5"}
+        },
+        key=lambda path: str(path).lower(),
+    )
+    for filename in ("mask_reg_corrected.nii", "mask_reg.nii"):
+        for raw_dir in raw_dirs:
+            candidate = raw_dir / filename
+            if candidate.is_file():
+                return candidate
+    return None
+
+
+def read_spectroscopy_rbcm(csv_path: Path) -> Optional[float]:
+    """Read the first valid RBC:M value from a spectroscopy CSV file."""
+    try:
+        with csv_path.open(newline="", encoding="utf-8-sig") as file:
+            reader = csv.reader(file)
+            header = next(reader, None)
+            if not header:
+                return None
+
+            normalized_header = [cell.strip().lower() for cell in header]
+            try:
+                rbcm_index = normalized_header.index("rbcm")
+            except ValueError:
+                if len(header) < 5:
+                    logging.warning(
+                        "Skipping %s: no rbcm column and fewer than five columns.",
+                        csv_path,
+                    )
+                    return None
+                rbcm_index = 4
+
+            for row in reader:
+                if rbcm_index >= len(row) or not row[rbcm_index].strip():
+                    continue
+                try:
+                    value = float(row[rbcm_index].strip())
+                except ValueError:
+                    logging.warning("Skipping invalid rbcm value in %s.", csv_path)
+                    continue
+                if math.isfinite(value) and value > 0:
+                    return value
+                logging.warning("Skipping invalid rbcm value in %s.", csv_path)
+    except (OSError, UnicodeError, csv.Error) as error:
+        logging.warning("Could not read spectroscopy CSV %s: %s", csv_path, error)
+    return None
+
+
+def find_spectroscopy_rbcm(subject_dir: Path) -> Optional[float]:
+    """Locate a subject spectroscopy CSV and return its RBC:M value."""
+    spectroscopy_dirs = sorted(
+        (
+            path
+            for path in subject_dir.iterdir()
+            if path.is_dir() and path.name.lower() == "spectroscopy"
+        ),
+        key=lambda path: str(path).lower(),
+    )
+    for spectroscopy_dir in spectroscopy_dirs:
+        csv_paths = sorted(
+            (
+                path
+                for path in spectroscopy_dir.rglob("*")
+                if path.is_file() and path.suffix.lower() == ".csv"
+            ),
+            key=lambda path: str(path).lower(),
+        )
+        for csv_path in csv_paths:
+            value = read_spectroscopy_rbcm(csv_path)
+            if value is not None:
+                return value
+    return None
+
+
 def populate_discovered_defaults(row: dict[str, str], data_dir: Path) -> None:
     """Expand non-subject-specific runtime defaults into a discovered CSV row."""
     config = build_config(row, data_dir)
@@ -281,12 +367,11 @@ def discover_subject_rows(
 
     Raw data is preferred when both raw and previously exported .mat files are
     present, allowing a later ``--discover --run`` invocation to reconstruct the
-    subject. Discovered rows intentionally leave both RBC:M and manual mask paths
-    blank: RBC:M remains auto-detected during processing and segmentation follows
-    the base configuration. Discovered subjects use Plummer reconstruction with
-    oscillation analysis and VC correction enabled. Recon rows receive numeric
-    gradient-delay defaults so they do not inherit the base config's non-numeric
-    placeholder values.
+    subject. Discovered rows use manual ventilation masks found beside raw Twix
+    or MRD files, and copy RBC:M from a subject spectroscopy CSV when available.
+    Discovered subjects use Plummer reconstruction with oscillation analysis and
+    VC correction enabled. Recon rows receive numeric gradient-delay defaults so
+    they do not inherit the base config's non-numeric placeholder values.
     """
     if not data_root.is_dir():
         raise FileNotFoundError(f"Data root not found: {data_root}")
@@ -309,11 +394,29 @@ def discover_subject_rows(
             "data_dir": str(subject_dir),
             "process_mode": process_mode,
             "rbc_m_ratio": "",
+            "segmentation_key": constants.SegmentationKey.MANUAL_VENT.value,
             "manual_seg_filepath": "",
             "recon_key": "plummer",
             "oscillation_analysis": "true",
             "vc_correction": "true",
         }
+        manual_seg_filepath = find_manual_seg_filepath(subject_dir)
+        if manual_seg_filepath is None:
+            logging.warning(
+                "Could not find mask_reg_corrected.nii or mask_reg.nii beside "
+                "Twix/MRD data for %s.",
+                subject_dir,
+            )
+        else:
+            row["manual_seg_filepath"] = str(manual_seg_filepath)
+
+        rbc_m_ratio = find_spectroscopy_rbcm(subject_dir)
+        if rbc_m_ratio is None:
+            logging.warning(
+                "Could not find a valid spectroscopy rbcm value for %s.", subject_dir
+            )
+        else:
+            row["rbc_m_ratio"] = f"{rbc_m_ratio:.3f}"
         if process_mode == "recon":
             row.update(
                 del_x=str(del_x),

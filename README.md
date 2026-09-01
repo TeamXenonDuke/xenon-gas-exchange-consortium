@@ -1,5 +1,16 @@
 # <sup>129</sup>Xe gas exchange imaging pipeline
 
+## Combine completed subject reports
+
+After processing each subject with `combine_reports = True`, merge the generated
+`<subject_id>_combined_report.pdf` files into one cohort-level PDF. The script
+uses the completed subject list in `manifest/batch_status.csv`, so it always
+uses the same cohort and order as the batch manifest:
+
+```bash
+python manifest/script_combine_pdfs.py --output=tmp/combined.pdf
+```
+
 The xenon gas exchange pipeline, developed at the [Driehuys Lab](https://sites.duke.edu/driehuyslab/), processes raw <sup>129</sup>Xe MRI data and produces a summary report to analyze the functionality of the human lung. This README presents the setup/installation process and basic usage of the pipeline. Before moving to the installation process, download or clone this repository to your computer.
 
 ## Table of contents:

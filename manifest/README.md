@@ -21,16 +21,19 @@ python manifest/batch_pipeline.py --run
 
 Discover all subject folders under `data/` without manually adding CSV rows.
 This dry run replaces `manifest_example.csv` with one editable row per valid
-subject and writes each subject to `batch_status.csv` as `planned`. It leaves
-the manual RBC:M and manual-mask settings unset. Discovered subjects use Plummer
-reconstruction, with oscillation analysis and VC correction enabled:
+subject and writes each subject to `batch_status.csv` as `planned`. It uses
+`manual_vent` segmentation and looks beside each Twix/MRD file for
+`mask_reg_corrected.nii`, falling back to `mask_reg.nii`. It also copies the
+first valid `rbcm` value (or fifth CSV column when that header is absent) from a
+subject's `spectroscopy`/`Spectroscopy` folder, rounded to three decimals.
+Missing masks or RBC:M values are left blank and logged for review. Discovered
+subjects use Plummer reconstruction, with oscillation analysis and VC correction enabled:
 
 The generated CSV also expands the active defaults for reconstruction, output
 folder, segmentation, registration, bias-field correction, reference data,
 ventilation normalization, and trajectory settings. This makes the generated
 manifest directly reviewable and editable. Fields that require subject-specific
-confirmation (`rbc_m_ratio`, `manual_seg_filepath`, `hb`, and lung-volume
-correction) remain blank.
+confirmation (`hb` and lung-volume correction) remain blank.
 
 `recon_size` and `key_radius_pct` are included for each discovered subject, so
 they can be reviewed or overridden directly in the CSV.
