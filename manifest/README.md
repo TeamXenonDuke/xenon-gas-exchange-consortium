@@ -120,11 +120,12 @@ available, it records documented defaults of 50 years, `M`, 170 cm, and
 70 kg. These values are audit metadata: the existing Python pipeline continues
 to obtain patient information from the Twix/MRD header during processing.
 
-Set `combine_reports` to `true` to write
-`<subject_id>_combined_report.pdf` in the subject directory. The pipeline
-merges the gas-exchange report from `output_folder` (normally `gx_batch`), the
-best matching PDF found in another subject subfolder, and the oscillation
-report when present. If no spectroscopy PDF is found, that section is skipped.
+`combine_reports` inherits the default `true` value when blank. Set it to
+`false` to disable writing `<subject_id>_combined_report.pdf` in the subject
+directory. The pipeline merges the gas-exchange report from `output_folder`
+(normally `gx_batch`), the best matching PDF found in another subject subfolder,
+and the oscillation report when present. If no spectroscopy PDF is found, that
+section is skipped.
 
 When `rbc_m_ratio` is blank, the pipeline attempts to calculate it from static
 spectroscopy. If that calculation cannot be completed, it uses `0.455` and

@@ -67,7 +67,7 @@ class Config(config_dict.ConfigDict):
         self.output_folder = "gx"
         # When enabled, assemble gas-exchange, spectroscopy, and oscillation
         # reports into one subject-level PDF after pipeline outputs are moved.
-        self.combine_reports = False
+        self.combine_reports = True
 
         # Additional options for contamination correction
         self.phase_gas_acq_diss = "None"  # degree

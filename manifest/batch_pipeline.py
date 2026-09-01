@@ -322,7 +322,6 @@ def populate_discovered_defaults(row: dict[str, str], data_dir: Path) -> None:
         ramp_time=csv_setting(config.recon.ramp_time),
         oscillation_analysis=csv_setting(config.osc_recon.oscillation_analysis),
         output_folder=csv_setting(config.output_folder),
-        combine_reports=csv_setting(config.combine_reports),
         vc_correction=csv_setting(config.osc_recon.vc_correction),
         segmentation_key=csv_setting(config.segmentation_key),
         registration_key=csv_setting(config.registration_key),
