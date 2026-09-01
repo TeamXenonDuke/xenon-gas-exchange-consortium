@@ -21,7 +21,8 @@ python manifest/batch_pipeline.py --run
 
 Discover all subject folders under `data/` without manually adding CSV rows.
 This dry run writes each valid subject to `batch_status.csv` as `planned` and
-leaves the manual RBC:M and manual-mask settings unset:
+leaves the manual RBC:M and manual-mask settings unset. Discovered subjects use
+Plummer reconstruction, with oscillation analysis and VC correction enabled:
 
 ```bash
 python manifest/batch_pipeline.py --discover
@@ -33,6 +34,16 @@ input but no raw data:
 
 ```bash
 python manifest/batch_pipeline.py --discover --data-root /path/to/data
+```
+
+For discovered raw-data subjects, the default gradient delays are `0`, `-4`,
+and `-3` microseconds for x, y, and z respectively. Override them for a
+different scanner or protocol. The current Twix reader does not reliably expose
+these delays, so they remain explicit batch-level inputs:
+
+```bash
+python manifest/batch_pipeline.py --discover --data-root /path/to/data \
+  --del-x 0 --del-y -4 --del-z -3
 ```
 
 To process the same automatically discovered subjects, add `--run`:

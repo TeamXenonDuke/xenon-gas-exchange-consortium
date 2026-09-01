@@ -79,6 +79,24 @@ def parse_args() -> argparse.Namespace:
         help="Root containing subject folders when data_dir is blank.",
     )
     parser.add_argument(
+        "--del-x",
+        type=float,
+        default=0.0,
+        help="Default x gradient delay in microseconds for --discover recon subjects.",
+    )
+    parser.add_argument(
+        "--del-y",
+        type=float,
+        default=-4.0,
+        help="Default y gradient delay in microseconds for --discover recon subjects.",
+    )
+    parser.add_argument(
+        "--del-z",
+        type=float,
+        default=-3.0,
+        help="Default z gradient delay in microseconds for --discover recon subjects.",
+    )
+    parser.add_argument(
         "--run",
         action="store_true",
         help="Run validated subjects serially. Default behavior is dry-run.",
@@ -142,14 +160,19 @@ def find_input_type(data_dir: Path, process_mode: str) -> tuple[str, str]:
     return "", "reconstruction mode requires .dat or .h5 input"
 
 
-def discover_subject_rows(data_root: Path) -> list[dict[str, str]]:
+def discover_subject_rows(
+    data_root: Path, del_x: float, del_y: float, del_z: float
+) -> list[dict[str, str]]:
     """Return one automatic batch row for each subject folder with supported input.
 
     Raw data is preferred when both raw and previously exported .mat files are
     present, allowing a later ``--discover --run`` invocation to reconstruct the
     subject. Discovered rows intentionally leave both RBC:M and manual mask paths
     blank: RBC:M remains auto-detected during processing and segmentation follows
-    the base configuration.
+    the base configuration. Discovered subjects use Plummer reconstruction with
+    oscillation analysis and VC correction enabled. Recon rows receive numeric
+    gradient-delay defaults so they do not inherit the base config's non-numeric
+    placeholder values.
     """
     if not data_root.is_dir():
         raise FileNotFoundError(f"Data root not found: {data_root}")
@@ -167,15 +190,19 @@ def discover_subject_rows(data_root: Path) -> list[dict[str, str]]:
             logging.info("Skipping %s: no supported input files", subject_dir)
             continue
 
-        rows.append(
-            {
-                "subject_id": subject_dir.name,
-                "data_dir": str(subject_dir),
-                "process_mode": process_mode,
-                "rbc_m_ratio": "",
-                "manual_seg_filepath": "",
-            }
-        )
+        row = {
+            "subject_id": subject_dir.name,
+            "data_dir": str(subject_dir),
+            "process_mode": process_mode,
+            "rbc_m_ratio": "",
+            "manual_seg_filepath": "",
+            "recon_key": "plummer",
+            "oscillation_analysis": "true",
+            "vc_correction": "true",
+        }
+        if process_mode == "recon":
+            row.update(del_x=str(del_x), del_y=str(del_y), del_z=str(del_z))
+        rows.append(row)
 
     return rows
 
@@ -587,7 +614,7 @@ def main() -> None:
 
     data_root = args.data_root.resolve()
     if args.discover:
-        rows = discover_subject_rows(data_root)
+        rows = discover_subject_rows(data_root, args.del_x, args.del_y, args.del_z)
         if not rows:
             logging.warning("No supported subject inputs found under %s", data_root)
     else:
