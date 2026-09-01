@@ -24,6 +24,44 @@ from typing import Any, Optional
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
 MANIFEST_ROOT = Path(__file__).resolve().parent
 DEFAULT_DATA_ROOT = PROJECT_ROOT / "data"
+DISCOVERED_MANIFEST_PATH = MANIFEST_ROOT / "manifest_example.csv"
+DISCOVERED_MANIFEST_FIELDS = [
+    "subject_id",
+    "data_dir",
+    "process_mode",
+    "rbc_m_ratio",
+    "hb",
+    "corrected_lung_volume",
+    "recon_proton",
+    "recon_key",
+    "scan_type",
+    "del_x",
+    "del_y",
+    "del_z",
+    "ramp_time",
+    "oscillation_analysis",
+    "output_folder",
+    "vc_correction",
+    "segmentation_key",
+    "manual_seg_filepath",
+    "registration_key",
+    "manual_reg_filepath",
+    "bias_key",
+    "reference_data_key",
+    "bag_volume",
+    "vent_normalization_method",
+    "n_skip_start",
+    "n_skip_end",
+    "traj_type",
+    "traj_scaling_factor",
+    "dicom_proton_dir",
+    "multi_echo",
+    "age",
+    "sex",
+    "height_cm",
+    "weight_kg",
+]
+DEFAULT_RAMP_TIME = 90.0
 
 if str(PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(PROJECT_ROOT))
@@ -160,6 +198,38 @@ def find_input_type(data_dir: Path, process_mode: str) -> tuple[str, str]:
     return "", "reconstruction mode requires .dat or .h5 input"
 
 
+def discover_ramp_time(data_dir: Path) -> float:
+    """Read ramp time from a Dixon Twix header, with a documented fallback."""
+    try:
+        import mapvbvd
+
+        from utils import twix_utils
+
+        dixon_file = next(
+            path for path in data_dir.rglob("*.dat") if "dixon" in path.name.lower()
+        )
+        ramp_time = float(twix_utils.get_ramp_time(mapvbvd.mapVBVD(str(dixon_file))))
+        if math.isfinite(ramp_time) and ramp_time > 0:
+            return ramp_time
+    except (ImportError, OSError, StopIteration, TypeError, ValueError):
+        pass
+
+    logging.warning(
+        "Could not read ramp time for %s; using fallback %.0f microseconds.",
+        data_dir,
+        DEFAULT_RAMP_TIME,
+    )
+    return DEFAULT_RAMP_TIME
+
+
+def write_discovered_manifest(rows: list[dict[str, str]]) -> None:
+    """Write automatically discovered subjects to the editable CSV manifest."""
+    with DISCOVERED_MANIFEST_PATH.open("w", newline="", encoding="utf-8") as file:
+        writer = csv.DictWriter(file, fieldnames=DISCOVERED_MANIFEST_FIELDS)
+        writer.writeheader()
+        writer.writerows(rows)
+
+
 def discover_subject_rows(
     data_root: Path, del_x: float, del_y: float, del_z: float
 ) -> list[dict[str, str]]:
@@ -201,7 +271,12 @@ def discover_subject_rows(
             "vc_correction": "true",
         }
         if process_mode == "recon":
-            row.update(del_x=str(del_x), del_y=str(del_y), del_z=str(del_z))
+            row.update(
+                del_x=str(del_x),
+                del_y=str(del_y),
+                del_z=str(del_z),
+                ramp_time=str(discover_ramp_time(subject_dir)),
+            )
         rows.append(row)
 
     return rows
@@ -617,6 +692,9 @@ def main() -> None:
         rows = discover_subject_rows(data_root, args.del_x, args.del_y, args.del_z)
         if not rows:
             logging.warning("No supported subject inputs found under %s", data_root)
+        else:
+            write_discovered_manifest(rows)
+            logging.info("Wrote discovered subjects to %s", DISCOVERED_MANIFEST_PATH)
     else:
         manifest_path = args.manifest.resolve()
         if not manifest_path.is_file():
