@@ -120,24 +120,6 @@ def parse_args() -> argparse.Namespace:
         help="Root containing subject folders when data_dir is blank.",
     )
     parser.add_argument(
-        "--del-x",
-        type=float,
-        default=0.0,
-        help="Default x gradient delay in microseconds for --discover recon subjects.",
-    )
-    parser.add_argument(
-        "--del-y",
-        type=float,
-        default=-4.0,
-        help="Default y gradient delay in microseconds for --discover recon subjects.",
-    )
-    parser.add_argument(
-        "--del-z",
-        type=float,
-        default=-3.0,
-        help="Default z gradient delay in microseconds for --discover recon subjects.",
-    )
-    parser.add_argument(
         "--run",
         action="store_true",
         help="Run validated subjects serially. Default behavior is dry-run.",
@@ -336,14 +318,9 @@ def populate_discovered_defaults(row: dict[str, str], data_dir: Path) -> None:
     row.update(
         recon_proton=csv_setting(config.recon.recon_proton),
         recon_key=csv_setting(config.recon.recon_key),
-        recon_size=csv_setting(config.recon.recon_size),
         scan_type=csv_setting(config.recon.scan_type),
-        del_x=csv_setting(config.recon.del_x),
-        del_y=csv_setting(config.recon.del_y),
-        del_z=csv_setting(config.recon.del_z),
         ramp_time=csv_setting(config.recon.ramp_time),
         oscillation_analysis=csv_setting(config.osc_recon.oscillation_analysis),
-        key_radius_pct=csv_setting(config.osc_recon.key_radius_pct),
         output_folder=csv_setting(config.output_folder),
         combine_reports=csv_setting(config.combine_reports),
         vc_correction=csv_setting(config.osc_recon.vc_correction),
@@ -352,7 +329,6 @@ def populate_discovered_defaults(row: dict[str, str], data_dir: Path) -> None:
         bias_key=csv_setting(config.bias_key),
         reference_data_key=csv_setting(config.reference_data_key),
         vent_normalization_method=csv_setting(config.vent_normalization_method),
-        n_skip_start=csv_setting(config.recon.n_skip_start),
         n_skip_end=csv_setting(config.recon.n_skip_end),
         traj_type=csv_setting(config.recon.traj_type),
         traj_scaling_factor=csv_setting(config.recon.traj_scaling_factor),
@@ -360,9 +336,7 @@ def populate_discovered_defaults(row: dict[str, str], data_dir: Path) -> None:
     )
 
 
-def discover_subject_rows(
-    data_root: Path, del_x: float, del_y: float, del_z: float
-) -> list[dict[str, str]]:
+def discover_subject_rows(data_root: Path) -> list[dict[str, str]]:
     """Return one automatic batch row for each subject folder with supported input.
 
     Raw data is preferred when both raw and previously exported .mat files are
@@ -370,8 +344,8 @@ def discover_subject_rows(
     subject. Discovered rows use manual ventilation masks found beside raw Twix
     or MRD files, and copy RBC:M from a subject spectroscopy CSV when available.
     Discovered subjects use Plummer reconstruction with oscillation analysis and
-    VC correction enabled. Recon rows receive numeric gradient-delay defaults so
-    they do not inherit the base config's non-numeric placeholder values.
+    VC correction enabled. Reconstruction settings controlled by base_config
+    remain blank in the generated manifest.
     """
     if not data_root.is_dir():
         raise FileNotFoundError(f"Data root not found: {data_root}")
@@ -419,9 +393,6 @@ def discover_subject_rows(
             row["rbc_m_ratio"] = f"{rbc_m_ratio:.3f}"
         if process_mode == "recon":
             row.update(
-                del_x=str(del_x),
-                del_y=str(del_y),
-                del_z=str(del_z),
                 ramp_time=str(discover_ramp_time(subject_dir)),
             )
         populate_discovered_defaults(row, subject_dir)
@@ -874,7 +845,7 @@ def main() -> None:
 
     data_root = args.data_root.resolve()
     if args.discover:
-        rows = discover_subject_rows(data_root, args.del_x, args.del_y, args.del_z)
+        rows = discover_subject_rows(data_root)
         if not rows:
             logging.warning("No supported subject inputs found under %s", data_root)
         else:

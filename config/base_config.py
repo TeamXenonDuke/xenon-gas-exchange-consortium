@@ -2,7 +2,6 @@
 
 import sys
 
-import numpy as np
 from ml_collections import config_dict
 
 # parent directory
@@ -112,16 +111,16 @@ class Recon(object):
 
     def __init__(self):
         """Initialize the reconstruction parameters."""
-        # Gradient delays - MUST be specified
-        self.del_x = "None"
-        self.del_y = "None"
-        self.del_z = "None"
+        # Gradient delays in microseconds
+        self.del_x = -5
+        self.del_y = -5
+        self.del_z = -5
 
         # Ramp time will read in by default, but may be specified in us
         self.ramp_time = 90  # "None"
 
         # Reconstruction and matrix sizes
-        self.recon_size = 128
+        self.recon_size = 64
         self.matrix_size = 128
 
         # Additional options
@@ -129,8 +128,7 @@ class Recon(object):
         self.recon_key = constants.ReconKey.ROBERTSON.value
         self.kernel_sharpness_lr = 0.14
         self.kernel_sharpness_hr = 0.32
-        # Set initial n_skip_start value as NaN, or user input an expected value
-        self.n_skip_start = np.nan
+        self.n_skip_start = 100
         self.n_skip_end = 0
         self.optimized_conta_phase = 49.9  # degree
         self.remove_contamination = False
@@ -156,7 +154,7 @@ class OscillationRecon(object):
         self.oscillation_analysis = False
 
         # Keyhole Radius
-        self.key_radius_pct = 9  # 14
+        self.key_radius_pct = 14
 
         # Correction for relative capillary blood volume
         self.vc_correction = False

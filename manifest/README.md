@@ -35,8 +35,10 @@ ventilation normalization, and trajectory settings. This makes the generated
 manifest directly reviewable and editable. Fields that require subject-specific
 confirmation (`hb` and lung-volume correction) remain blank.
 
-`recon_size` and `key_radius_pct` are included for each discovered subject, so
-they can be reviewed or overridden directly in the CSV.
+`recon_size`, `del_x`, `del_y`, `del_z`, `key_radius_pct`, and `n_skip_start`
+are deliberately blank in discovered manifests so they inherit the enforced
+defaults from `base_config.Config`. They may still be set as per-subject CSV
+overrides when needed.
 
 For Twix inputs, age, sex, height, and weight are also copied into the generated
 CSV when available in the Dixon header. If the header does not provide a complete
@@ -58,16 +60,9 @@ input but no raw data:
 python manifest/batch_pipeline.py --discover --data-root /path/to/data
 ```
 
-For discovered raw-data subjects, the default gradient delays are `0`, `-4`,
-and `-3` microseconds for x, y, and z respectively. Override them for a
-different scanner or protocol. The current Twix reader does not reliably expose
-these delays, so they remain explicit batch-level inputs. Ramp time is read from
-the Dixon Twix header when possible; otherwise the manifest records `90`:
-
-```bash
-python manifest/batch_pipeline.py --discover --data-root /path/to/data \
-  --del-x 0 --del-y -4 --del-z -3
-```
+For discovered raw-data subjects, gradient delays are inherited from
+`base_config.Config`. Ramp time is read from the Dixon Twix header when possible;
+otherwise the manifest records `90`.
 
 To process the same automatically discovered subjects, add `--run`:
 
