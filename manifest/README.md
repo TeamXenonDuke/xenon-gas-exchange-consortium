@@ -19,6 +19,28 @@ Run the same manifest through the existing pipeline:
 python manifest/batch_pipeline.py --run
 ```
 
+Discover all subject folders under `data/` without manually adding CSV rows.
+This dry run writes each valid subject to `batch_status.csv` as `planned` and
+leaves the manual RBC:M and manual-mask settings unset:
+
+```bash
+python manifest/batch_pipeline.py --discover
+```
+
+Use another data root when needed. The runner chooses `recon` when it finds
+`.dat` or `.h5` input, and chooses `readin` only when the folder has `.mat`
+input but no raw data:
+
+```bash
+python manifest/batch_pipeline.py --discover --data-root /path/to/data
+```
+
+To process the same automatically discovered subjects, add `--run`:
+
+```bash
+python manifest/batch_pipeline.py --discover --run
+```
+
 Use another manifest or data root when needed:
 
 ```bash
@@ -67,6 +89,10 @@ demographic cells, the runner reads the Dixon Twix header; if that is not
 available, it records documented defaults of 50 years, `M`, 170 cm, and
 70 kg. These values are audit metadata: the existing Python pipeline continues
 to obtain patient information from the Twix/MRD header during processing.
+
+When `rbc_m_ratio` is blank, the pipeline attempts to calculate it from static
+spectroscopy. If that calculation cannot be completed, it uses `0.455` and
+emits a warning. A supplied manifest value always takes priority.
 
 ## Generated files
 

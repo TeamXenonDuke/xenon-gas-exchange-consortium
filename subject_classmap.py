@@ -227,7 +227,17 @@ class Subject(object):
         if self.config.rbc_m_ratio > 0:
             self.rbc_m_ratio = float(self.config.rbc_m_ratio)
         else:
-            self.rbc_m_ratio = float(mdict["rbc_m_ratio"])
+            try:
+                self.rbc_m_ratio = float(mdict["rbc_m_ratio"])
+                if not np.isfinite(self.rbc_m_ratio) or self.rbc_m_ratio <= 0:
+                    raise ValueError("Read-in RBC:M ratio is not positive and finite")
+            except (KeyError, TypeError, ValueError):
+                self.rbc_m_ratio = 0.455
+                logging.warning(
+                    "Could not read RBC:M ratio from the .mat file; using fallback "
+                    "value %.3f.",
+                    self.rbc_m_ratio,
+                )
 
     def calculate_rbc_m_ratio(self):
         """Calculate RBC:M ratio using static spectroscopy.
@@ -239,17 +249,29 @@ class Subject(object):
             logging.info("Using manual RBC:M ratio of {}".format(self.rbc_m_ratio))
         else:
             logging.info("Calculating RBC:M ratio from static spectroscopy.")
-            assert self.dict_dyn[constants.IOFields.FIDS_DIS] is not None
-            self.rbc_m_ratio, _ = spect_utils.calculate_static_spectroscopy(
-                fid=self.dict_dyn[constants.IOFields.FIDS_DIS],
-                sample_time=self.dict_dyn[constants.IOFields.SAMPLE_TIME],
-                tr=self.dict_dyn[constants.IOFields.TR],
-                center_freq=self.dict_dyn[constants.IOFields.XE_CENTER_FREQUENCY],
-                rf_excitation=self.dict_dyn[
-                    constants.IOFields.XE_DISSOLVED_OFFSET_FREQUENCY
-                ],
-                plot=False,
-            )
+            try:
+                assert self.dict_dyn[constants.IOFields.FIDS_DIS] is not None
+                rbc_m_ratio, _ = spect_utils.calculate_static_spectroscopy(
+                    fid=self.dict_dyn[constants.IOFields.FIDS_DIS],
+                    sample_time=self.dict_dyn[constants.IOFields.SAMPLE_TIME],
+                    tr=self.dict_dyn[constants.IOFields.TR],
+                    center_freq=self.dict_dyn[constants.IOFields.XE_CENTER_FREQUENCY],
+                    rf_excitation=self.dict_dyn[
+                        constants.IOFields.XE_DISSOLVED_OFFSET_FREQUENCY
+                    ],
+                    plot=False,
+                )
+                if not np.isfinite(rbc_m_ratio) or rbc_m_ratio <= 0:
+                    raise ValueError("Calculated RBC:M ratio is not positive and finite")
+                self.rbc_m_ratio = rbc_m_ratio
+            except Exception as error:
+                self.rbc_m_ratio = 0.455
+                logging.warning(
+                    "Could not calculate RBC:M ratio from static spectroscopy; "
+                    "using fallback value %.3f. Reason: %s",
+                    self.rbc_m_ratio,
+                    error,
+                )
 
     def preprocess(self):
         """Prepare data and trajectory for reconstruction.

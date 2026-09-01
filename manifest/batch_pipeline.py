@@ -56,11 +56,21 @@ DEFAULT_DEMOGRAPHICS = {
 def parse_args() -> argparse.Namespace:
     """Parse arguments for dry-run validation or pipeline execution."""
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument(
+    input_source = parser.add_mutually_exclusive_group()
+    input_source.add_argument(
         "--manifest",
         type=Path,
         default=MANIFEST_ROOT / "manifest_example.csv",
         help="CSV manifest containing one subject per row.",
+    )
+    input_source.add_argument(
+        "--discover",
+        action="store_true",
+        help=(
+            "Discover subject folders under --data-root instead of reading a CSV. "
+            "Raw .dat/.h5 inputs are planned as recon; folders with only .mat "
+            "inputs are planned as readin."
+        ),
     )
     parser.add_argument(
         "--data-root",
@@ -130,6 +140,44 @@ def find_input_type(data_dir: Path, process_mode: str) -> tuple[str, str]:
         return "mrd", ""
 
     return "", "reconstruction mode requires .dat or .h5 input"
+
+
+def discover_subject_rows(data_root: Path) -> list[dict[str, str]]:
+    """Return one automatic batch row for each subject folder with supported input.
+
+    Raw data is preferred when both raw and previously exported .mat files are
+    present, allowing a later ``--discover --run`` invocation to reconstruct the
+    subject. Discovered rows intentionally leave both RBC:M and manual mask paths
+    blank: RBC:M remains auto-detected during processing and segmentation follows
+    the base configuration.
+    """
+    if not data_root.is_dir():
+        raise FileNotFoundError(f"Data root not found: {data_root}")
+
+    rows: list[dict[str, str]] = []
+    for subject_dir in sorted(path for path in data_root.iterdir() if path.is_dir()):
+        suffixes = {
+            path.suffix.lower() for path in subject_dir.rglob("*") if path.is_file()
+        }
+        if ".dat" in suffixes or ".h5" in suffixes:
+            process_mode = "recon"
+        elif ".mat" in suffixes:
+            process_mode = "readin"
+        else:
+            logging.info("Skipping %s: no supported input files", subject_dir)
+            continue
+
+        rows.append(
+            {
+                "subject_id": subject_dir.name,
+                "data_dir": str(subject_dir),
+                "process_mode": process_mode,
+                "rbc_m_ratio": "",
+                "manual_seg_filepath": "",
+            }
+        )
+
+    return rows
 
 
 def resolve_demographics(
@@ -537,15 +585,20 @@ def main() -> None:
         format="%(levelname)s: %(message)s",
     )
 
-    manifest_path = args.manifest.resolve()
     data_root = args.data_root.resolve()
-
-    if not manifest_path.is_file():
-        raise FileNotFoundError(f"Manifest not found: {manifest_path}")
+    if args.discover:
+        rows = discover_subject_rows(data_root)
+        if not rows:
+            logging.warning("No supported subject inputs found under %s", data_root)
+    else:
+        manifest_path = args.manifest.resolve()
+        if not manifest_path.is_file():
+            raise FileNotFoundError(f"Manifest not found: {manifest_path}")
+        rows = read_manifest(manifest_path)
 
     status_rows = []
 
-    for row in read_manifest(manifest_path):
+    for row in rows:
         status_rows.append(process_subject(row, data_root, args.run))
         write_status(status_rows)
 
