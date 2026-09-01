@@ -43,6 +43,7 @@ DISCOVERED_MANIFEST_FIELDS = [
     "oscillation_analysis",
     "key_radius_pct",
     "output_folder",
+    "combine_reports",
     "vc_correction",
     "segmentation_key",
     "manual_seg_filepath",
@@ -258,6 +259,7 @@ def populate_discovered_defaults(row: dict[str, str], data_dir: Path) -> None:
         oscillation_analysis=csv_setting(config.osc_recon.oscillation_analysis),
         key_radius_pct=csv_setting(config.osc_recon.key_radius_pct),
         output_folder=csv_setting(config.output_folder),
+        combine_reports=csv_setting(config.combine_reports),
         vc_correction=csv_setting(config.osc_recon.vc_correction),
         segmentation_key=csv_setting(config.segmentation_key),
         registration_key=csv_setting(config.registration_key),
@@ -400,6 +402,10 @@ def build_config(
     config.output_folder = row.get("output_folder", "").strip() or "gx_batch"
     config.trachea_plus_lung_mask_output_dir = str(data_dir)
 
+    value = row.get("combine_reports", "").strip()
+    if value:
+        config.combine_reports = is_true(value)
+
     # Optional subject-level pipeline settings.
     for field in (
         "segmentation_key",
@@ -533,6 +539,7 @@ def config_snapshot(
         "subject_id": config.subject_id,
         "data_dir": config.data_dir,
         "output_folder": config.output_folder,
+        "combine_reports": config.combine_reports,
         "input_type": input_type,
         "rbc_m_ratio": config.rbc_m_ratio,
         "hb": config.hb,

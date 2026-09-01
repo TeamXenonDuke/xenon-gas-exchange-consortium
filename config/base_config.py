@@ -23,6 +23,7 @@ class Config(config_dict.ConfigDict):
         manual_reg_filepath: str, path to manual registration nifti file
         manual_seg_filepath: str, path to the manual segmentation nifti file
         output_folder: str, name of folder to output gx files
+        combine_reports: bool, whether to create a combined subject-level PDF
         dicom_proton_dir: str, path to the DICOM proton images
         processes: Process, the evaluation processes
         rbc_m_ratio: float, the RBC to M ratio from spectroscopy
@@ -65,6 +66,9 @@ class Config(config_dict.ConfigDict):
         self.registration_key = constants.RegistrationKey.SKIP.value
         self.manual_reg_filepath = ""
         self.output_folder = "gx"
+        # When enabled, assemble gas-exchange, spectroscopy, and oscillation
+        # reports into one subject-level PDF after pipeline outputs are moved.
+        self.combine_reports = False
 
         # Additional options for contamination correction
         self.phase_gas_acq_diss = "None"  # degree
