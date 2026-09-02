@@ -26,8 +26,9 @@ subject and writes each subject to `batch_status.csv` as `planned`. It uses
 `mask_reg_corrected.nii`, falling back to `mask_reg.nii`. It also copies the
 first valid `rbcm` value (or fifth CSV column when that header is absent) from a
 subject's `spectroscopy`/`Spectroscopy` folder, rounded to three decimals.
-Missing masks or RBC:M values are left blank and logged for review. Discovered
-subjects use Plummer reconstruction, with oscillation analysis and VC correction enabled:
+When no manual mask is found, the generated row uses `cnn_vent`; missing RBC:M
+values are left blank and logged for review. Discovered subjects use Plummer
+reconstruction, with oscillation analysis and VC correction enabled:
 
 The generated CSV also expands the active defaults for reconstruction, output
 folder, segmentation, registration, bias-field correction, reference data,

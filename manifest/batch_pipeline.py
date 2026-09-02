@@ -375,9 +375,10 @@ def discover_subject_rows(data_root: Path) -> list[dict[str, str]]:
         }
         manual_seg_filepath = find_manual_seg_filepath(subject_dir)
         if manual_seg_filepath is None:
+            row["segmentation_key"] = constants.SegmentationKey.CNN_VENT.value
             logging.warning(
                 "Could not find mask_reg_corrected.nii or mask_reg.nii beside "
-                "Twix/MRD data for %s.",
+                "Twix/MRD data for %s; using CNN ventilation segmentation.",
                 subject_dir,
             )
         else:
@@ -497,6 +498,17 @@ def build_config(
         value = row.get(field, "").strip()
         if value:
             setattr(config, field, value)
+
+    if (
+        config.segmentation_key == constants.SegmentationKey.MANUAL_VENT.value
+        and not config.manual_seg_filepath
+    ):
+        logging.warning(
+            "No manual segmentation path supplied for %s; using CNN ventilation "
+            "segmentation.",
+            config.subject_id,
+        )
+        config.segmentation_key = constants.SegmentationKey.CNN_VENT.value
 
     for field in ("bag_volume", "patient_frc"):
         value = optional_float(row.get(field, ""))

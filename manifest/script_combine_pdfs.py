@@ -1,7 +1,7 @@
-"""Combine reports from the completed subjects in the latest batch manifest."""
+"""Create one ordered cohort PDF from subject-level combined reports."""
 
-import csv
 import logging
+import re
 from pathlib import Path
 from typing import List
 
@@ -11,50 +11,54 @@ from PyPDF2 import PdfMerger
 FLAGS = flags.FLAGS
 
 flags.DEFINE_string(
-    "output",
-    "tmp/combined.pdf",
-    "Path for the final cohort-level PDF.",
+    "data_root",
+    "data",
+    "Directory that contains one subdirectory per subject.",
 )
+flags.DEFINE_string("output", None, "Optional path for the final cohort-level PDF.")
 
 
-def get_pdfs() -> List[Path]:
-    """Return reports for the completed subjects in manifest batch order."""
-    status_path = Path(__file__).with_name("batch_status.csv")
-    if not status_path.is_file():
-        raise FileNotFoundError(
-            f"Batch status not found: {status_path}. Run the manifest batch first."
-        )
+def natural_sort_key(path: Path) -> list[object]:
+    """Sort subject IDs naturally, so 006-2 comes before 006-10."""
+    return [
+        int(part) if part.isdigit() else part.lower()
+        for part in re.split(r"(\d+)", path.name)
+    ]
 
-    output_path = Path(FLAGS.output).resolve()
+
+def get_pdfs(data_root: Path) -> List[Path]:
+    """Return one combined PDF per subject, ordered by subject directory name."""
     pdfs = []
-    with status_path.open(newline="", encoding="utf-8-sig") as file:
-        for row in csv.DictReader(file):
-            if row.get("status") != "completed":
-                continue
-
-            subject_id = row.get("subject_id", "").strip()
-            subject_dir = Path(row.get("data_dir", ""))
-            pdf = subject_dir / f"{subject_id}_combined_report.pdf"
-            if pdf.resolve() == output_path:
-                continue
-            if pdf.is_file():
-                pdfs.append(pdf)
-            else:
-                logging.warning("Combined report not found; skipping %s", pdf)
+    for subject_dir in sorted(
+        (path for path in data_root.iterdir() if path.is_dir()),
+        key=natural_sort_key,
+    ):
+        pdf = subject_dir / f"{subject_dir.name}_combined_report.pdf"
+        if pdf.is_file():
+            pdfs.append(pdf)
+        else:
+            logging.warning("Combined report not found; skipping %s", pdf)
     return pdfs
 
 
 def main(argv):
-    """Merge each completed subject's combined report into one PDF."""
+    """Merge each subject's combined report into one cohort PDF."""
     del argv
-    pdfs = get_pdfs()
+    data_root = Path(FLAGS.data_root).resolve()
+    if not data_root.is_dir():
+        raise FileNotFoundError(f"Data root not found: {data_root}")
+
+    output_path = (
+        Path(FLAGS.output).resolve()
+        if FLAGS.output
+        else data_root / "combined_subject_reports.pdf"
+    )
+    pdfs = get_pdfs(data_root)
     if not pdfs:
         raise ValueError(
-            "No subject combined reports found. Enable combine_reports for each "
-            "subject before running this script."
+            f"No subject combined reports found under {data_root}."
         )
 
-    output_path = Path(FLAGS.output)
     output_path.parent.mkdir(parents=True, exist_ok=True)
     merger = PdfMerger()
     try:
