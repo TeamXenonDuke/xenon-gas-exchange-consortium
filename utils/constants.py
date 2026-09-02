@@ -222,7 +222,7 @@ class SystemVendor(enum.Enum):
     PHILIPS = "Philips"
 
 
-class TrajType(object):
+class TrajType(enum.Enum):
     """Trajectory type."""
 
     SPIRAL = "spiral"
@@ -395,7 +395,7 @@ class OSCHISTOGRAMFields(object):
     TITLE = "RBC Oscillations (%)"
 
 
-class NormalizationMethods(object):
+class NormalizationMethods(enum.Enum):
     """Image normalization methods."""
 
     # For increasing the image contrast

@@ -47,7 +47,7 @@ class Config(config_dict.ConfigDict):
         self.segmentation_key = constants.SegmentationKey.CNN_VENT.value
         self.manual_seg_filepath = ""
         # Choose NormalizationMethod from GLB_99 (default), GLB_FV, GLB_MA, THRESHOLD_MA
-        self.vent_normalization_method = constants.NormalizationMethods.GLB_99
+        self.vent_normalization_method = constants.NormalizationMethods.GLB_99.value
         # auto-generate if filepath missing or file not found
         self.auto_make_trachea_plus_lung_mask = True
         # where to write it if auto-generated
@@ -132,7 +132,7 @@ class Recon(object):
         self.remove_contamination = False
         self.remove_noisy_projections = False
         self.gas_contamination_correction = False
-        self.traj_type = constants.TrajType.HALTONSPIRAL
+        self.traj_type = constants.TrajType.HALTONSPIRAL.value
 
         # Scaling is calculated automatically if not reading in trajectories directly
         # Will default to 1 when reading in trajectories, but may be specified instead
