@@ -2125,14 +2125,9 @@ class Subject(object):
             self.combine_subject_reports()
 
     def combine_subject_reports(self):
-        """Create an optional subject-level report in modality order.
-
-        The spectroscopy report is discovered from PDFs in subject subfolders.
-        Existing pipeline reports and previously combined reports are excluded.
-        If no candidate exists, the spectroscopy section is skipped.
-        """
+        """Create a subject-level report from gx_batch and oscillation PDFs only."""
         subject_dir = Path(self.config.data_dir)
-        gas_exchange_pdf = subject_dir / self.config.output_folder / (
+        gas_exchange_pdf = subject_dir / "gx_batch" / (
             f"{self.config.subject_id}_report.pdf"
         )
         oscillation_pdf = subject_dir / "osc_imaging" / (
@@ -2140,44 +2135,13 @@ class Subject(object):
         )
         combined_pdf = subject_dir / f"{self.config.subject_id}_combined_report.pdf"
 
-        excluded_paths = {
-            path.resolve()
-            for path in (gas_exchange_pdf, oscillation_pdf, combined_pdf)
-        }
-        excluded_directories = {self.config.output_folder, "osc_imaging"}
-        candidates = [
-            path
-            for path in subject_dir.rglob("*.pdf")
-            if path.resolve() not in excluded_paths
-            and not any(directory in path.parts for directory in excluded_directories)
-        ]
-
-        # Prefer spectroscopy-like names, then report-like names, then the newest
-        # candidate. The fallback makes this useful for legacy naming conventions.
-        spectroscopy_keywords = ("spect", "mrs", "nmr")
-
-        def candidate_score(path: Path) -> tuple[int, int, float]:
-            candidate_name = str(path).lower()
-            return (
-                sum(keyword in candidate_name for keyword in spectroscopy_keywords),
-                int("report" in candidate_name),
-                path.stat().st_mtime,
-            )
-
-        spectroscopy_pdf = max(candidates, key=candidate_score, default=None)
-
-        reports = [gas_exchange_pdf]
-        if spectroscopy_pdf is None:
-            logging.info("No spectroscopy PDF found; skipping spectroscopy section.")
-        else:
-            logging.info("Using spectroscopy PDF: %s", spectroscopy_pdf)
-            reports.append(spectroscopy_pdf)
-        if oscillation_pdf.is_file():
-            reports.append(oscillation_pdf)
-
+        reports = [gas_exchange_pdf, oscillation_pdf]
         existing_reports = [str(path) for path in reports if path.is_file()]
         if not existing_reports:
-            logging.warning("No reports found to combine for subject %s.", self.config.subject_id)
+            logging.warning(
+                "No PDFs found in gx_batch or osc_imaging for subject %s.",
+                self.config.subject_id,
+            )
             return
 
         report.combine_pdfs(existing_reports, str(combined_pdf))

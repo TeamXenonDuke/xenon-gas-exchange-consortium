@@ -122,10 +122,9 @@ to obtain patient information from the Twix/MRD header during processing.
 
 `combine_reports` inherits the default `true` value when blank. Set it to
 `false` to disable writing `<subject_id>_combined_report.pdf` in the subject
-directory. The pipeline merges the gas-exchange report from `output_folder`
-(normally `gx_batch`), the best matching PDF found in another subject subfolder,
-and the oscillation report when present. If no spectroscopy PDF is found, that
-section is skipped.
+directory. The pipeline reads only `<subject_id>_report.pdf` from `gx_batch`
+and `<subject_id>_report_osc_imaging.pdf` from `osc_imaging`; no PDFs from
+other subject subfolders are included.
 
 When `rbc_m_ratio` is blank, the pipeline attempts to calculate it from static
 spectroscopy. If that calculation cannot be completed, it uses `0.455` and

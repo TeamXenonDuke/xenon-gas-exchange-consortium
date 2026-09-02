@@ -65,8 +65,8 @@ class Config(config_dict.ConfigDict):
         self.registration_key = constants.RegistrationKey.SKIP.value
         self.manual_reg_filepath = ""
         self.output_folder = "gx"
-        # When enabled, assemble gas-exchange, spectroscopy, and oscillation
-        # reports into one subject-level PDF after pipeline outputs are moved.
+        # When enabled, assemble gx_batch and osc_imaging reports into one
+        # subject-level PDF after pipeline outputs are moved.
         self.combine_reports = True
 
         # Additional options for contamination correction
