@@ -29,7 +29,7 @@ class Config(config_dict.ConfigDict):
         reference_data_key: str, reference data key
         remove_contamination: bool, whether to remove gas contamination
         remove_noisy_projections: bool, whether to remove noisy projections
-        segmentation_key: str, the segmentation key (CNN_VENT, MANUAL)
+        segmentation_key: str, the segmentation key
         subject_id: str, the subject id
         vol_correction_key: str,lung volume correction key (NONE, RBC_AND_MEMBRANE)
         corrected_lung_volume: float, target lung volume in L
@@ -44,6 +44,8 @@ class Config(config_dict.ConfigDict):
         self.rbc_m_ratio = 0.0
         self.patient_frc = "None"
         self.bag_volume = "None"
+        # Choose SegmentationKey from CNN_VENT, CNN_PROTON, MANUAL_VENT, MANUAL_PROTON,...
+        # ...THRESHOLD_VENT, THRESHOLDS_FRACTIONAL_VENTILATION, SKIP
         self.segmentation_key = constants.SegmentationKey.CNN_VENT.value
         self.manual_seg_filepath = ""
         # Choose NormalizationMethod from GLB_99 (default), GLB_FV, GLB_MA, THRESHOLD_MA
