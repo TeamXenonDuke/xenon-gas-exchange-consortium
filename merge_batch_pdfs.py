@@ -14,7 +14,7 @@ import re
 import sys
 from pathlib import Path
 
-from pypdf import PdfWriter
+from PyPDF2 import PdfMerger
 
 
 DEFAULT_BATCH_DIR = Path(
@@ -72,14 +72,17 @@ def find_reports(batch_dir: Path) -> list[Path]:
 
 def merge_reports(reports: list[Path], output_path: Path) -> None:
     """Append reports in the supplied order and write one PDF."""
-    writer = PdfWriter()
-    for report in reports:
-        print(f"Adding: {report}")
-        writer.append(str(report))
+    merger = PdfMerger()
+    try:
+        for report in reports:
+            print(f"Adding: {report}")
+            merger.append(str(report))
 
-    output_path.parent.mkdir(parents=True, exist_ok=True)
-    with output_path.open("wb") as output_file:
-        writer.write(output_file)
+        output_path.parent.mkdir(parents=True, exist_ok=True)
+        with output_path.open("wb") as output_file:
+            merger.write(output_file)
+    finally:
+        merger.close()
 
 
 def parse_args() -> argparse.Namespace:
