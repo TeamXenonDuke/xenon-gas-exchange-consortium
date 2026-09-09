@@ -171,8 +171,7 @@ class Subject(object):
         data.
         """
         self.dict_dis = io_utils.read_dis_mrd(
-            io_utils.get_dis_mrd_files(str(self.config.data_dir)),
-            self.config.multi_echo,
+            io_utils.get_dis_mrd_files(str(self.config.data_dir))
         )
         try:
             self.dict_dyn = io_utils.read_dyn_mrd(
