@@ -237,7 +237,7 @@ def interp(img: np.ndarray, factor: int = 1):
 def normalize(
     image: np.ndarray,
     mask: np.ndarray = np.array([0.0]),
-    method: str = constants.NormalizationMethods.GLB_99,  # default method = GLB_99
+    method: str = constants.NormalizationMethods.GLB_99.value,  # default method = GLB_99
     percentile: float = 99.0,
     bag_volume: float = None,  # Add bag_volume as a parameter with a default value
 ) -> np.ndarray:
@@ -255,30 +255,30 @@ def normalize(
     """
     # Only require bag_volume when doing GLB_FV normalization
 
-    if method == constants.NormalizationMethods.MAX:
+    if method == constants.NormalizationMethods.MAX.value:
         return image * 1.0 / np.max(image)
-    elif method == constants.NormalizationMethods.PERCENTILE:
+    elif method == constants.NormalizationMethods.PERCENTILE.value:
         return image * 1.0 / np.percentile(image, percentile)
-    elif method == constants.NormalizationMethods.GLB_99:
+    elif method == constants.NormalizationMethods.GLB_99.value:
         image_thre = np.percentile(image[mask], percentile)
         image_n = np.divide(np.multiply(image, mask), image_thre)
         image_n[image_n > 1] = 1
         return image_n
-    elif method == constants.NormalizationMethods.MEAN:
+    elif method == constants.NormalizationMethods.MEAN.value:
         image[np.isnan(image)] = 0
         image[np.isinf(image)] = 0
         return image / np.mean(image[mask])
-    elif method == constants.NormalizationMethods.GLB_MA:
+    elif method == constants.NormalizationMethods.GLB_MA.value:
         image_mean = np.mean(image[mask])
         image_n = np.divide(np.multiply(image, mask), image_mean)
         image_clip = np.percentile(image_n[mask], 99)
         image_n[image_n > image_clip] = image_clip
         return image_n
-    elif method == constants.NormalizationMethods.THRESHOLD_MA:
+    elif method == constants.NormalizationMethods.THRESHOLD_MA.value:
         image_mean = np.mean(image[mask])
         image_n = np.divide(np.multiply(image, mask), image_mean)
         return image_n
-    elif method == constants.NormalizationMethods.GLB_FV:
+    elif method == constants.NormalizationMethods.GLB_FV.value:
 
         if (
             bag_volume is None

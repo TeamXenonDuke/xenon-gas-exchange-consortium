@@ -53,7 +53,7 @@ def prepare_traj(
         del_x=data_dict[constants.IOFields.GRAD_DELAY_X],
         del_y=data_dict[constants.IOFields.GRAD_DELAY_Y],
         del_z=data_dict[constants.IOFields.GRAD_DELAY_Z],
-        traj_type=config.recon.traj_type if config else constants.TrajType.HALTONSPIRAL,  # type: ignore
+        traj_type=config.recon.traj_type if config else constants.TrajType.HALTONSPIRAL.value,  # type: ignore
     )
     # remove projections at the beginning and end of the trajectory
     shape_traj = traj_x.shape

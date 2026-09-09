@@ -78,7 +78,7 @@ def calculate_biasfield_rf(
     )
     # normalize to the mean
     image_biasfield = img_utils.normalize(
-        image_biasfield, mask, method=constants.NormalizationMethods.MEAN
+        image_biasfield, mask, method=constants.NormalizationMethods.MEAN.value
     )
     image_biasfield_smoothed = img_utils.approximate_image_with_bspline(
         image_biasfield, mask
@@ -247,7 +247,7 @@ def correct_biasfield_rf(
     image_cor[np.isinf(image_cor)] = 0
     image_cor[mask == 0] = image[mask == 0]
     image_cor = img_utils.normalize(
-        image_cor, mask, method=constants.NormalizationMethods.MAX
+        image_cor, mask, method=constants.NormalizationMethods.MAX.value
     )
     return image_cor, image_biasfield_smoothed
 

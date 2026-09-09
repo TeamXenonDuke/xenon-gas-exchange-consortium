@@ -909,7 +909,7 @@ class Subject(object):
 
         if (
             self.config.vent_normalization_method
-            == constants.NormalizationMethods.GLB_FV
+            == constants.NormalizationMethods.GLB_FV.value
         ):
             norm_mask = self.mask_include_trachea
             bag_volume = self.config.bag_volume
@@ -926,7 +926,7 @@ class Subject(object):
 
         if (
             self.config.vent_normalization_method
-            == constants.NormalizationMethods.GLB_99
+            == constants.NormalizationMethods.GLB_99.value
         ):
             self.image_gas_binned = binning.linear_bin(
                 image=self.image_gas_cor_norm,
@@ -944,7 +944,7 @@ class Subject(object):
 
         elif (
             self.config.vent_normalization_method
-            == constants.NormalizationMethods.GLB_FV
+            == constants.NormalizationMethods.GLB_FV.value
         ):
             self.image_gas_binned = binning.linear_bin(
                 image=self.image_gas_cor_norm,
@@ -955,7 +955,7 @@ class Subject(object):
             gas_nifti_img.to_filename("tmp/image_gas_binned_GLB_FV.nii")
         elif (
             self.config.vent_normalization_method
-            == constants.NormalizationMethods.GLB_MA
+            == constants.NormalizationMethods.GLB_MA.value
         ):
             self.image_gas_binned = binning.linear_bin(
                 image=self.image_gas_cor_norm,
@@ -972,7 +972,7 @@ class Subject(object):
             gas_nifti_img.to_filename("tmp/image_gas_binned.nii")
         elif (
             self.config.vent_normalization_method
-            == constants.NormalizationMethods.THRESHOLD_MA
+            == constants.NormalizationMethods.THRESHOLD_MA.value
         ):
             self.image_gas_binned = binning.threshold(
                 image=self.image_gas_cor_norm,
@@ -1591,7 +1591,7 @@ class Subject(object):
             np.abs(self.image_proton_reg),
             self.mask,
             bag_volume=self.config.bag_volume,
-            method=constants.NormalizationMethods.PERCENTILE,
+            method=constants.NormalizationMethods.PERCENTILE.value,
         )
         plot.plot_montage_grey(
             image=np.abs(self.image_gas_highreso),
@@ -1705,7 +1705,7 @@ class Subject(object):
             refer_threshold=(
                 constants.THRESHOLD_MA
                 if self.config.vent_normalization_method
-                == constants.NormalizationMethods.THRESHOLD_MA
+                == constants.NormalizationMethods.THRESHOLD_MA.value
                 else None
             ),
         )
@@ -1939,7 +1939,7 @@ class Subject(object):
             np.abs(self.image_proton),
             self.mask,
             bag_volume=self.config.bag_volume,
-            method=constants.NormalizationMethods.PERCENTILE,
+            method=constants.NormalizationMethods.PERCENTILE.value,
         )
         io_utils.export_nii(
             self.image_rbc2gas_binned,
@@ -2017,14 +2017,14 @@ class Subject(object):
 
         if (
             self.config.vent_normalization_method
-            == constants.NormalizationMethods.GLB_FV
+            == constants.NormalizationMethods.GLB_FV.value
         ):
             io_utils.export_nii(
                 img_utils.normalize(
                     self.image_gas_cor,
                     self.mask_include_trachea,
                     bag_volume=self.config.bag_volume,
-                    method=constants.NormalizationMethods.GLB_FV,
+                    method=constants.NormalizationMethods.GLB_FV.value,
                 ),
                 "tmp/GLB_FV.nii",
             )
