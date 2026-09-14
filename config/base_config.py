@@ -145,14 +145,16 @@ class OscillationRecon(object):
         """Initialize the oscillation reconstruction parameters.
 
         Attributes:
-            oscillation_analysis: bool, whether to perform oscillation imaging analysis
-            key_radius_pct: int, percentage of points used to recon the keyhole image
-            vc_correction: bool, whether to correction oscillation images for relative capillary blood volume
+            oscillation_analysis: bool, whether to perform oscillation imaging analysis.
+            key_radius: int, points per radial spoke used to define the center of the keyhole image.
+                If not specified, this will be calculated automatically, such that the
+                key radius is 7.43% of the k-max.
+            vc_correction: bool, whether to correction oscillation images for relative capillary blood volume.
         """
         self.oscillation_analysis = False
 
         # Keyhole Radius
-        self.key_radius_pct = 14
+        self.key_radius = 0
 
         # Correction for relative capillary blood volume
         self.vc_correction = False
