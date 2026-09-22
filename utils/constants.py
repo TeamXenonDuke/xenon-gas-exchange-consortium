@@ -312,6 +312,7 @@ class StatsIOFields(object):
     OSC_DEFECTLOW_PCT = "osc_defectlow"
     OSC_HIGH_PCT = "osc_high"
     OSC_MEAN = "osc_mean"
+    OSC_STDDEV = "osc_stddev"
     OSC_NEGATIVE_PCT = "osc_negative"
     KEY_RADIUS = "key_radius"
 
@@ -320,6 +321,7 @@ class StatsIOFields(object):
     OSC_DEFECTLOW_PCT_CORR = "osc_defectlow_corr"
     OSC_HIGH_PCT_CORR = "osc_high_corr"
     OSC_MEAN_CORR = "osc_mean_corr"
+    OSC_STDDEV_CORR = "osc_stddev_corr"
     OSC_NEGATIVE_PCT_CORR = "osc_negative_corr"
 
 

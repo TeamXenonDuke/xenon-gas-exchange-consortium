@@ -1482,6 +1482,9 @@ class Subject(object):
                     constants.StatsIOFields.OSC_MEAN: float(
                         metrics.mean(self.image_rbc_osc, self.mask_rbc)
                     ),
+                    constants.StatsIOFields.OSC_STDDEV: float(
+                        metrics.std(self.image_rbc_osc, self.mask_rbc)
+                    ),
                     constants.StatsIOFields.OSC_NEGATIVE_PCT: metrics.negative_percentage(
                         self.image_rbc_osc, self.mask_rbc
                     ),
@@ -1518,6 +1521,9 @@ class Subject(object):
                         ),
                         constants.StatsIOFields.OSC_MEAN_CORR: float(
                             metrics.mean(self.image_rbc_osc_corr, self.mask_rbc)
+                        ),
+                        constants.StatsIOFields.OSC_STDDEV_CORR: float(
+                            metrics.std(self.image_rbc_osc_corr, self.mask_rbc)
                         ),
                         constants.StatsIOFields.OSC_NEGATIVE_PCT_CORR: metrics.negative_percentage(
                             self.image_rbc_osc_corr, self.mask_rbc

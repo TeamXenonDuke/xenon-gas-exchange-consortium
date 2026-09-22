@@ -62,6 +62,7 @@ def format_dict(dict_stats: Dict[str, Any]) -> Dict[str, Any]:
         constants.StatsIOFields.OSC_DEFECTLOW_PCT,
         constants.StatsIOFields.OSC_HIGH_PCT,
         constants.StatsIOFields.OSC_MEAN,
+        constants.StatsIOFields.OSC_STDDEV,
         constants.StatsIOFields.OSC_NEGATIVE_PCT,
         constants.StatsIOFields.RBC_HIGH_SNR,
         constants.StatsIOFields.RBC_LOW_SNR,
@@ -71,6 +72,7 @@ def format_dict(dict_stats: Dict[str, Any]) -> Dict[str, Any]:
         constants.StatsIOFields.OSC_DEFECTLOW_PCT_CORR,
         constants.StatsIOFields.OSC_HIGH_PCT_CORR,
         constants.StatsIOFields.OSC_MEAN_CORR,
+        constants.StatsIOFields.OSC_STDDEV_CORR,
         constants.StatsIOFields.OSC_NEGATIVE_PCT_CORR,
     ]
     # list of variables to round to 3 decimal places
