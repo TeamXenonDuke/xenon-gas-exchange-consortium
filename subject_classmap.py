@@ -1978,6 +1978,11 @@ class Subject(object):
             self.dict_dis[constants.IOFields.FOV],
         )
         io_utils.export_nii(
+            np.abs(self.image_rbc2gas),
+            "tmp/rbc2gas.nii",
+            self.dict_dis[constants.IOFields.FOV],
+        )
+        io_utils.export_nii(
             np.abs(self.image_membrane),
             "tmp/membrane.nii",
             self.dict_dis[constants.IOFields.FOV],
@@ -2092,6 +2097,8 @@ class Subject(object):
             "tmp/membrane2gas_rgb.nii",
             "tmp/proton_reg.nii",
             "tmp/rbc2gas_rgb.nii",
+            "tmp/membrane2gas.nii",
+            "tmp/rbc2gas.nii",
         )
 
         # move files
