@@ -601,14 +601,24 @@ class Subject(object):
             rbc_m_ratio=self.rbc_m_ratio,
             TR=self.dict_dis[constants.IOFields.TR],
         )
-        # calculate the key radius and normalize
-        self.key_radius = int(
-            np.ceil(
-                self.data_dissolved.shape[1]
-                * self.config.osc_recon.key_radius_pct
-                / 100
+
+        if (
+            self.config is not None
+            and hasattr(self.config.osc_recon, "key_radius")
+            and self.config.osc_recon.key_radius > 0
+        ):
+            self.key_radius = self.config.osc_recon.key_radius
+        else:
+            logging.info(
+                "Key radius not specified in config. Calculating automatically."
             )
-        )
+            self.key_radius = recon_utils.calculate_key_radius(
+                self.dict_dis[constants.IOFields.SAMPLE_TIME],
+                self.dict_dis[constants.IOFields.FIDS_DIS].shape[1],
+                self.dict_dis[constants.IOFields.RAMP_TIME] * (10**-6),
+                self.config.recon.oversampled,
+            )
+
         normalization = np.abs(self.data_gas[:, 0])
         data_dissolved_norm = np.divide(
             self.data_dissolved, np.expand_dims(normalization, -1)
@@ -1579,7 +1589,8 @@ class Subject(object):
             constants.IOFields.SEX: self.dict_dis[constants.IOFields.SEX],
             constants.IOFields.HEIGHT: self.dict_dis[constants.IOFields.HEIGHT],
             constants.IOFields.WEIGHT: self.dict_dis[constants.IOFields.WEIGHT],
-            constants.IOFields.BMI: self.dict_dis[constants.IOFields.WEIGHT]/((self.dict_dis[constants.IOFields.HEIGHT]/100)**2),
+            constants.IOFields.BMI: self.dict_dis[constants.IOFields.WEIGHT]
+            / ((self.dict_dis[constants.IOFields.HEIGHT] / 100) ** 2),
             constants.IOFields.VENT_NORMALIZATION_METHOD: self.config.vent_normalization_method,
         }
         return self.dict_info

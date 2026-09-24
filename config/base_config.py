@@ -102,6 +102,7 @@ class Recon(object):
         n_skip_end: int, the number of frames to skip at the end
         recon_size: int, size to which the images are reconstructed
         matrix_size: int, the final matrix size
+        oversampled: bool, whether or not the k-space data is oversampled
         traj_type: str, the trajectory type
         traj_scaling_factor: str, scaling factor to apply to trajectories
     """
@@ -119,6 +120,7 @@ class Recon(object):
         # Reconstruction and matrix sizes
         self.recon_size = 64
         self.matrix_size = 128
+        self.oversampled = False
 
         # Additional options
         self.recon_proton = True
@@ -145,14 +147,16 @@ class OscillationRecon(object):
         """Initialize the oscillation reconstruction parameters.
 
         Attributes:
-            oscillation_analysis: bool, whether to perform oscillation imaging analysis
-            key_radius_pct: int, percentage of points used to recon the keyhole image
-            vc_correction: bool, whether to correction oscillation images for relative capillary blood volume
+            oscillation_analysis: bool, whether to perform oscillation imaging analysis.
+            key_radius: int, points per radial spoke used to define the center of the keyhole image.
+                If not specified, this will be calculated automatically, such that the
+                key radius is 7.43% of the k-max.
+            vc_correction: bool, whether to correction oscillation images for relative capillary blood volume.
         """
         self.oscillation_analysis = False
 
         # Keyhole Radius
-        self.key_radius_pct = 14
+        self.key_radius = 0
 
         # Correction for relative capillary blood volume
         self.vc_correction = False
