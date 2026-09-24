@@ -616,6 +616,7 @@ class Subject(object):
                 self.dict_dis[constants.IOFields.SAMPLE_TIME],
                 self.dict_dis[constants.IOFields.FIDS_DIS].shape[1],
                 self.dict_dis[constants.IOFields.RAMP_TIME] * (10**-6),
+                self.config.recon.oversampled,
             )
 
         normalization = np.abs(self.data_gas[:, 0])
