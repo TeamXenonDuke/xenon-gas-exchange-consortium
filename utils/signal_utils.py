@@ -489,7 +489,7 @@ def find_high_low_indices(
     peak_distance: int,
     distance_threshold: float = 0.2,
     same_length: bool = True,
-    method: str = constants.BinningMethods.PEAKS,
+    method: str = constants.BinningMethods.PEAKS.value,
 ) -> Tuple[np.ndarray, np.ndarray]:
     """Find indices of high and low signal bins.
 
@@ -507,7 +507,7 @@ def find_high_low_indices(
     high_indices = np.array([])
     low_indices = np.array([])
 
-    if method == constants.BinningMethods.PEAKS:
+    if method == constants.BinningMethods.PEAKS.value:
         high_peaks = find_peaks(data=data, distance=int(0.6 * peak_distance))
         low_peaks = find_peaks(data=-data, distance=int(0.6 * peak_distance))
 
@@ -517,7 +517,7 @@ def find_high_low_indices(
             high_indices = np.append(high_indices, np.arange(peak - left, peak + right))
         for peak in low_peaks:
             low_indices = np.append(low_indices, np.arange(peak - left, peak + right))
-    elif method == constants.BinningMethods.THRESHOLD:
+    elif method == constants.BinningMethods.THRESHOLD.value:
         data_norm = (data - np.mean(data)) / np.std(data)
         high_indices = np.argwhere(data_norm > 0.7).flatten()
         low_indices = np.argwhere(data_norm < -0.7).flatten()
@@ -589,13 +589,13 @@ def get_hb_correction(hb: float) -> Tuple[float, float]:
     Reference: https://onlinelibrary.wiley.com/doi/10.1002/mrm.29712
     """
 
-    rbc_hb_correction_factor = constants.HbCorrection.R1 + (
-        constants.HbCorrection.HB_REF * (1 - constants.HbCorrection.R1) / hb
+    rbc_hb_correction_factor = constants.HbCorrection.R1.value + (
+        constants.HbCorrection.HB_REF.value * (1 - constants.HbCorrection.R1.value) / hb
     )
-    membrane_hb_correction_factor = (1 + constants.HbCorrection.M1 * hb) / (
+    membrane_hb_correction_factor = (1 + constants.HbCorrection.M1.value * hb) / (
         1
-        + constants.HbCorrection.M1 * constants.HbCorrection.HB_REF
-        - constants.HbCorrection.M2 * (constants.HbCorrection.HB_REF - hb)
+        + constants.HbCorrection.M1.value * constants.HbCorrection.HB_REF.value
+        - constants.HbCorrection.M2.value * (constants.HbCorrection.HB_REF.value - hb)
     )
 
     return rbc_hb_correction_factor, membrane_hb_correction_factor
@@ -615,19 +615,19 @@ def get_vol_correction(
     V2 = expected_lung_volume
 
     vol_correction_factor_rbc = (
-        vol * (1 + constants.VolCorrection.ALPHA_RBC)
-        + V2 * (1 - constants.VolCorrection.ALPHA_RBC)
+        vol * (1 + constants.VolCorrection.ALPHA_RBC.value)
+        + V2 * (1 - constants.VolCorrection.ALPHA_RBC.value)
     ) / (
-        vol * (1 - constants.VolCorrection.ALPHA_RBC)
-        + V2 * (1 + constants.VolCorrection.ALPHA_RBC)
+        vol * (1 - constants.VolCorrection.ALPHA_RBC.value)
+        + V2 * (1 + constants.VolCorrection.ALPHA_RBC.value)
     )
     print("VCF_RBC = " + str(vol_correction_factor_rbc))
     vol_correction_factor_membrane = (
-        vol * (1 + constants.VolCorrection.ALPHA_MEM)
-        + V2 * (1 - constants.VolCorrection.ALPHA_MEM)
+        vol * (1 + constants.VolCorrection.ALPHA_MEM.value)
+        + V2 * (1 - constants.VolCorrection.ALPHA_MEM.value)
     ) / (
-        vol * (1 - constants.VolCorrection.ALPHA_MEM)
-        + V2 * (1 + constants.VolCorrection.ALPHA_MEM)
+        vol * (1 - constants.VolCorrection.ALPHA_MEM.value)
+        + V2 * (1 + constants.VolCorrection.ALPHA_MEM.value)
     )
     print("VCF_mem = " + str(vol_correction_factor_membrane))
 

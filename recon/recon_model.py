@@ -77,9 +77,9 @@ class LSQgridded(GriddedReconModel):
         Returns:
             np.ndarray: gridded data.
         """
-        if self.dcf_obj.space == constants.DCFSpace.GRIDSPACE:
+        if self.dcf_obj.space == constants.DCFSpace.GRIDSPACE.value:
             gridVol = np.multiply(self.system_obj.ATrans.dot(data), self.dcf_obj.dcf)
-        elif self.dcf_obj.space == constants.DCFSpace.DATASPACE:
+        elif self.dcf_obj.space == constants.DCFSpace.DATASPACE.value:
             gridVol = self.system_obj.ATrans.dot(np.multiply(self.dcf_obj.dcf, data))
         else:
             raise Exception("DCF space type not recognized")

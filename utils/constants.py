@@ -20,7 +20,7 @@ VA_ALPHA = 1.58
 NONE = "None"
 
 
-class IOFields(object):
+class IOFields(enum.Enum):
     """General IOFields constants."""
 
     AGE = "age"
@@ -222,7 +222,7 @@ class SystemVendor(enum.Enum):
     PHILIPS = "Philips"
 
 
-class TrajType(object):
+class TrajType(enum.Enum):
     """Trajectory type."""
 
     SPIRAL = "spiral"
@@ -233,7 +233,7 @@ class TrajType(object):
     GOLDENMEAN = "goldenmean"
 
 
-class Orientation(object):
+class Orientation(enum.Enum):
     """Image orientation."""
 
     CORONAL = "coronal"
@@ -243,14 +243,14 @@ class Orientation(object):
     NONE = "none"
 
 
-class DCFSpace(object):
+class DCFSpace(enum.Enum):
     """Defines the DCF space."""
 
     GRIDSPACE = "gridspace"
     DATASPACE = "dataspace"
 
 
-class Methods(object):
+class Methods(enum.Enum):
     """Defines the method to calculate the RBC oscillation image."""
 
     ELEMENTWISE = "elementwise"
@@ -259,7 +259,7 @@ class Methods(object):
     BSPLINE = "bspline"
 
 
-class BinningMethods(object):
+class BinningMethods(enum.Enum):
     """Define the method to preprocess and bin RBC oscillation image."""
 
     BANDPASS = "bandpass"
@@ -270,7 +270,7 @@ class BinningMethods(object):
     PEAKS = "peaks"
 
 
-class StatsIOFields(object):
+class StatsIOFields(enum.Enum):
     """Statistic IO Fields."""
 
     INFLATION = "inflation"
@@ -395,7 +395,7 @@ class OSCHISTOGRAMFields(object):
     TITLE = "RBC Oscillations (%)"
 
 
-class NormalizationMethods(object):
+class NormalizationMethods(enum.Enum):
     """Image normalization methods."""
 
     # For increasing the image contrast
@@ -455,7 +455,7 @@ class CMAP(object):
     }
 
 
-class HbCorrection(object):
+class HbCorrection(enum.Enum):
     """Coefficients for hb correction scaling factor equations.
 
     Reference: https://onlinelibrary.wiley.com/doi/10.1002/mrm.29712
@@ -467,7 +467,7 @@ class HbCorrection(object):
     M2 = 0.011  # second coefficient of membrane hb correction equation
 
 
-class VolCorrection(object):
+class VolCorrection(enum.Enum):
     """Coefficients for volume correction scaling factor equations
 
     Reference DOI: 10.1183/13993003.00289-2020
@@ -477,7 +477,7 @@ class VolCorrection(object):
     ALPHA_MEM = -0.38665  # slope of trend in membrane equation
 
 
-class ContrastLabels(object):
+class ContrastLabels(enum.Enum):
     """Numbers for labelling type of FID acquisition excitation."""
 
     PROTON = 0  # proton acquisition
@@ -485,20 +485,20 @@ class ContrastLabels(object):
     DISSOLVED = 2  # dissolved phase 129Xe acquisition
 
 
-class BonusSpectraLabels(object):
+class BonusSpectraLabels(enum.Enum):
     """Numbers for labelling if FID acquisition is part of bonus spectra."""
 
     NOT_BONUS = 0  # not part of bonus spectra
     BONUS = 1  # part of bonus spectra
 
 
-class PipelineVersion(object):
+class PipelineVersion(enum.Enum):
     """Pipeline version."""
 
     VERSION_NUMBER = 4
 
 
-class ReferenceDistribution(object):
+class ReferenceDistribution(enum.Enum):
     """Reference distributions for binning based on RF excitation.
 
     Reference: Sup's reference distribution paper when published"""

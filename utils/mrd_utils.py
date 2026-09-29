@@ -263,7 +263,7 @@ def get_excitation_freq(
 	]
 	freq_excitation_hz = float(
 		header.userParameters.userParameterLong[
-			var_names.index(constants.IOFields.XE_DISSOLVED_OFFSET_FREQUENCY)
+			var_names.index(constants.IOFields.XE_DISSOLVED_OFFSET_FREQUENCY.value)
 		].value
 	)
 	freq_excitation_ppm = (freq_excitation_hz) / (
@@ -289,7 +289,7 @@ def get_center_freq(header: ismrmrd.xsd.ismrmrdschema.ismrmrd.ismrmrdHeader) -> 
 	]
 	xe_center_frequency = float(
 		header.userParameters.userParameterLong[
-			var_names.index(constants.IOFields.XE_CENTER_FREQUENCY)
+			var_names.index(constants.IOFields.XE_CENTER_FREQUENCY.value)
 		].value
 	)
 	return xe_center_frequency * 1e-6
@@ -359,12 +359,12 @@ def get_prep_pulses(
 	"""
 	var_names = [up.name for up in header.userParameters.userParameterString]
 	# Check if PREP_PULSES exists
-	if constants.IOFields.PREP_PULSES not in var_names:
+	if constants.IOFields.PREP_PULSES.value not in var_names:
 		return "prep_pulses does not exist in the MRD file."
 
 	prep_pulses = str(
 		header.userParameters.userParameterString[
-			var_names.index(constants.IOFields.PREP_PULSES)
+			var_names.index(constants.IOFields.PREP_PULSES.value)
 		].value
 	)
 	return prep_pulses
@@ -401,7 +401,7 @@ def get_orientation(header: ismrmrd.xsd.ismrmrdschema.ismrmrd.ismrmrdHeader) -> 
 			for i in range(len(header.userParameters.userParameterString))
 		]
 		orientation = header.userParameters.userParameterString[
-			var_names.index(constants.IOFields.ORIENTATION)
+			var_names.index(constants.IOFields.ORIENTATION.value)
 		].value
 	except:
 		logging.info("Unable to find orientation from twix object, returning coronal.")
@@ -414,14 +414,14 @@ def get_orientation(header: ismrmrd.xsd.ismrmrdschema.ismrmrd.ismrmrdHeader) -> 
 		constants.SystemVendor.GE.value,
 	}
 	valid_orientations = {
-		constants.Orientation.CORONAL,
-		constants.Orientation.AXIAL,
-		constants.Orientation.TRANSVERSE,
-		constants.Orientation.SAGITTAL,
+		constants.Orientation.CORONAL.value,
+		constants.Orientation.AXIAL.value,
+		constants.Orientation.TRANSVERSE.value,
+		constants.Orientation.SAGITTAL.value,
 	}
 	if system_vendor in supported_vendors and orientation in valid_orientations:
 		return orientation
-	return constants.Orientation.CORONAL
+	return constants.Orientation.CORONAL.value
 
 
 def get_protocol_name(header: ismrmrd.xsd.ismrmrdschema.ismrmrd.ismrmrdHeader) -> str:
@@ -455,7 +455,7 @@ def get_ramp_time(header: ismrmrd.xsd.ismrmrdschema.ismrmrd.ismrmrdHeader) -> fl
 	ramp_time = float(
 		header.encoding[0]
 		.trajectoryDescription.userParameterLong[
-			var_names.index(constants.IOFields.RAMP_TIME)
+			var_names.index(constants.IOFields.RAMP_TIME.value)
 		]
 		.value
 	)
@@ -552,19 +552,19 @@ def get_gx_data(dataset: ismrmrd.hdf5.Dataset) -> Dict[str, Any]:
 
 		for set_label in unique_set_labels:
 			gas_fids_set = raw_fids_truncated[
-				(contrast_labels_truncated == constants.ContrastLabels.GAS)
+				(contrast_labels_truncated == constants.ContrastLabels.GAS.value)
 				& (set_labels_truncated == set_label)
 			]
 			dis_fids_set = raw_fids_truncated[
-				(contrast_labels_truncated == constants.ContrastLabels.DISSOLVED)
+				(contrast_labels_truncated == constants.ContrastLabels.DISSOLVED.value)
 				& (set_labels_truncated == set_label)
 			]
 			gas_traj_set = raw_traj[
-				(contrast_labels_truncated == constants.ContrastLabels.GAS)
+				(contrast_labels_truncated == constants.ContrastLabels.GAS.value)
 				& (set_labels_truncated == set_label)
 			]
 			dis_traj_set = raw_traj[
-				(contrast_labels_truncated == constants.ContrastLabels.DISSOLVED)
+				(contrast_labels_truncated == constants.ContrastLabels.DISSOLVED.value)
 				& (set_labels_truncated == set_label)
 			]
 
@@ -582,32 +582,32 @@ def get_gx_data(dataset: ismrmrd.hdf5.Dataset) -> Dict[str, Any]:
 
 		all_traj = [gas_trajectories_all[..., 0], dis_trajectories_all[..., 0]]
 		return {
-			constants.IOFields.FIDS: raw_fids_truncated,
-			constants.IOFields.FIDS_GAS: gas_fids_all[..., 0],
-			constants.IOFields.FIDS_DIS: dis_fids_all[..., 0],
-			constants.IOFields.TRAJ: all_traj,
+			constants.IOFields.FIDS.value: raw_fids_truncated,
+			constants.IOFields.FIDS_GAS.value: gas_fids_all[..., 0],
+			constants.IOFields.FIDS_DIS.value: dis_fids_all[..., 0],
+			constants.IOFields.TRAJ.value: all_traj,
 		}
 
 	else:
 		gas_traj = raw_traj[
-			contrast_labels_truncated == constants.ContrastLabels.GAS, :, :
+			contrast_labels_truncated == constants.ContrastLabels.GAS.value, :, :
 		]
 
 		dis_traj = raw_traj[
-			contrast_labels_truncated == constants.ContrastLabels.DISSOLVED, :, :
+			contrast_labels_truncated == constants.ContrastLabels.DISSOLVED.value, :, :
 		]
 
 		all_traj = [gas_traj, dis_traj]
 
 		return {
-			constants.IOFields.FIDS: raw_fids_truncated,
-			constants.IOFields.FIDS_GAS: raw_fids_truncated[
-				contrast_labels_truncated == constants.ContrastLabels.GAS, :
+			constants.IOFields.FIDS.value: raw_fids_truncated,
+			constants.IOFields.FIDS_GAS.value: raw_fids_truncated[
+				contrast_labels_truncated == constants.ContrastLabels.GAS.value, :
 			],
-			constants.IOFields.FIDS_DIS: raw_fids_truncated[
-				contrast_labels_truncated == constants.ContrastLabels.DISSOLVED, :
+			constants.IOFields.FIDS_DIS.value: raw_fids_truncated[
+				contrast_labels_truncated == constants.ContrastLabels.DISSOLVED.value, :
 			],
-			constants.IOFields.TRAJ: all_traj,
+			constants.IOFields.TRAJ.value: all_traj,
 		}
 
 
@@ -637,10 +637,10 @@ def get_ute_data(dataset: ismrmrd.hdf5.Dataset) -> Dict[str, Any]:
 
 	# remove bonus spectra
 	raw_fids_truncated = raw_fids[
-		bonus_spectra_labels == constants.BonusSpectraLabels.NOT_BONUS, :
+		bonus_spectra_labels == constants.BonusSpectraLabels.NOT_BONUS.value, :
 	]
 	contrast_labels_truncated = contrast_labels[
-		bonus_spectra_labels == constants.BonusSpectraLabels.NOT_BONUS
+		bonus_spectra_labels == constants.BonusSpectraLabels.NOT_BONUS.value
 	]
 
 	# get the trajectories
@@ -649,10 +649,10 @@ def get_ute_data(dataset: ismrmrd.hdf5.Dataset) -> Dict[str, Any]:
 		raw_traj[i, :, :] = dataset.read_acquisition(i).traj
 
 	return {
-		constants.IOFields.FIDS: raw_fids_truncated[
-			contrast_labels_truncated == constants.ContrastLabels.PROTON, :
+		constants.IOFields.FIDS.value: raw_fids_truncated[
+			contrast_labels_truncated == constants.ContrastLabels.PROTON.value, :
 		],
-		constants.IOFields.TRAJ: raw_traj[
-			contrast_labels_truncated == constants.ContrastLabels.PROTON, :, :
+		constants.IOFields.TRAJ.value: raw_traj[
+			contrast_labels_truncated == constants.ContrastLabels.PROTON.value, :, :
 		],
 	}
