@@ -239,14 +239,14 @@ class Subject(object):
             logging.info("Using manual RBC:M ratio of {}".format(self.rbc_m_ratio))
         else:
             logging.info("Calculating RBC:M ratio from static spectroscopy.")
-            assert self.dict_dyn[constants.IOFields.FIDS_DIS] is not None
+            assert self.dict_dyn[constants.IOFields.FIDS_DIS.value] is not None
             self.rbc_m_ratio, _ = spect_utils.calculate_static_spectroscopy(
-                fid=self.dict_dyn[constants.IOFields.FIDS_DIS],
-                sample_time=self.dict_dyn[constants.IOFields.SAMPLE_TIME],
-                tr=self.dict_dyn[constants.IOFields.TR],
-                center_freq=self.dict_dyn[constants.IOFields.XE_CENTER_FREQUENCY],
+                fid=self.dict_dyn[constants.IOFields.FIDS_DIS.value],
+                sample_time=self.dict_dyn[constants.IOFields.SAMPLE_TIME.value],
+                tr=self.dict_dyn[constants.IOFields.TR.value],
+                center_freq=self.dict_dyn[constants.IOFields.XE_CENTER_FREQUENCY.value],
                 rf_excitation=self.dict_dyn[
-                    constants.IOFields.XE_DISSOLVED_OFFSET_FREQUENCY
+                    constants.IOFields.XE_DISSOLVED_OFFSET_FREQUENCY.value
                 ],
                 plot=False,
             )
@@ -274,18 +274,18 @@ class Subject(object):
                     self.dict_dis, self.config
                 )
 
-        self.data_dissolved = self.dict_dis[constants.IOFields.FIDS_DIS]
-        self.data_gas = self.dict_dis[constants.IOFields.FIDS_GAS]
+        self.data_dissolved = self.dict_dis[constants.IOFields.FIDS_DIS.value]
+        self.data_gas = self.dict_dis[constants.IOFields.FIDS_GAS.value]
 
         if (
-            self.dict_dis[constants.IOFields.SYSTEM_VENDOR]
+            self.dict_dis[constants.IOFields.SYSTEM_VENDOR.value]
             == constants.SystemVendor.GE.value
         ):
             self.data_dissolved = np.conjugate(self.data_dissolved)
             self.data_gas = np.conjugate(self.data_gas)
 
         # get or generate trajectories and trajectory scaling factors
-        if constants.IOFields.TRAJ not in self.dict_dis.keys():
+        if constants.IOFields.TRAJ.value not in self.dict_dis.keys():
             self.traj_dissolved = pp.prepare_traj(self.dict_dis, config=self.config)
             if (
                 hasattr(self.config.recon, "traj_scaling_factor")
@@ -299,8 +299,8 @@ class Subject(object):
                 )
             self.traj_gas = self.traj_dissolved
         else:
-            self.traj_gas = self.dict_dis[constants.IOFields.TRAJ][0]
-            self.traj_dissolved = self.dict_dis[constants.IOFields.TRAJ][1]
+            self.traj_gas = self.dict_dis[constants.IOFields.TRAJ.value][0]
+            self.traj_dissolved = self.dict_dis[constants.IOFields.TRAJ.value][1]
             if (
                 hasattr(self.config.recon, "traj_scaling_factor")
                 and self.config.recon.traj_scaling_factor is not constants.NONE
@@ -310,18 +310,18 @@ class Subject(object):
         """Calculate the number of frames to skip at the beginning of scan:
           if the prep_pulse = 'true', there is no skip frames n_skip_start=0; else calculated by dissolved flip angle"""
         if (
-            self.dict_dis[constants.IOFields.PREP_PULSES]
+            self.dict_dis[constants.IOFields.PREP_PULSES.value]
             == constants.PrepPulses.PREP_PULSES.value
         ):
             self.config.recon.n_skip_start = 0
             logging.info(
-                f"get prep_pulses: value={self.dict_dis[constants.IOFields.PREP_PULSES]}"
+                f"get prep_pulses: value={self.dict_dis[constants.IOFields.PREP_PULSES.value]}"
             )
         else:
             # Calculate the number of frames to skip at the beginning by dissolved flip angle
             if np.isnan(self.config.recon.n_skip_start):
                 self.config.recon.n_skip_start = recon_utils.skip_from_flipangle(
-                    self.dict_dis[constants.IOFields.FA_DIS]
+                    self.dict_dis[constants.IOFields.FA_DIS.value]
                 )
 
         # truncate gas and dissolved data and trajectories
@@ -369,13 +369,13 @@ class Subject(object):
         if self.config.recon.recon_proton:
             if getattr(self, "dict_ute", None):
                 # get or generate trajectories
-                if constants.IOFields.TRAJ not in self.dict_ute.keys():
+                if constants.IOFields.TRAJ.value not in self.dict_ute.keys():
                     self.traj_ute = pp.prepare_traj(self.dict_ute)
                 else:
-                    self.traj_ute = self.dict_ute[constants.IOFields.TRAJ]
+                    self.traj_ute = self.dict_ute[constants.IOFields.TRAJ.value]
 
                 # get proton data
-                self.data_ute = self.dict_ute[constants.IOFields.FIDS]
+                self.data_ute = self.dict_ute[constants.IOFields.FIDS.value]
 
                 # remove noisy FIDs
                 if self.config.recon.remove_noisy_projections:
@@ -396,26 +396,26 @@ class Subject(object):
             # Default to 218 if other or no value for excitation found.
             if (
                 216
-                <= self.dict_dis[constants.IOFields.XE_DISSOLVED_OFFSET_FREQUENCY]
+                <= self.dict_dis[constants.IOFields.XE_DISSOLVED_OFFSET_FREQUENCY.value]
                 <= 220
             ):
-                self.reference_data = constants.ReferenceDistribution.REFERENCE_218_PPM
+                self.reference_data = constants.ReferenceDistribution.REFERENCE_218_PPM.value
 
             elif (
                 206
-                <= self.dict_dis[constants.IOFields.XE_DISSOLVED_OFFSET_FREQUENCY]
+                <= self.dict_dis[constants.IOFields.XE_DISSOLVED_OFFSET_FREQUENCY.value]
                 <= 210
             ):
-                self.reference_data = constants.ReferenceDistribution.REFERENCE_208_PPM
+                self.reference_data = constants.ReferenceDistribution.REFERENCE_208_PPM.value
 
             else:
-                self.reference_data = constants.ReferenceDistribution.REFERENCE_218_PPM
+                self.reference_data = constants.ReferenceDistribution.REFERENCE_218_PPM.value
                 logging.info("Warning: Unrecognized excitation frequency")
 
         elif (
             self.reference_data_key == constants.ReferenceDataKey.MANUAL_REFERENCE.value
         ):
-            self.reference_data = constants.ReferenceDistribution.REFERENCE_MANUAL
+            self.reference_data = constants.ReferenceDistribution.REFERENCE_MANUAL.value
 
     def reconstruction_ute(self):
         """Reconstruct the UTE image."""
@@ -426,8 +426,8 @@ class Subject(object):
             kernel_extent=9 * float(self.config.recon.kernel_sharpness_hr),
             image_size=int(self.config.recon.recon_size),
         )
-        orientation = self.dict_ute[constants.IOFields.ORIENTATION]
-        system_vendor = self.dict_ute[constants.IOFields.SYSTEM_VENDOR]
+        orientation = self.dict_ute[constants.IOFields.ORIENTATION.value]
+        system_vendor = self.dict_ute[constants.IOFields.SYSTEM_VENDOR.value]
         self.image_proton = img_utils.interp(
             self.image_proton,
             self.config.recon.matrix_size // self.config.recon.recon_size,
@@ -456,8 +456,8 @@ class Subject(object):
                 kernel_extent=9 * float(self.config.recon.kernel_sharpness_hr),
                 image_size=int(self.config.recon.recon_size),
             )
-            orientation = self.dict_dis[constants.IOFields.ORIENTATION]
-            system_vendor = self.dict_dis[constants.IOFields.SYSTEM_VENDOR]
+            orientation = self.dict_dis[constants.IOFields.ORIENTATION.value]
+            system_vendor = self.dict_dis[constants.IOFields.SYSTEM_VENDOR.value]
             self.image_gas_highreso = img_utils.interp(
                 self.image_gas_highreso,
                 self.config.recon.matrix_size // self.config.recon.recon_size,
@@ -488,7 +488,7 @@ class Subject(object):
             decay_factor = signal_utils.calculate_decay_factor(
                 self.data_gas,
                 constants.T2STAR_GAS,
-                self.dict_dis[constants.IOFields.SAMPLE_TIME],
+                self.dict_dis[constants.IOFields.SAMPLE_TIME.value],
             )
             self.image_gas = (
                 reconstruction.reconstruct_cs(
@@ -518,8 +518,8 @@ class Subject(object):
     def reconstruction_dissolved(self):
         """Reconstruct the dissolved phase image."""
         if self.config.recon.recon_key == constants.ReconKey.ROBERTSON.value:
-            orientation = self.dict_dis[constants.IOFields.ORIENTATION]
-            system_vendor = self.dict_dis[constants.IOFields.SYSTEM_VENDOR]
+            orientation = self.dict_dis[constants.IOFields.ORIENTATION.value]
+            system_vendor = self.dict_dis[constants.IOFields.SYSTEM_VENDOR.value]
             self.image_dissolved = reconstruction.reconstruct(
                 data=(recon_utils.flatten_data(self.data_dissolved)),
                 traj=recon_utils.flatten_traj(self.traj_dissolved),
@@ -563,7 +563,7 @@ class Subject(object):
             decay_factor = signal_utils.calculate_decay_factor(
                 self.data_dissolved,
                 constants.T2STAR_DISSOLVED_3T,
-                self.dict_dis[constants.IOFields.SAMPLE_TIME],
+                self.dict_dis[constants.IOFields.SAMPLE_TIME.value],
             )
 
             self.image_dissolved_norm = reconstruction.reconstruct_cs(
@@ -599,7 +599,7 @@ class Subject(object):
             data_gas=self.data_gas,
             data_dissolved=self.data_dissolved,
             rbc_m_ratio=self.rbc_m_ratio,
-            TR=self.dict_dis[constants.IOFields.TR],
+            TR=self.dict_dis[constants.IOFields.TR.value],
         )
         # calculate the key radius and normalize
         self.key_radius = int(
@@ -657,13 +657,13 @@ class Subject(object):
             # flip and rotate images
             self.image_dissolved_high = img_utils.flip_and_rotate_image(
                 self.image_dissolved_high,
-                orientation=self.dict_dis[constants.IOFields.ORIENTATION],
-                system_vendor=self.dict_dis[constants.IOFields.SYSTEM_VENDOR],
+                orientation=self.dict_dis[constants.IOFields.ORIENTATION.value],
+                system_vendor=self.dict_dis[constants.IOFields.SYSTEM_VENDOR.value],
             )
             self.image_dissolved_low = img_utils.flip_and_rotate_image(
                 self.image_dissolved_low,
-                orientation=self.dict_dis[constants.IOFields.ORIENTATION],
-                system_vendor=self.dict_dis[constants.IOFields.SYSTEM_VENDOR],
+                orientation=self.dict_dis[constants.IOFields.ORIENTATION.value],
+                system_vendor=self.dict_dis[constants.IOFields.SYSTEM_VENDOR.value],
             )
         elif self.config.recon.recon_key == constants.ReconKey.PLUMMER.value:
             # prepare data and traj for reconstruction
@@ -677,7 +677,7 @@ class Subject(object):
                 data=self.data_dissolved,
                 traj=self.traj_dissolved,
                 bin_indices=self.high_indices,
-                dwell_time=self.dict_dis[constants.IOFields.SAMPLE_TIME],
+                dwell_time=self.dict_dis[constants.IOFields.SAMPLE_TIME.value],
                 key_radius=self.key_radius,
             )
             (
@@ -688,7 +688,7 @@ class Subject(object):
                 data=self.data_dissolved,
                 traj=self.traj_dissolved,
                 bin_indices=self.low_indices,
-                dwell_time=self.dict_dis[constants.IOFields.SAMPLE_TIME],
+                dwell_time=self.dict_dis[constants.IOFields.SAMPLE_TIME.value],
                 key_radius=self.key_radius,
             )
             self.image_dissolved_high = reconstruction.reconstruct_cs(
@@ -777,7 +777,7 @@ class Subject(object):
         # Fail-safe check: if the segmented thoracic cavity volume is implausibly small
         # (< 0.5 L), assume mask generation failed and replace it with a phantom mask.
         if (
-            metrics.inflation_volume(self.mask, self.dict_dis[constants.IOFields.FOV])
+            metrics.inflation_volume(self.mask, self.dict_dis[constants.IOFields.FOV.value])
             < 0.5
         ):
             if (
@@ -1024,8 +1024,8 @@ class Subject(object):
 
     def vol_correction(self):
         self.dict_stats = {
-            constants.StatsIOFields.INFLATION: metrics.inflation_volume(
-                self.mask, self.dict_dis[constants.IOFields.FOV]
+            constants.StatsIOFields.INFLATION.value: metrics.inflation_volume(
+                self.mask, self.dict_dis[constants.IOFields.FOV.value]
             )
         }
         if self.config.vol_correction_key != constants.VolCorrectionKey.NONE.value:
@@ -1077,19 +1077,19 @@ class Subject(object):
         )
         # scale by flip angle difference
         flip_angle_scale_factor = signal_utils.calculate_flipangle_correction(
-            self.dict_dis[constants.IOFields.FA_GAS],
-            self.dict_dis[constants.IOFields.FA_DIS],
+            self.dict_dis[constants.IOFields.FA_GAS.value],
+            self.dict_dis[constants.IOFields.FA_DIS.value],
         )
         # correct for T2* decay
         t2star_scale_factor_rbc = signal_utils.calculate_t2star_correction(
-            self.dict_dis[constants.IOFields.TE90],
+            self.dict_dis[constants.IOFields.TE90.value],
             constants.T2STAR_RBC_3T,
-            self.dict_dis[constants.IOFields.FIELD_STRENGTH],
+            self.dict_dis[constants.IOFields.FIELD_STRENGTH.value],
         )
         t2star_scale_factor_membrane = signal_utils.calculate_t2star_correction(
-            self.dict_dis[constants.IOFields.TE90],
+            self.dict_dis[constants.IOFields.TE90.value],
             constants.T2STAR_MEMBRANE_3T,
-            self.dict_dis[constants.IOFields.FIELD_STRENGTH],
+            self.dict_dis[constants.IOFields.FIELD_STRENGTH.value],
         )
         self.image_rbc2gas = (
             flip_angle_scale_factor * t2star_scale_factor_rbc * self.image_rbc2gas
@@ -1176,13 +1176,13 @@ class Subject(object):
                 rbc2gas=self.image_rbc2gas,
                 rbc_ref=self.reference_data["threshold_rbc"][2],
                 mask=self.mask_rbc,
-                age=self.dict_dis[constants.IOFields.AGE],
-                sex=self.dict_dis[constants.IOFields.SEX],
-                height=self.dict_dis[constants.IOFields.HEIGHT],
+                age=self.dict_dis[constants.IOFields.AGE.value],
+                sex=self.dict_dis[constants.IOFields.SEX.value],
+                height=self.dict_dis[constants.IOFields.HEIGHT.value],
                 alveolar_volume=metrics.alveolar_volume(
                     self.image_gas_binned,
                     self.mask,
-                    self.dict_dis[constants.IOFields.FOV],
+                    self.dict_dis[constants.IOFields.FOV.value],
                 ),
                 hemoglobin=self.config.hb,
             )
@@ -1196,7 +1196,7 @@ class Subject(object):
     def oscillation_binning(self):
         """Bin oscillation image to colormap bins."""
 
-        self.reference_data_osc = constants.ReferenceDistribution.REFERENCE_RBC_OSC
+        self.reference_data_osc = constants.ReferenceDistribution.REFERENCE_RBC_OSC.value
 
         self.image_rbc_osc_binned = binning.linear_bin(
             image=self.image_rbc_osc,
@@ -1225,151 +1225,151 @@ class Subject(object):
             dict_stats: Dictionary of statistics for reporting
         """
         self.dict_stats = {
-            constants.IOFields.SUBJECT_ID: self.config.subject_id,
-            constants.IOFields.SCAN_DATE: self.dict_dis[constants.IOFields.SCAN_DATE],
-            constants.IOFields.PROCESS_DATE: metrics.process_date(),
-            constants.StatsIOFields.INFLATION: metrics.inflation_volume(
-                self.mask, self.dict_dis[constants.IOFields.FOV]
+            constants.IOFields.SUBJECT_ID.value: self.config.subject_id,
+            constants.IOFields.SCAN_DATE.value: self.dict_dis[constants.IOFields.SCAN_DATE.value],
+            constants.IOFields.PROCESS_DATE.value: metrics.process_date(),
+            constants.StatsIOFields.INFLATION.value: metrics.inflation_volume(
+                self.mask, self.dict_dis[constants.IOFields.FOV.value]
             ),
-            constants.StatsIOFields.RBC_M_RATIO: self.rbc_m_ratio,
-            constants.StatsIOFields.N_POINTS: self.data_gas.shape[1],
-            constants.StatsIOFields.VENT_SNR: metrics.snr(
+            constants.StatsIOFields.RBC_M_RATIO.value: self.rbc_m_ratio,
+            constants.StatsIOFields.N_POINTS.value: self.data_gas.shape[1],
+            constants.StatsIOFields.VENT_SNR.value: metrics.snr(
                 np.abs(self.image_gas_highreso), self.mask
             )[1],
-            constants.StatsIOFields.VENT_DEFECT_PCT: metrics.bin_percentage(
+            constants.StatsIOFields.VENT_DEFECT_PCT.value: metrics.bin_percentage(
                 self.image_gas_binned, np.array([1]), self.mask
             ),
-            constants.StatsIOFields.VENT_LOW_PCT: metrics.bin_percentage(
+            constants.StatsIOFields.VENT_LOW_PCT.value: metrics.bin_percentage(
                 self.image_gas_binned, np.array([2]), self.mask
             ),
-            constants.StatsIOFields.VENT_HIGH_PCT: metrics.bin_percentage(
+            constants.StatsIOFields.VENT_HIGH_PCT.value: metrics.bin_percentage(
                 self.image_gas_binned, np.array([6]), self.mask
             ),
-            constants.StatsIOFields.VENT_MEAN: metrics.mean(
+            constants.StatsIOFields.VENT_MEAN.value: metrics.mean(
                 self.image_gas_cor_norm, self.mask
             ),
-            constants.StatsIOFields.VENT_MEDIAN: metrics.median(
+            constants.StatsIOFields.VENT_MEDIAN.value: metrics.median(
                 self.image_gas_cor_norm, self.mask
             ),
-            constants.StatsIOFields.VENT_STDDEV: metrics.std(
+            constants.StatsIOFields.VENT_STDDEV.value: metrics.std(
                 self.image_gas_cor_norm, self.mask
             ),
-            constants.StatsIOFields.RBC_SNR: float(
+            constants.StatsIOFields.RBC_SNR.value: float(
                 metrics.snr(self.image_rbc, self.mask)[0]
             ),
-            constants.StatsIOFields.RBC_DEFECT_PCT: metrics.bin_percentage(
+            constants.StatsIOFields.RBC_DEFECT_PCT.value: metrics.bin_percentage(
                 self.image_rbc2gas_binned, np.array([1]), self.mask
             ),
-            constants.StatsIOFields.RBC_LOW_PCT: metrics.bin_percentage(
+            constants.StatsIOFields.RBC_LOW_PCT.value: metrics.bin_percentage(
                 self.image_rbc2gas_binned, np.array([2]), self.mask
             ),
-            constants.StatsIOFields.RBC_HIGH_PCT: metrics.bin_percentage(
+            constants.StatsIOFields.RBC_HIGH_PCT.value: metrics.bin_percentage(
                 self.image_rbc2gas_binned, np.array([6]), self.mask
             ),
-            constants.StatsIOFields.RBC_MEAN: float(
+            constants.StatsIOFields.RBC_MEAN.value: float(
                 metrics.mean(self.image_rbc2gas, self.mask_vent)
             ),
-            constants.StatsIOFields.RBC_MEDIAN: float(
+            constants.StatsIOFields.RBC_MEDIAN.value: float(
                 metrics.median(self.image_rbc2gas, self.mask_vent)
             ),
-            constants.StatsIOFields.RBC_STDDEV: float(
+            constants.StatsIOFields.RBC_STDDEV.value: float(
                 metrics.std(self.image_rbc2gas, self.mask_vent)
             ),
-            constants.StatsIOFields.MEMBRANE_SNR: float(
+            constants.StatsIOFields.MEMBRANE_SNR.value: float(
                 metrics.snr(self.image_membrane, self.mask)[0]
             ),
-            constants.StatsIOFields.MEMBRANE_DEFECT_PCT: metrics.bin_percentage(
+            constants.StatsIOFields.MEMBRANE_DEFECT_PCT.value: metrics.bin_percentage(
                 self.image_membrane2gas_binned, np.array([1]), self.mask
             ),
-            constants.StatsIOFields.MEMBRANE_LOW_PCT: metrics.bin_percentage(
+            constants.StatsIOFields.MEMBRANE_LOW_PCT.value: metrics.bin_percentage(
                 self.image_membrane2gas_binned, np.array([2]), self.mask
             ),
-            constants.StatsIOFields.MEMBRANE_HIGH_PCT: metrics.bin_percentage(
+            constants.StatsIOFields.MEMBRANE_HIGH_PCT.value: metrics.bin_percentage(
                 self.image_membrane2gas_binned, np.array([6, 7, 8]), self.mask
             ),
-            constants.StatsIOFields.MEMBRANE_MEAN: float(
+            constants.StatsIOFields.MEMBRANE_MEAN.value: float(
                 metrics.mean(self.image_membrane2gas, self.mask_vent)
             ),
-            constants.StatsIOFields.MEMBRANE_MEDIAN: float(
+            constants.StatsIOFields.MEMBRANE_MEDIAN.value: float(
                 metrics.median(self.image_membrane2gas, self.mask_vent)
             ),
-            constants.StatsIOFields.MEMBRANE_STDDEV: float(
+            constants.StatsIOFields.MEMBRANE_STDDEV.value: float(
                 metrics.std(self.image_membrane2gas, self.mask_vent)
             ),
-            constants.StatsIOFields.ALVEOLAR_VOLUME: metrics.alveolar_volume(
-                self.image_gas_binned, self.mask, self.dict_dis[constants.IOFields.FOV]
+            constants.StatsIOFields.ALVEOLAR_VOLUME.value: metrics.alveolar_volume(
+                self.image_gas_binned, self.mask, self.dict_dis[constants.IOFields.FOV.value]
             ),
-            constants.StatsIOFields.KCO_EST: metrics.kco(
+            constants.StatsIOFields.KCO_EST.value: metrics.kco(
                 self.image_membrane2gas,
                 self.image_rbc2gas,
                 self.mask_vent,
-                self.dict_dis[constants.IOFields.XE_DISSOLVED_OFFSET_FREQUENCY],
+                self.dict_dis[constants.IOFields.XE_DISSOLVED_OFFSET_FREQUENCY.value],
                 0.008871,
                 0.00455,  # sex- and hemoglobin averaged, the value in Sup's paper is non-Hb-corrected, non-sex-specific average
             ),
-            constants.StatsIOFields.DLCO_EST: metrics.dlco(
+            constants.StatsIOFields.DLCO_EST.value: metrics.dlco(
                 self.image_gas_binned,
                 self.image_membrane2gas,
                 self.image_rbc2gas,
                 self.mask,
                 self.mask_vent,
-                self.dict_dis[constants.IOFields.FOV],
-                self.dict_dis[constants.IOFields.XE_DISSOLVED_OFFSET_FREQUENCY],
+                self.dict_dis[constants.IOFields.FOV.value],
+                self.dict_dis[constants.IOFields.XE_DISSOLVED_OFFSET_FREQUENCY.value],
                 0.008871,
                 0.00455,  # sex- and hemoglobin averaged, the value in Sup's paper is non-Hb-corrected, non-sex-specific average
             ),
-            constants.StatsIOFields.RDP_BA: round(
+            constants.StatsIOFields.RDP_BA.value: round(
                 metrics.rdp_ba(
                     self.image_rbc2gas_binned,
                     self.mask,
                 ),
                 1,
             ),
-            constants.IOFields.GLI_FRC: metrics.GLI_volume(
-                self.dict_dis[constants.IOFields.AGE],
-                self.dict_dis[constants.IOFields.SEX],
-                self.dict_dis[constants.IOFields.HEIGHT],
+            constants.IOFields.GLI_FRC.value: metrics.GLI_volume(
+                self.dict_dis[constants.IOFields.AGE.value],
+                self.dict_dis[constants.IOFields.SEX.value],
+                self.dict_dis[constants.IOFields.HEIGHT.value],
                 volume_type="frc",
             ),
-            constants.IOFields.GLI_VA: metrics.GLI_volume(
-                self.dict_dis[constants.IOFields.AGE],
-                self.dict_dis[constants.IOFields.SEX],
-                self.dict_dis[constants.IOFields.HEIGHT],
+            constants.IOFields.GLI_VA.value: metrics.GLI_volume(
+                self.dict_dis[constants.IOFields.AGE.value],
+                self.dict_dis[constants.IOFields.SEX.value],
+                self.dict_dis[constants.IOFields.HEIGHT.value],
                 volume_type="va",
             ),
-            constants.IOFields.GLI_KCO: metrics.GLI_volume(
-                self.dict_dis[constants.IOFields.AGE],
-                self.dict_dis[constants.IOFields.SEX],
-                self.dict_dis[constants.IOFields.HEIGHT],
+            constants.IOFields.GLI_KCO.value: metrics.GLI_volume(
+                self.dict_dis[constants.IOFields.AGE.value],
+                self.dict_dis[constants.IOFields.SEX.value],
+                self.dict_dis[constants.IOFields.HEIGHT.value],
                 volume_type="kco",
             ),
-            constants.IOFields.GLI_DLCO: metrics.GLI_volume(
-                self.dict_dis[constants.IOFields.AGE],
-                self.dict_dis[constants.IOFields.SEX],
-                self.dict_dis[constants.IOFields.HEIGHT],
+            constants.IOFields.GLI_DLCO.value: metrics.GLI_volume(
+                self.dict_dis[constants.IOFields.AGE.value],
+                self.dict_dis[constants.IOFields.SEX.value],
+                self.dict_dis[constants.IOFields.HEIGHT.value],
                 volume_type="dlco",
             ),
         }
-        age = self.dict_dis[constants.IOFields.AGE]
-        sex = self.dict_dis[constants.IOFields.SEX]
+        age = self.dict_dis[constants.IOFields.AGE.value]
+        sex = self.dict_dis[constants.IOFields.SEX.value]
         if pd.notna(age) and age != "" and pd.notna(sex) and sex != "":
             rbcm_ref = metrics.rbcm_ref(age, sex)
             if pd.notna(rbcm_ref) and rbcm_ref != 0:
-                self.dict_stats[constants.IOFields.RBCM_REF] = rbcm_ref
-                self.dict_stats[constants.IOFields.RBCM_PERC] = round(
+                self.dict_stats[constants.IOFields.RBCM_REF.value] = rbcm_ref
+                self.dict_stats[constants.IOFields.RBCM_PERC.value] = round(
                     100 * self.rbc_m_ratio / rbcm_ref
                 )
         else:
-            self.dict_stats[constants.IOFields.RBCM_REF] = "NA"
-            self.dict_stats[constants.IOFields.RBCM_PERC] = "NA"
+            self.dict_stats[constants.IOFields.RBCM_REF.value] = "NA"
+            self.dict_stats[constants.IOFields.RBCM_PERC.value] = "NA"
         if isinstance(self.config.patient_frc, (int, float)):
             FRC_Volume = float(self.config.patient_frc)
             User_Volume_FRC = f"{FRC_Volume}L"
         else:
             FRC_Volume = metrics.GLI_volume(
-                self.dict_dis[constants.IOFields.AGE],
-                self.dict_dis[constants.IOFields.SEX],
-                self.dict_dis[constants.IOFields.HEIGHT],
+                self.dict_dis[constants.IOFields.AGE.value],
+                self.dict_dis[constants.IOFields.SEX.value],
+                self.dict_dis[constants.IOFields.HEIGHT.value],
                 volume_type="frc",
             )
             User_Volume_FRC = "Predicted"
@@ -1380,9 +1380,9 @@ class Subject(object):
         else:
             User_Volume_Bag = "Predicted"
             FVC_Volume = metrics.GLI_volume(
-                self.dict_dis[constants.IOFields.AGE],
-                self.dict_dis[constants.IOFields.SEX],
-                self.dict_dis[constants.IOFields.HEIGHT],
+                self.dict_dis[constants.IOFields.AGE.value],
+                self.dict_dis[constants.IOFields.SEX.value],
+                self.dict_dis[constants.IOFields.HEIGHT.value],
                 volume_type="fvc",
             )
             if isinstance(FVC_Volume, (int, float)) and not pd.isna(FVC_Volume):
@@ -1408,68 +1408,68 @@ class Subject(object):
 
         if pd.isna(FRC_Volume) or pd.isna(Bag_Volume):
             self.reference_data["reference_stats"][
-                constants.StatsIOFields.INFLATION_PCT
+                constants.StatsIOFields.INFLATION_PCT.value
             ] = "NA"
             self.reference_data["reference_stats"][
-                constants.StatsIOFields.INFLATION_AVG
+                constants.StatsIOFields.INFLATION_AVG.value
             ] = "NA"
             self.reference_data["reference_stats"][
-                constants.StatsIOFields.INFLATION_DISPLAY
+                constants.StatsIOFields.INFLATION_DISPLAY.value
             ] = "NA"
-            self.dict_stats[constants.StatsIOFields.INFLATION] = round(
-                self.dict_stats[constants.StatsIOFields.INFLATION], 1
+            self.dict_stats[constants.StatsIOFields.INFLATION.value] = round(
+                self.dict_stats[constants.StatsIOFields.INFLATION.value], 1
             )
         else:
             predicted_volume = FRC_Volume + Bag_Volume
             self.reference_data["reference_stats"][
-                constants.StatsIOFields.INFLATION_PCT
+                constants.StatsIOFields.INFLATION_PCT.value
             ] = int(
                 round(
-                    self.dict_stats[constants.StatsIOFields.INFLATION]
+                    self.dict_stats[constants.StatsIOFields.INFLATION.value]
                     / predicted_volume
                     * 100,
                     0,
                 )
             )
             self.reference_data["reference_stats"][
-                constants.StatsIOFields.INFLATION_AVG
+                constants.StatsIOFields.INFLATION_AVG.value
             ] = round(predicted_volume, 1)
             self.reference_data["reference_stats"][
-                constants.StatsIOFields.INFLATION_DISPLAY
-            ] = f"{self.reference_data['reference_stats'][constants.StatsIOFields.INFLATION_AVG] }L ({self.reference_data['reference_stats'][constants.StatsIOFields.INFLATION_PCT]}%)"
-            self.dict_stats[constants.StatsIOFields.INFLATION] = round(
-                self.dict_stats[constants.StatsIOFields.INFLATION], 1
+                constants.StatsIOFields.INFLATION_DISPLAY.value
+            ] = f"{self.reference_data['reference_stats'][constants.StatsIOFields.INFLATION_AVG.value] }L ({self.reference_data['reference_stats'][constants.StatsIOFields.INFLATION_PCT.value]}%)"
+            self.dict_stats[constants.StatsIOFields.INFLATION.value] = round(
+                self.dict_stats[constants.StatsIOFields.INFLATION.value], 1
             )
 
         if self.config.osc_recon.oscillation_analysis:
             self.dict_stats.update(
                 {
-                    constants.StatsIOFields.OSC_DEFECT_PCT: metrics.bin_percentage(
+                    constants.StatsIOFields.OSC_DEFECT_PCT.value: metrics.bin_percentage(
                         self.image_rbc_osc_binned, np.array([1]), self.mask_rbc
                     ),
-                    constants.StatsIOFields.OSC_LOW_PCT: metrics.bin_percentage(
+                    constants.StatsIOFields.OSC_LOW_PCT.value: metrics.bin_percentage(
                         self.image_rbc_osc_binned, np.array([2]), self.mask_rbc
                     ),
-                    constants.StatsIOFields.OSC_DEFECTLOW_PCT: metrics.bin_percentage(
+                    constants.StatsIOFields.OSC_DEFECTLOW_PCT.value: metrics.bin_percentage(
                         self.image_rbc_osc_binned, np.array([1, 2]), self.mask_rbc
                     ),
-                    constants.StatsIOFields.OSC_HIGH_PCT: metrics.bin_percentage(
+                    constants.StatsIOFields.OSC_HIGH_PCT.value: metrics.bin_percentage(
                         self.image_rbc_osc_binned, np.array([5, 6]), self.mask_rbc
                     ),
-                    constants.StatsIOFields.OSC_MEAN: float(
+                    constants.StatsIOFields.OSC_MEAN.value: float(
                         metrics.mean(self.image_rbc_osc, self.mask_rbc)
                     ),
-                    constants.StatsIOFields.OSC_NEGATIVE_PCT: metrics.negative_percentage(
+                    constants.StatsIOFields.OSC_NEGATIVE_PCT.value: metrics.negative_percentage(
                         self.image_rbc_osc, self.mask_rbc
                     ),
-                    constants.StatsIOFields.KEY_RADIUS: self.key_radius,
-                    constants.StatsIOFields.RBC_HIGH_SNR: float(
+                    constants.StatsIOFields.KEY_RADIUS.value: self.key_radius,
+                    constants.StatsIOFields.RBC_HIGH_SNR.value: float(
                         metrics.snr(self.image_rbc_high, self.mask)[0]
                     ),
-                    constants.StatsIOFields.RBC_LOW_SNR: float(
+                    constants.StatsIOFields.RBC_LOW_SNR.value: float(
                         metrics.snr(self.image_rbc_low, self.mask)[0]
                     ),
-                    constants.StatsIOFields.DISSOLVED_SNR: float(
+                    constants.StatsIOFields.DISSOLVED_SNR.value: float(
                         metrics.snr(np.abs(self.image_dissolved), self.mask)[1]
                     ),
                 }
@@ -1477,26 +1477,26 @@ class Subject(object):
             if self.config.osc_recon.vc_correction:
                 self.dict_stats.update(
                     {
-                        constants.StatsIOFields.OSC_DEFECT_PCT_CORR: metrics.bin_percentage(
+                        constants.StatsIOFields.OSC_DEFECT_PCT_CORR.value: metrics.bin_percentage(
                             self.image_rbc_osc_binned_corr, np.array([1]), self.mask_rbc
                         ),
-                        constants.StatsIOFields.OSC_LOW_PCT_CORR: metrics.bin_percentage(
+                        constants.StatsIOFields.OSC_LOW_PCT_CORR.value: metrics.bin_percentage(
                             self.image_rbc_osc_binned_corr, np.array([2]), self.mask_rbc
                         ),
-                        constants.StatsIOFields.OSC_DEFECTLOW_PCT_CORR: metrics.bin_percentage(
+                        constants.StatsIOFields.OSC_DEFECTLOW_PCT_CORR.value: metrics.bin_percentage(
                             self.image_rbc_osc_binned_corr,
                             np.array([1, 2]),
                             self.mask_rbc,
                         ),
-                        constants.StatsIOFields.OSC_HIGH_PCT_CORR: metrics.bin_percentage(
+                        constants.StatsIOFields.OSC_HIGH_PCT_CORR.value: metrics.bin_percentage(
                             self.image_rbc_osc_binned_corr,
                             np.array([5, 6]),
                             self.mask_rbc,
                         ),
-                        constants.StatsIOFields.OSC_MEAN_CORR: float(
+                        constants.StatsIOFields.OSC_MEAN_CORR.value: float(
                             metrics.mean(self.image_rbc_osc_corr, self.mask_rbc)
                         ),
-                        constants.StatsIOFields.OSC_NEGATIVE_PCT_CORR: metrics.negative_percentage(
+                        constants.StatsIOFields.OSC_NEGATIVE_PCT_CORR.value: metrics.negative_percentage(
                             self.image_rbc_osc_corr, self.mask_rbc
                         ),
                     }
@@ -1511,76 +1511,76 @@ class Subject(object):
             dict_info: Dictionary of information.
         """
         self.dict_info = {
-            constants.IOFields.SUBJECT_ID: self.config.subject_id,
-            constants.IOFields.SCAN_DATE: self.dict_dis[constants.IOFields.SCAN_DATE],
-            constants.IOFields.PROCESS_DATE: metrics.process_date(),
-            constants.IOFields.PIPELINE_VERSION: constants.PipelineVersion.VERSION_NUMBER,
-            constants.IOFields.SOFTWARE_VERSION: self.dict_dis[
-                constants.IOFields.SOFTWARE_VERSION
+            constants.IOFields.SUBJECT_ID.value: self.config.subject_id,
+            constants.IOFields.SCAN_DATE.value: self.dict_dis[constants.IOFields.SCAN_DATE.value],
+            constants.IOFields.PROCESS_DATE.value: metrics.process_date(),
+            constants.IOFields.PIPELINE_VERSION.value: constants.PipelineVersion.VERSION_NUMBER.value,
+            constants.IOFields.SOFTWARE_VERSION.value: self.dict_dis[
+                constants.IOFields.SOFTWARE_VERSION.value
             ],
-            constants.IOFields.GIT_BRANCH: report.get_git_branch(),
-            constants.IOFields.REFERENCE_DATA_KEY: self.reference_data["title"],
-            constants.IOFields.BANDWIDTH: self.dict_dis[constants.IOFields.BANDWIDTH],
-            constants.IOFields.SAMPLE_TIME: (
-                1e6 * self.dict_dis[constants.IOFields.SAMPLE_TIME]
+            constants.IOFields.GIT_BRANCH.value: report.get_git_branch(),
+            constants.IOFields.REFERENCE_DATA_KEY.value: self.reference_data["title"],
+            constants.IOFields.BANDWIDTH.value: self.dict_dis[constants.IOFields.BANDWIDTH.value],
+            constants.IOFields.SAMPLE_TIME.value: (
+                1e6 * self.dict_dis[constants.IOFields.SAMPLE_TIME.value]
             ),
-            constants.IOFields.FA_DIS: self.dict_dis[constants.IOFields.FA_DIS],
-            constants.IOFields.FA_GAS: self.dict_dis[constants.IOFields.FA_GAS],
-            constants.IOFields.FIELD_STRENGTH: self.dict_dis[
-                constants.IOFields.FIELD_STRENGTH
+            constants.IOFields.FA_DIS.value: self.dict_dis[constants.IOFields.FA_DIS.value],
+            constants.IOFields.FA_GAS.value: self.dict_dis[constants.IOFields.FA_GAS.value],
+            constants.IOFields.FIELD_STRENGTH.value: self.dict_dis[
+                constants.IOFields.FIELD_STRENGTH.value
             ],
-            constants.IOFields.FLIP_ANGLE_FACTOR: signal_utils.calculate_flipangle_factor(
-                self.dict_dis[constants.IOFields.FA_GAS],
-                self.dict_dis[constants.IOFields.FA_DIS],
+            constants.IOFields.FLIP_ANGLE_FACTOR.value: signal_utils.calculate_flipangle_factor(
+                self.dict_dis[constants.IOFields.FA_GAS.value],
+                self.dict_dis[constants.IOFields.FA_DIS.value],
             ),
-            constants.IOFields.FOV: self.dict_dis[constants.IOFields.FOV],
-            constants.IOFields.XE_DISSOLVED_OFFSET_FREQUENCY: self.dict_dis[
-                constants.IOFields.XE_DISSOLVED_OFFSET_FREQUENCY
+            constants.IOFields.FOV.value: self.dict_dis[constants.IOFields.FOV.value],
+            constants.IOFields.XE_DISSOLVED_OFFSET_FREQUENCY.value: self.dict_dis[
+                constants.IOFields.XE_DISSOLVED_OFFSET_FREQUENCY.value
             ],
-            constants.IOFields.GRAD_DELAY_X: self.dict_dis[
-                constants.IOFields.GRAD_DELAY_X
+            constants.IOFields.GRAD_DELAY_X.value: self.dict_dis[
+                constants.IOFields.GRAD_DELAY_X.value
             ],
-            constants.IOFields.GRAD_DELAY_Y: self.dict_dis[
-                constants.IOFields.GRAD_DELAY_Y
+            constants.IOFields.GRAD_DELAY_Y.value: self.dict_dis[
+                constants.IOFields.GRAD_DELAY_Y.value
             ],
-            constants.IOFields.GRAD_DELAY_Z: self.dict_dis[
-                constants.IOFields.GRAD_DELAY_Z
+            constants.IOFields.GRAD_DELAY_Z.value: self.dict_dis[
+                constants.IOFields.GRAD_DELAY_Z.value
             ],
-            constants.IOFields.RAMP_TIME: self.dict_dis[constants.IOFields.RAMP_TIME],
-            constants.IOFields.HB_CORRECTION_KEY: self.config.hb_correction_key,
-            constants.IOFields.HB: self.config.hb,
-            constants.IOFields.RBC_HB_CORRECTION_FACTOR: self.rbc_hb_correction_factor,
-            constants.IOFields.MEMBRANE_HB_CORRECTION_FACTOR: self.membrane_hb_correction_factor,
-            constants.IOFields.VOL_CORRECTION_KEY: self.config.vol_correction_key,
-            constants.IOFields.CORRECTED_LUNG_VOLUME: self.corrected_lung_volume,
-            constants.IOFields.VOL_CORRECTION_FACTOR_MEMBRANE: self.vol_correction_factor_membrane,
-            constants.IOFields.VOL_CORRECTION_FACTOR_RBC: self.vol_correction_factor_rbc,
-            constants.IOFields.KERNEL_SHARPNESS: self.config.recon.kernel_sharpness_hr,
-            constants.IOFields.N_SKIP_START: self.config.recon.n_skip_start,
-            constants.IOFields.N_DIS_REMOVED: self.n_dis_spikes_detected,
-            constants.IOFields.N_GAS_REMOVED: self.n_gas_spikes_detected,
-            constants.IOFields.REMOVE_NOISE: self.config.recon.remove_noisy_projections,
-            constants.IOFields.SHAPE_FIDS: self.dict_dis[constants.IOFields.FIDS].shape,
-            constants.IOFields.SHAPE_IMAGE: self.image_gas_highreso.shape,
-            constants.IOFields.T2_CORRECTION_FACTOR_MEMBRANE: signal_utils.calculate_t2star_correction(
-                self.dict_dis[constants.IOFields.TE90],
+            constants.IOFields.RAMP_TIME.value: self.dict_dis[constants.IOFields.RAMP_TIME.value],
+            constants.IOFields.HB_CORRECTION_KEY.value: self.config.hb_correction_key,
+            constants.IOFields.HB.value: self.config.hb,
+            constants.IOFields.RBC_HB_CORRECTION_FACTOR.value: self.rbc_hb_correction_factor,
+            constants.IOFields.MEMBRANE_HB_CORRECTION_FACTOR.value: self.membrane_hb_correction_factor,
+            constants.IOFields.VOL_CORRECTION_KEY.value: self.config.vol_correction_key,
+            constants.IOFields.CORRECTED_LUNG_VOLUME.value: self.corrected_lung_volume,
+            constants.IOFields.VOL_CORRECTION_FACTOR_MEMBRANE.value: self.vol_correction_factor_membrane,
+            constants.IOFields.VOL_CORRECTION_FACTOR_RBC.value: self.vol_correction_factor_rbc,
+            constants.IOFields.KERNEL_SHARPNESS.value: self.config.recon.kernel_sharpness_hr,
+            constants.IOFields.N_SKIP_START.value: self.config.recon.n_skip_start,
+            constants.IOFields.N_DIS_REMOVED.value: self.n_dis_spikes_detected,
+            constants.IOFields.N_GAS_REMOVED.value: self.n_gas_spikes_detected,
+            constants.IOFields.REMOVE_NOISE.value: self.config.recon.remove_noisy_projections,
+            constants.IOFields.SHAPE_FIDS.value: self.dict_dis[constants.IOFields.FIDS.value].shape,
+            constants.IOFields.SHAPE_IMAGE.value: self.image_gas_highreso.shape,
+            constants.IOFields.T2_CORRECTION_FACTOR_MEMBRANE.value: signal_utils.calculate_t2star_correction(
+                self.dict_dis[constants.IOFields.TE90.value],
                 constants.T2STAR_MEMBRANE_3T,
-                self.dict_dis[constants.IOFields.FIELD_STRENGTH],
+                self.dict_dis[constants.IOFields.FIELD_STRENGTH.value],
             ),
-            constants.IOFields.T2_CORRECTION_FACTOR_RBC: signal_utils.calculate_t2star_correction(
-                self.dict_dis[constants.IOFields.TE90],
+            constants.IOFields.T2_CORRECTION_FACTOR_RBC.value: signal_utils.calculate_t2star_correction(
+                self.dict_dis[constants.IOFields.TE90.value],
                 constants.T2STAR_RBC_3T,
-                self.dict_dis[constants.IOFields.FIELD_STRENGTH],
+                self.dict_dis[constants.IOFields.FIELD_STRENGTH.value],
             ),
-            constants.IOFields.TE90: 1e6 * self.dict_dis[constants.IOFields.TE90],
-            constants.IOFields.TR_DIS: 1e3 * self.dict_dis[constants.IOFields.TR],
-            constants.IOFields.USER_LUNG_VOLUME_VALUE: self.user_lung_volume_value,
-            constants.IOFields.AGE: self.dict_dis[constants.IOFields.AGE],
-            constants.IOFields.SEX: self.dict_dis[constants.IOFields.SEX],
-            constants.IOFields.HEIGHT: self.dict_dis[constants.IOFields.HEIGHT],
-            constants.IOFields.WEIGHT: self.dict_dis[constants.IOFields.WEIGHT],
-            constants.IOFields.BMI: self.dict_dis[constants.IOFields.WEIGHT]/((self.dict_dis[constants.IOFields.HEIGHT]/100)**2),
-            constants.IOFields.VENT_NORMALIZATION_METHOD: self.config.vent_normalization_method,
+            constants.IOFields.TE90.value: 1e6 * self.dict_dis[constants.IOFields.TE90.value],
+            constants.IOFields.TR_DIS.value: 1e3 * self.dict_dis[constants.IOFields.TR.value],
+            constants.IOFields.USER_LUNG_VOLUME_VALUE.value: self.user_lung_volume_value,
+            constants.IOFields.AGE.value: self.dict_dis[constants.IOFields.AGE.value],
+            constants.IOFields.SEX.value: self.dict_dis[constants.IOFields.SEX.value],
+            constants.IOFields.HEIGHT.value: self.dict_dis[constants.IOFields.HEIGHT.value],
+            constants.IOFields.WEIGHT.value: self.dict_dis[constants.IOFields.WEIGHT.value],
+            constants.IOFields.BMI.value: self.dict_dis[constants.IOFields.WEIGHT.value]/((self.dict_dis[constants.IOFields.HEIGHT.value]/100)**2),
+            constants.IOFields.VENT_NORMALIZATION_METHOD.value: self.config.vent_normalization_method,
         }
         return self.dict_info
 
@@ -1784,7 +1784,7 @@ class Subject(object):
             )
             plot.plot_data_rbc_k0(
                 t=np.arange(self.data_rbc_k0.shape[0])
-                * self.dict_dis[constants.IOFields.TR],
+                * self.dict_dis[constants.IOFields.TR.value],
                 data=self.data_rbc_k0,
                 path="tmp/data_rbc_k0_proc.png",
                 high=self.high_indices,
@@ -1793,7 +1793,7 @@ class Subject(object):
             )
             plot.plot_data_rbc_k0(
                 t=np.arange(self.data_rbc_k0.shape[0])
-                * self.dict_dis[constants.IOFields.TR],
+                * self.dict_dis[constants.IOFields.TR.value],
                 data=signal_utils.dixon_decomposition(
                     self.data_dissolved, self.rbc_m_ratio
                 )[0][:, 0],
@@ -1944,53 +1944,53 @@ class Subject(object):
         io_utils.export_nii(
             self.image_rbc2gas_binned,
             "tmp/rbc_binned.nii",
-            self.dict_dis[constants.IOFields.FOV],
+            self.dict_dis[constants.IOFields.FOV.value],
         )
         io_utils.export_nii(
             np.abs(self.image_gas_highreso),
             "tmp/gas_highreso.nii",
-            self.dict_dis[constants.IOFields.FOV],
+            self.dict_dis[constants.IOFields.FOV.value],
         )
         io_utils.export_nii(
             np.abs(self.image_gas_highsnr),
             "tmp/gas_highsnr.nii",
-            self.dict_dis[constants.IOFields.FOV],
+            self.dict_dis[constants.IOFields.FOV.value],
         )
         io_utils.export_nii(
             np.abs(self.image_rbc),
             "tmp/rbc.nii",
-            self.dict_dis[constants.IOFields.FOV],
+            self.dict_dis[constants.IOFields.FOV.value],
         )
         io_utils.export_nii(
             np.abs(self.image_membrane),
             "tmp/membrane.nii",
-            self.dict_dis[constants.IOFields.FOV],
+            self.dict_dis[constants.IOFields.FOV.value],
         )
         io_utils.export_nii(
             np.abs(self.image_membrane2gas),
             "tmp/membrane2gas.nii",
-            self.dict_dis[constants.IOFields.FOV],
+            self.dict_dis[constants.IOFields.FOV.value],
         )
         io_utils.export_nii(
             self.mask.astype(float),
             "tmp/mask_reg.nii",
-            self.dict_dis[constants.IOFields.FOV],
+            self.dict_dis[constants.IOFields.FOV.value],
         )
         io_utils.export_nii(
             np.abs(self.image_dissolved),
             "tmp/dissolved.nii",
-            self.dict_dis[constants.IOFields.FOV],
+            self.dict_dis[constants.IOFields.FOV.value],
         )
         if self.config.recon.recon_proton:
             io_utils.export_nii(
                 np.abs(self.image_proton),
                 "tmp/proton.nii",
-                self.dict_dis[constants.IOFields.FOV],
+                self.dict_dis[constants.IOFields.FOV.value],
             )
             io_utils.export_nii(
                 np.abs(self.image_proton_reg),
                 "tmp/proton_reg.nii",
-                self.dict_dis[constants.IOFields.FOV],
+                self.dict_dis[constants.IOFields.FOV.value],
             ),
         io_utils.export_nii_4d(
             plot.map_and_overlay_to_rgb(
