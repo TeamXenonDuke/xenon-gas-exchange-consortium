@@ -324,16 +324,13 @@ def capillary_blood_volume(
     """Estimate absolute Vc in mL using the supplied manuscript equation.
 
     alveolar_volume is in L; hemoglobin is in g/dL. rbc_mean is the
-    mean RBC/gas ratio over the ventilated mask, before optional Hb and
-    lung-volume signal corrections (other acquisition corrections remain).
+    mean RBC/gas ratio over the ventilated mask.
     The 208 ppm mean is converted locally to the 218 ppm scale. Frequency
     windows match the pipeline's reference-data selection.
     Missing Hb (including the config's zero placeholder) uses the reference
-    Hb, so its multiplicative factor is one. Negative or infinite Hb is invalid.
+    Hb of 14, so its multiplicative factor is one. 
     """
     va, rbc, ppm = map(float, (alveolar_volume, rbc_mean, excitation_ppm))
-    # Zero is the existing config's missing-Hb placeholder. Missing Hb makes
-    # Hb_ref/Hb equal one; it does not change the subject's stored Hb field.
     if hemoglobin is None or (
         isinstance(hemoglobin, str)
         and hemoglobin.strip().lower() in {"", "na", "n/a", "none", "nan"}
@@ -365,10 +362,7 @@ def capillary_blood_volume(
 
 def capillary_blood_volume_reference(age: float, sex: str, height: float) -> float:
     """Return demographic Vc reference in mL; age is years and height is cm.
-
-    Uses the supplied male/female equations exactly, including the female
-    age-squared coefficient 0.00421, as clarified by the user. Invalid or
-    nonpositive references cannot serve as a denominator and raise ValueError.
+     Invalid or nonpositive references cannot serve as a denominator and raise ValueError.
     """
     age, height = float(age), float(height)
     if not all(math.isfinite(value) and value > 0 for value in (age, height)):
