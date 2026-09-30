@@ -17,6 +17,22 @@ KCO_ALPHA = 22.6  # membrane coefficient
 KCO_BETA = 7.42  # RBC coefficient
 VA_ALPHA = 1.58
 
+# Absolute capillary blood volume equation; RBC reference is a ratio, not percent.
+VC_COEFFICIENT = 13.0  # mL/L
+VC_RBC_REF = 0.00455  # 0.455 / 100, at 218 ppm
+VC_RBC_208_TO_218 = 1.031
+
+
+class VcReference:
+    """Demographic Vc reference coefficients from the supplied equations.
+
+    Each tuple is (intercept in mL, height coefficient in mL/cm,
+    age-squared coefficient in mL/year^2). The age term is subtracted.
+    """
+
+    MALE = (-23.8, 0.645, 0.00547)
+    FEMALE = (-13.8, 0.527, 0.00421)
+
 NONE = "None"
 
 
@@ -304,6 +320,8 @@ class StatsIOFields(object):
     KCO_EST = "kco_est"
     RDP_BA = "rdp_ba"
     ALVEOLAR_VOLUME = "alveolar_volume"
+    VC = "vc"
+    RELATIVE_VC = "relative_vc"
 
     RBC_HIGH_SNR = "rbc_high_snr"
     RBC_LOW_SNR = "rbc_low_snr"

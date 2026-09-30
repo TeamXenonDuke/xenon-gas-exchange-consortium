@@ -108,6 +108,7 @@ class Subject(object):
         self.image_rbc_osc_corr = np.array([0.0])
         self.image_rbc_osc_binned_corr = np.array([0.0])
         self.relative_vc_map = np.array([0.0])
+        self.vc_ref = "NA"
         self.correction_map = np.array([0.0])
         self.key_radius = 0
         self.low_indices = np.array([0.0])
@@ -1218,6 +1219,52 @@ class Subject(object):
                 np.logical_and(self.mask, ~self.mask_rbc)
             ] = -1
 
+    def get_capillary_blood_volume(self):
+        """Return Vc in mL, or NA when its inputs are unavailable/unsupported."""
+        # The supplied equation expects RBC before these optional corrections.
+        # Do not silently add its Hb factor to an already corrected RBC mean.
+        if (
+            self.config.hb_correction_key != constants.HbCorrectionKey.NONE.value
+            or self.config.vol_correction_key != constants.VolCorrectionKey.NONE.value
+        ):
+            logging.warning(
+                "Vc unavailable: requires RBC before optional Hb/volume signal "
+                "corrections; vc will be NA"
+            )
+            return "NA"
+        try:
+            return metrics.capillary_blood_volume(
+                alveolar_volume=self.dict_stats[constants.StatsIOFields.ALVEOLAR_VOLUME],
+                rbc_mean=self.dict_stats[constants.StatsIOFields.RBC_MEAN],
+                hemoglobin=getattr(self.config, "hb", None),
+                excitation_ppm=self.dict_dis[
+                    constants.IOFields.XE_DISSOLVED_OFFSET_FREQUENCY
+                ],
+            )
+        except (TypeError, ValueError, KeyError, OverflowError) as exc:
+            logging.warning("Vc unavailable: %s; vc will be NA", exc)
+            return "NA"
+
+    def get_relative_capillary_blood_volume(self):
+        """Store demographic Vc reference internally and return vc/vc_ref."""
+        self.vc_ref = "NA"
+        try:
+            self.vc_ref = metrics.capillary_blood_volume_reference(
+                age=self.dict_dis.get(constants.IOFields.AGE),
+                sex=self.dict_dis.get(constants.IOFields.SEX),
+                height=self.dict_dis.get(constants.IOFields.HEIGHT),
+            )
+        except (TypeError, ValueError, OverflowError) as exc:
+            logging.warning("Vc reference unavailable: %s; relative_vc will be NA", exc)
+            return "NA"
+        try:
+            return metrics.relative_capillary_blood_volume(
+                self.dict_stats[constants.StatsIOFields.VC], self.vc_ref
+            )
+        except (TypeError, ValueError, KeyError, OverflowError) as exc:
+            logging.warning("Relative Vc unavailable: %s; relative_vc will be NA", exc)
+            return "NA"
+
     def get_statistics(self) -> Dict[str, Any]:
         """Calculate image statistics.
 
@@ -1350,6 +1397,10 @@ class Subject(object):
                 volume_type="dlco",
             ),
         }
+        self.dict_stats[constants.StatsIOFields.VC] = self.get_capillary_blood_volume()
+        self.dict_stats[constants.StatsIOFields.RELATIVE_VC] = (
+            self.get_relative_capillary_blood_volume()
+        )
         age = self.dict_dis[constants.IOFields.AGE]
         sex = self.dict_dis[constants.IOFields.SEX]
         if pd.notna(age) and age != "" and pd.notna(sex) and sex != "":

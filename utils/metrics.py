@@ -315,6 +315,90 @@ def dlco(
     return dlco_v
 
 
+def capillary_blood_volume(
+    alveolar_volume: float,
+    rbc_mean: float,
+    hemoglobin: float,
+    excitation_ppm: float,
+) -> float:
+    """Estimate absolute Vc in mL using the supplied manuscript equation.
+
+    alveolar_volume is in L; hemoglobin is in g/dL. rbc_mean is the
+    mean RBC/gas ratio over the ventilated mask, before optional Hb and
+    lung-volume signal corrections (other acquisition corrections remain).
+    The 208 ppm mean is converted locally to the 218 ppm scale. Frequency
+    windows match the pipeline's reference-data selection.
+    Missing Hb (including the config's zero placeholder) uses the reference
+    Hb, so its multiplicative factor is one. Negative or infinite Hb is invalid.
+    """
+    va, rbc, ppm = map(float, (alveolar_volume, rbc_mean, excitation_ppm))
+    # Zero is the existing config's missing-Hb placeholder. Missing Hb makes
+    # Hb_ref/Hb equal one; it does not change the subject's stored Hb field.
+    if hemoglobin is None or (
+        isinstance(hemoglobin, str)
+        and hemoglobin.strip().lower() in {"", "na", "n/a", "none", "nan"}
+    ):
+        hb = constants.HbCorrection.HB_REF
+    else:
+        hb = float(hemoglobin)
+        if hb == 0 or math.isnan(hb):
+            hb = constants.HbCorrection.HB_REF
+    if not all(math.isfinite(value) for value in (va, rbc, hb, ppm)):
+        raise ValueError("Vc inputs must be finite numbers")
+    if va < 0 or rbc < 0 or hb <= 0:
+        raise ValueError("Vc requires nonnegative VA/RBC and positive Hb when supplied")
+    if 206 <= ppm <= 210:
+        rbc *= constants.VC_RBC_208_TO_218
+    elif not 216 <= ppm <= 220:
+        raise ValueError("Vc requires a 208 or 218 ppm excitation")
+
+    vc = (
+        constants.VC_COEFFICIENT
+        * va
+        * (constants.HbCorrection.HB_REF / hb)
+        * (rbc / constants.VC_RBC_REF)
+    )
+    if not math.isfinite(vc):
+        raise ValueError("Vc result is not finite")
+    return vc
+
+
+def capillary_blood_volume_reference(age: float, sex: str, height: float) -> float:
+    """Return demographic Vc reference in mL; age is years and height is cm.
+
+    Uses the supplied male/female equations exactly, including the female
+    age-squared coefficient 0.00421, as clarified by the user. Invalid or
+    nonpositive references cannot serve as a denominator and raise ValueError.
+    """
+    age, height = float(age), float(height)
+    if not all(math.isfinite(value) and value > 0 for value in (age, height)):
+        raise ValueError("Vc reference requires positive finite age and height")
+    if not isinstance(sex, str):
+        raise ValueError("Vc reference requires sex M or F")
+    sex = sex.strip().upper()
+    if sex in {"M", "MALE"}:
+        intercept, height_coefficient, age_squared_coefficient = constants.VcReference.MALE
+    elif sex in {"F", "FEMALE"}:
+        intercept, height_coefficient, age_squared_coefficient = constants.VcReference.FEMALE
+    else:
+        raise ValueError("Vc reference requires sex M or F")
+    vc_ref = intercept + height_coefficient * height - age_squared_coefficient * age**2
+    if not math.isfinite(vc_ref) or vc_ref <= 0:
+        raise ValueError("Demographic Vc reference is nonpositive or not finite")
+    return vc_ref
+
+
+def relative_capillary_blood_volume(vc: float, vc_ref: float) -> float:
+    """Return dimensionless vc/vc_ref; 1.0 corresponds to 100% predicted."""
+    vc, vc_ref = float(vc), float(vc_ref)
+    if not all(math.isfinite(value) for value in (vc, vc_ref)) or vc < 0 or vc_ref <= 0:
+        raise ValueError("Relative Vc requires nonnegative Vc and positive finite reference")
+    relative_vc = vc / vc_ref
+    if not math.isfinite(relative_vc):
+        raise ValueError("Relative Vc result is not finite")
+    return relative_vc
+
+
 def alveolar_volume(image: np.ndarray, mask: np.ndarray, fov: float) -> float:
     """Get the alveolar volume of the image.
 
