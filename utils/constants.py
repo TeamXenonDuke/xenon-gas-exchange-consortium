@@ -15,7 +15,7 @@ THRESHOLD_MA = 60 / 100.0 # Here we use 60% which is used by other consortiums, 
 
 KCO_ALPHA = 22.6  # membrane coefficient
 KCO_BETA = 7.42  # RBC coefficient
-VA_ALPHA = 1.58
+VA_ALPHA = 1.61
 
 # Absolute capillary blood volume equation; RBC reference is a ratio, not percent.
 VC_COEFFICIENT = 13.0  # mL/L
