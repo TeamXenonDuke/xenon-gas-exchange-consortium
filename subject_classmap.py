@@ -1221,8 +1221,6 @@ class Subject(object):
 
     def get_capillary_blood_volume(self):
         """Return Vc in mL, or NA when its inputs are unavailable/unsupported."""
-        # The supplied equation expects RBC before these optional corrections.
-        # Do not silently add its Hb factor to an already corrected RBC mean.
         if (
             self.config.hb_correction_key != constants.HbCorrectionKey.NONE.value
             or self.config.vol_correction_key != constants.VolCorrectionKey.NONE.value
