@@ -17,17 +17,17 @@ def gas_contamination_correction(
 ) -> Dict:
     """Remove gas contamination from data."""
 
-    dict_dis[constants.IOFields.FIDS_DIS] = signal_utils.remove_gasphase_contamination(
-        data_dissolved=dict_dis[constants.IOFields.FIDS_DIS],
-        data_gas=dict_dis[constants.IOFields.FIDS_GAS],
-        sample_time=dict_dis[constants.IOFields.SAMPLE_TIME],
-        freq_gas_acq_diss=dict_dis[constants.IOFields.XE_CENTER_FREQUENCY]
-        * dict_dis[constants.IOFields.XE_DISSOLVED_OFFSET_FREQUENCY]
+    dict_dis[constants.IOFields.FIDS_DIS.value] = signal_utils.remove_gasphase_contamination(
+        data_dissolved=dict_dis[constants.IOFields.FIDS_DIS.value],
+        data_gas=dict_dis[constants.IOFields.FIDS_GAS.value],
+        sample_time=dict_dis[constants.IOFields.SAMPLE_TIME.value],
+        freq_gas_acq_diss=dict_dis[constants.IOFields.XE_CENTER_FREQUENCY.value]
+        * dict_dis[constants.IOFields.XE_DISSOLVED_OFFSET_FREQUENCY.value]
         * (-1.0),
         phase_gas_acq_diss=config.phase_gas_acq_diss,
         area_gas_acq_diss=config.area_gas_acq_diss,
         optimized_conta_phase=config.recon.optimized_conta_phase,
-        fa_gas=dict_dis[constants.IOFields.FA_GAS],
+        fa_gas=dict_dis[constants.IOFields.FA_GAS.value],
     )
     return dict_dis
 
@@ -43,23 +43,23 @@ def prepare_traj(
     Returns:
         traj (np.array): trajectory array of shape (n_projections, n_points, 3)
     """
-    data = data_dict[constants.IOFields.FIDS]
+    data = data_dict[constants.IOFields.FIDS.value]
 
     traj_x, traj_y, traj_z = traj_utils.generate_trajectory(
-        sample_time=1e6 * data_dict[constants.IOFields.SAMPLE_TIME],
-        ramp_time=data_dict[constants.IOFields.RAMP_TIME],
-        n_frames=data_dict[constants.IOFields.N_FRAMES],
+        sample_time=1e6 * data_dict[constants.IOFields.SAMPLE_TIME.value],
+        ramp_time=data_dict[constants.IOFields.RAMP_TIME.value],
+        n_frames=data_dict[constants.IOFields.N_FRAMES.value],
         n_points=data.shape[1],
-        del_x=data_dict[constants.IOFields.GRAD_DELAY_X],
-        del_y=data_dict[constants.IOFields.GRAD_DELAY_Y],
-        del_z=data_dict[constants.IOFields.GRAD_DELAY_Z],
-        traj_type=config.recon.traj_type if config else constants.TrajType.HALTONSPIRAL,  # type: ignore
+        del_x=data_dict[constants.IOFields.GRAD_DELAY_X.value],
+        del_y=data_dict[constants.IOFields.GRAD_DELAY_Y.value],
+        del_z=data_dict[constants.IOFields.GRAD_DELAY_Z.value],
+        traj_type=config.recon.traj_type if config else constants.TrajType.HALTONSPIRAL.value,  # type: ignore
     )
     # remove projections at the beginning and end of the trajectory
     shape_traj = traj_x.shape
-    if constants.IOFields.N_SKIP_START in data_dict:
-        nskip_start = int(data_dict[constants.IOFields.N_SKIP_START])
-        nskip_end = int(data_dict[constants.IOFields.N_SKIP_END])
+    if constants.IOFields.N_SKIP_START.value in data_dict:
+        nskip_start = int(data_dict[constants.IOFields.N_SKIP_START.value])
+        nskip_end = int(data_dict[constants.IOFields.N_SKIP_END.value])
         traj_x = traj_x[nskip_start : shape_traj[0] - (nskip_end)]
         traj_y = traj_y[nskip_start : shape_traj[0] - (nskip_end)]
         traj_z = traj_z[nskip_start : shape_traj[0] - (nskip_end)]

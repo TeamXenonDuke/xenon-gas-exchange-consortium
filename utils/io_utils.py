@@ -233,12 +233,12 @@ def read_dyn_twix(path: str) -> Dict[str, Any]:
     tr = twix_utils.get_TR(twix_obj=twix_obj)
 
     return {
-        constants.IOFields.SAMPLE_TIME: sample_time,
-        constants.IOFields.FIDS_DIS: fids_dis,
-        constants.IOFields.XE_CENTER_FREQUENCY: xe_center_frequency,
-        constants.IOFields.XE_DISSOLVED_OFFSET_FREQUENCY: xe_dissolved_offset_frequency,
-        constants.IOFields.SCAN_DATE: scan_date,
-        constants.IOFields.TR: tr,
+        constants.IOFields.SAMPLE_TIME.value: sample_time,
+        constants.IOFields.FIDS_DIS.value: fids_dis,
+        constants.IOFields.XE_CENTER_FREQUENCY.value: xe_center_frequency,
+        constants.IOFields.XE_DISSOLVED_OFFSET_FREQUENCY.value: xe_dissolved_offset_frequency,
+        constants.IOFields.SCAN_DATE.value: scan_date,
+        constants.IOFields.TR.value: tr,
     }
 
 
@@ -303,42 +303,42 @@ def read_dis_twix(
         ramp_time = twix_utils.get_ramp_time(twix_obj)
 
     return {
-        constants.IOFields.AGE: twix_utils.get_patient_age(twix_obj),
-        constants.IOFields.SEX: twix_utils.get_patient_sex(twix_obj),
-        constants.IOFields.HEIGHT: twix_utils.get_patient_height(twix_obj),
-        constants.IOFields.WEIGHT: twix_utils.get_patient_weight(twix_obj),
-        constants.IOFields.SAMPLE_TIME: twix_utils.get_sample_time(twix_obj),
-        constants.IOFields.FA_DIS: twix_utils.get_flipangle_dissolved(twix_obj),
-        constants.IOFields.FA_GAS: twix_utils.get_flipangle_gas(twix_obj),
-        constants.IOFields.FIELD_STRENGTH: twix_utils.get_field_strength(twix_obj),
-        constants.IOFields.FIDS: data_dict[constants.IOFields.FIDS],
-        constants.IOFields.FIDS_DIS: data_dict[constants.IOFields.FIDS_DIS],
-        constants.IOFields.FIDS_GAS: data_dict[constants.IOFields.FIDS_GAS],
-        constants.IOFields.FOV: twix_utils.get_FOV(twix_obj),
-        constants.IOFields.XE_CENTER_FREQUENCY: twix_utils.get_center_freq(twix_obj),
-        constants.IOFields.XE_DISSOLVED_OFFSET_FREQUENCY: twix_utils.get_excitation_freq(
+        constants.IOFields.AGE.value: twix_utils.get_patient_age(twix_obj),
+        constants.IOFields.SEX.value: twix_utils.get_patient_sex(twix_obj),
+        constants.IOFields.HEIGHT.value: twix_utils.get_patient_height(twix_obj),
+        constants.IOFields.WEIGHT.value: twix_utils.get_patient_weight(twix_obj),
+        constants.IOFields.SAMPLE_TIME.value: twix_utils.get_sample_time(twix_obj),
+        constants.IOFields.FA_DIS.value: twix_utils.get_flipangle_dissolved(twix_obj),
+        constants.IOFields.FA_GAS.value: twix_utils.get_flipangle_gas(twix_obj),
+        constants.IOFields.FIELD_STRENGTH.value: twix_utils.get_field_strength(twix_obj),
+        constants.IOFields.FIDS.value: data_dict[constants.IOFields.FIDS.value],
+        constants.IOFields.FIDS_DIS.value: data_dict[constants.IOFields.FIDS_DIS.value],
+        constants.IOFields.FIDS_GAS.value: data_dict[constants.IOFields.FIDS_GAS.value],
+        constants.IOFields.FOV.value: twix_utils.get_FOV(twix_obj),
+        constants.IOFields.XE_CENTER_FREQUENCY.value: twix_utils.get_center_freq(twix_obj),
+        constants.IOFields.XE_DISSOLVED_OFFSET_FREQUENCY.value: twix_utils.get_excitation_freq(
             twix_obj
         ),
-        constants.IOFields.GRAD_DELAY_X: config.recon.del_x,
-        constants.IOFields.GRAD_DELAY_Y: config.recon.del_y,
-        constants.IOFields.GRAD_DELAY_Z: config.recon.del_z,
-        constants.IOFields.INSTITUTION: twix_utils.get_institution_name(twix_obj),
-        constants.IOFields.SYSTEM_VENDOR: twix_utils.get_system_vendor(twix_obj),
-        constants.IOFields.N_FRAMES: data_dict[constants.IOFields.N_FRAMES],
-        constants.IOFields.N_SKIP_END: data_dict[constants.IOFields.N_SKIP_END],
-        constants.IOFields.N_SKIP_START: data_dict[constants.IOFields.N_SKIP_START],
-        constants.IOFields.ORIENTATION: twix_utils.get_orientation(twix_obj),
-        constants.IOFields.PROTOCOL_NAME: twix_utils.get_protocol_name(twix_obj),
-        constants.IOFields.RAMP_TIME: ramp_time,
-        constants.IOFields.REMOVEOS: twix_utils.get_flag_removeOS(twix_obj),
-        constants.IOFields.SCAN_DATE: twix_utils.get_scan_date(twix_obj),
-        constants.IOFields.SOFTWARE_VERSION: twix_utils.get_software_version(twix_obj),
-        constants.IOFields.TE90: twix_utils.get_TE90(twix_obj),
-        constants.IOFields.TR: twix_utils.get_TR_dissolved(twix_obj),
-        constants.IOFields.BANDWIDTH: twix_utils.get_bandwidth(
+        constants.IOFields.GRAD_DELAY_X.value: config.recon.del_x,
+        constants.IOFields.GRAD_DELAY_Y.value: config.recon.del_y,
+        constants.IOFields.GRAD_DELAY_Z.value: config.recon.del_z,
+        constants.IOFields.INSTITUTION.value: twix_utils.get_institution_name(twix_obj),
+        constants.IOFields.SYSTEM_VENDOR.value: twix_utils.get_system_vendor(twix_obj),
+        constants.IOFields.N_FRAMES.value: data_dict[constants.IOFields.N_FRAMES.value],
+        constants.IOFields.N_SKIP_END.value: data_dict[constants.IOFields.N_SKIP_END.value],
+        constants.IOFields.N_SKIP_START.value: data_dict[constants.IOFields.N_SKIP_START.value],
+        constants.IOFields.ORIENTATION.value: twix_utils.get_orientation(twix_obj),
+        constants.IOFields.PROTOCOL_NAME.value: twix_utils.get_protocol_name(twix_obj),
+        constants.IOFields.RAMP_TIME.value: ramp_time,
+        constants.IOFields.REMOVEOS.value: twix_utils.get_flag_removeOS(twix_obj),
+        constants.IOFields.SCAN_DATE.value: twix_utils.get_scan_date(twix_obj),
+        constants.IOFields.SOFTWARE_VERSION.value: twix_utils.get_software_version(twix_obj),
+        constants.IOFields.TE90.value: twix_utils.get_TE90(twix_obj),
+        constants.IOFields.TR.value: twix_utils.get_TR_dissolved(twix_obj),
+        constants.IOFields.BANDWIDTH.value: twix_utils.get_bandwidth(
             twix_obj, data_dict, filename
         ),
-        constants.IOFields.PREP_PULSES: "false",
+        constants.IOFields.PREP_PULSES.value: "false",
     }
 
 
@@ -388,18 +388,18 @@ def read_ute_twix(
         logging.error("Gradient delay is not properly set in the config file")
 
     return {
-        constants.IOFields.SAMPLE_TIME: twix_utils.get_sample_time(twix_obj),
-        constants.IOFields.FIDS: data_dict[constants.IOFields.FIDS],
-        constants.IOFields.INSTITUTION: twix_utils.get_institution_name(twix_obj),
-        constants.IOFields.SYSTEM_VENDOR: twix_utils.get_system_vendor(twix_obj),
-        constants.IOFields.RAMP_TIME: twix_utils.get_ramp_time(twix_obj),
-        constants.IOFields.GRAD_DELAY_X: config.recon.del_x,
-        constants.IOFields.GRAD_DELAY_Y: config.recon.del_y,
-        constants.IOFields.GRAD_DELAY_Z: config.recon.del_z,
-        constants.IOFields.N_SKIP_END: data_dict[constants.IOFields.N_SKIP_END],
-        constants.IOFields.N_SKIP_START: data_dict[constants.IOFields.N_SKIP_START],
-        constants.IOFields.N_FRAMES: data_dict[constants.IOFields.N_FRAMES],
-        constants.IOFields.ORIENTATION: twix_utils.get_orientation(twix_obj),
+        constants.IOFields.SAMPLE_TIME.value: twix_utils.get_sample_time(twix_obj),
+        constants.IOFields.FIDS.value: data_dict[constants.IOFields.FIDS.value],
+        constants.IOFields.INSTITUTION.value: twix_utils.get_institution_name(twix_obj),
+        constants.IOFields.SYSTEM_VENDOR.value: twix_utils.get_system_vendor(twix_obj),
+        constants.IOFields.RAMP_TIME.value: twix_utils.get_ramp_time(twix_obj),
+        constants.IOFields.GRAD_DELAY_X.value: config.recon.del_x,
+        constants.IOFields.GRAD_DELAY_Y.value: config.recon.del_y,
+        constants.IOFields.GRAD_DELAY_Z.value: config.recon.del_z,
+        constants.IOFields.N_SKIP_END.value: data_dict[constants.IOFields.N_SKIP_END.value],
+        constants.IOFields.N_SKIP_START.value: data_dict[constants.IOFields.N_SKIP_START.value],
+        constants.IOFields.N_FRAMES.value: data_dict[constants.IOFields.N_FRAMES.value],
+        constants.IOFields.ORIENTATION.value: twix_utils.get_orientation(twix_obj),
     }
 
 
@@ -431,12 +431,12 @@ def read_dyn_mrd(path: str) -> Dict[str, Any]:
     tr = mrd_utils.get_TR(header=header)
 
     return {
-        constants.IOFields.SAMPLE_TIME: sample_time,
-        constants.IOFields.FIDS_DIS: fids_dis,
-        constants.IOFields.XE_CENTER_FREQUENCY: xe_center_frequency,
-        constants.IOFields.XE_DISSOLVED_OFFSET_FREQUENCY: xe_dissolved_offset_frequency,
-        constants.IOFields.SCAN_DATE: scan_date,
-        constants.IOFields.TR: tr,
+        constants.IOFields.SAMPLE_TIME.value: sample_time,
+        constants.IOFields.FIDS_DIS.value: fids_dis,
+        constants.IOFields.XE_CENTER_FREQUENCY.value: xe_center_frequency,
+        constants.IOFields.XE_DISSOLVED_OFFSET_FREQUENCY.value: xe_dissolved_offset_frequency,
+        constants.IOFields.SCAN_DATE.value: scan_date,
+        constants.IOFields.TR.value: tr,
     }
 
 
@@ -478,38 +478,38 @@ def read_dis_mrd(path: str) -> Dict[str, Any]:
 
     data_dict = mrd_utils.get_gx_data(dataset)
     return {
-        constants.IOFields.AGE: mrd_utils.get_patient_age(header),
-        constants.IOFields.SEX: mrd_utils.get_patient_sex(header),
-        constants.IOFields.HEIGHT: mrd_utils.get_patient_height(header),
-        constants.IOFields.WEIGHT: mrd_utils.get_patient_weight(header),
-        constants.IOFields.BANDWIDTH: np.nan,
-        constants.IOFields.SAMPLE_TIME: mrd_utils.get_sample_time_gas_exchange(dataset),
-        constants.IOFields.FA_DIS: mrd_utils.get_flipangle_dissolved(header),
-        constants.IOFields.FA_GAS: mrd_utils.get_flipangle_gas(header),
-        constants.IOFields.FIDS: data_dict[constants.IOFields.FIDS],
-        constants.IOFields.FIDS_DIS: data_dict[constants.IOFields.FIDS_DIS],
-        constants.IOFields.FIDS_GAS: data_dict[constants.IOFields.FIDS_GAS],
-        constants.IOFields.FIELD_STRENGTH: mrd_utils.get_field_strength(header),
-        constants.IOFields.FOV: mrd_utils.get_FOV(header),
-        constants.IOFields.XE_CENTER_FREQUENCY: mrd_utils.get_center_freq(header),
-        constants.IOFields.XE_DISSOLVED_OFFSET_FREQUENCY: mrd_utils.get_excitation_freq(
+        constants.IOFields.AGE.value: mrd_utils.get_patient_age(header),
+        constants.IOFields.SEX.value: mrd_utils.get_patient_sex(header),
+        constants.IOFields.HEIGHT.value: mrd_utils.get_patient_height(header),
+        constants.IOFields.WEIGHT.value: mrd_utils.get_patient_weight(header),
+        constants.IOFields.BANDWIDTH.value: np.nan,
+        constants.IOFields.SAMPLE_TIME.value: mrd_utils.get_sample_time_gas_exchange(dataset),
+        constants.IOFields.FA_DIS.value: mrd_utils.get_flipangle_dissolved(header),
+        constants.IOFields.FA_GAS.value: mrd_utils.get_flipangle_gas(header),
+        constants.IOFields.FIDS.value: data_dict[constants.IOFields.FIDS.value],
+        constants.IOFields.FIDS_DIS.value: data_dict[constants.IOFields.FIDS_DIS.value],
+        constants.IOFields.FIDS_GAS.value: data_dict[constants.IOFields.FIDS_GAS.value],
+        constants.IOFields.FIELD_STRENGTH.value: mrd_utils.get_field_strength(header),
+        constants.IOFields.FOV.value: mrd_utils.get_FOV(header),
+        constants.IOFields.XE_CENTER_FREQUENCY.value: mrd_utils.get_center_freq(header),
+        constants.IOFields.XE_DISSOLVED_OFFSET_FREQUENCY.value: mrd_utils.get_excitation_freq(
             header
         ),
-        constants.IOFields.GRAD_DELAY_X: np.nan,
-        constants.IOFields.GRAD_DELAY_Y: np.nan,
-        constants.IOFields.GRAD_DELAY_Z: np.nan,
-        constants.IOFields.INSTITUTION: mrd_utils.get_institution_name(header),
-        constants.IOFields.SYSTEM_VENDOR: mrd_utils.get_system_vendor(header),
-        constants.IOFields.ORIENTATION: mrd_utils.get_orientation(header),
-        constants.IOFields.PROTOCOL_NAME: mrd_utils.get_protocol_name(header),
-        constants.IOFields.RAMP_TIME: mrd_utils.get_ramp_time(header),
-        constants.IOFields.REMOVEOS: False,
-        constants.IOFields.SCAN_DATE: mrd_utils.get_scan_date(header),
-        constants.IOFields.SOFTWARE_VERSION: "NA",
-        constants.IOFields.TE90: mrd_utils.get_TE90(header),
-        constants.IOFields.TR: mrd_utils.get_TR_dissolved(header),
-        constants.IOFields.TRAJ: data_dict[constants.IOFields.TRAJ],
-        constants.IOFields.PREP_PULSES: mrd_utils.get_prep_pulses(header),
+        constants.IOFields.GRAD_DELAY_X.value: np.nan,
+        constants.IOFields.GRAD_DELAY_Y.value: np.nan,
+        constants.IOFields.GRAD_DELAY_Z.value: np.nan,
+        constants.IOFields.INSTITUTION.value: mrd_utils.get_institution_name(header),
+        constants.IOFields.SYSTEM_VENDOR.value: mrd_utils.get_system_vendor(header),
+        constants.IOFields.ORIENTATION.value: mrd_utils.get_orientation(header),
+        constants.IOFields.PROTOCOL_NAME.value: mrd_utils.get_protocol_name(header),
+        constants.IOFields.RAMP_TIME.value: mrd_utils.get_ramp_time(header),
+        constants.IOFields.REMOVEOS.value: False,
+        constants.IOFields.SCAN_DATE.value: mrd_utils.get_scan_date(header),
+        constants.IOFields.SOFTWARE_VERSION.value: "NA",
+        constants.IOFields.TE90.value: mrd_utils.get_TE90(header),
+        constants.IOFields.TR.value: mrd_utils.get_TR_dissolved(header),
+        constants.IOFields.TRAJ.value: data_dict[constants.IOFields.TRAJ.value],
+        constants.IOFields.PREP_PULSES.value: mrd_utils.get_prep_pulses(header),
     }
 
 
@@ -530,15 +530,15 @@ def read_ute_mrd(path: str) -> Dict[str, Any]:
 
     data_dict = mrd_utils.get_ute_data(dataset)
     return {
-        constants.IOFields.SAMPLE_TIME: mrd_utils.get_sample_time(dataset),
-        constants.IOFields.FIDS: data_dict[constants.IOFields.FIDS],
-        constants.IOFields.ORIENTATION: mrd_utils.get_orientation(header),
-        constants.IOFields.SYSTEM_VENDOR: mrd_utils.get_system_vendor(header),
-        constants.IOFields.RAMP_TIME: mrd_utils.get_ramp_time(header),
-        constants.IOFields.GRAD_DELAY_X: np.nan,
-        constants.IOFields.GRAD_DELAY_Y: np.nan,
-        constants.IOFields.GRAD_DELAY_Z: np.nan,
-        constants.IOFields.TRAJ: data_dict[constants.IOFields.TRAJ],
+        constants.IOFields.SAMPLE_TIME.value: mrd_utils.get_sample_time(dataset),
+        constants.IOFields.FIDS.value: data_dict[constants.IOFields.FIDS.value],
+        constants.IOFields.ORIENTATION.value: mrd_utils.get_orientation(header),
+        constants.IOFields.SYSTEM_VENDOR.value: mrd_utils.get_system_vendor(header),
+        constants.IOFields.RAMP_TIME.value: mrd_utils.get_ramp_time(header),
+        constants.IOFields.GRAD_DELAY_X.value: np.nan,
+        constants.IOFields.GRAD_DELAY_Y.value: np.nan,
+        constants.IOFields.GRAD_DELAY_Z.value: np.nan,
+        constants.IOFields.TRAJ.value: data_dict[constants.IOFields.TRAJ.value],
     }
 
 
