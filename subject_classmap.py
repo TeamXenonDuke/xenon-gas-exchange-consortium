@@ -1910,19 +1910,23 @@ class Subject(object):
         ]
         report.intro(self.dict_info, path=pdf_list[0])
         report.clinical(
-            {**self.dict_stats, **self.reference_data["reference_stats"]},
+            {**self.dict_stats, **self.reference_data["reference_stats"],
+             "vc_ref": getattr(self, "vc_ref", "NA")},
             path=pdf_list[1],
         )
         report.grayscale(
-            {**self.dict_stats, **self.reference_data["reference_stats"]},
+            {**self.dict_stats, **self.reference_data["reference_stats"],
+             "vc_ref": getattr(self, "vc_ref", "NA")},
             path=pdf_list[2],
         )
         report.grayscale_cor(
-            {**self.dict_stats, **self.reference_data["reference_stats"]},
+            {**self.dict_stats, **self.reference_data["reference_stats"],
+             "vc_ref": getattr(self, "vc_ref", "NA")},
             path=pdf_list[3],
         )
         report.qa(
-            {**self.dict_stats, **self.reference_data["reference_stats"]},
+            {**self.dict_stats, **self.reference_data["reference_stats"],
+             "vc_ref": getattr(self, "vc_ref", "NA")},
             path=pdf_list[4],
         )
 

@@ -104,6 +104,33 @@ def format_dict(dict_stats: Dict[str, Any]) -> Dict[str, Any]:
     return dict_stats
 
 
+def format_vc_values(dict_stats: Dict[str, Any]) -> Dict[str, Any]:
+    """Add report-only VC display strings without changing the CSV values.
+
+    Format the percentage from the full precision relative_vc ratio before
+    format_dict rounds numeric statistics. Both volume values are in mL.
+    """
+    def finite_nonnegative(value):
+        try:
+            value = float(value)
+        except (TypeError, ValueError, OverflowError):
+            return None
+        return value if np.isfinite(value) and value >= 0 else None
+
+    formatted = dict_stats.copy()
+    vc = finite_nonnegative(dict_stats.get("vc"))
+    relative_vc = finite_nonnegative(dict_stats.get("relative_vc"))
+    vc_ref = finite_nonnegative(dict_stats.get("vc_ref"))
+    if vc is None:
+        formatted["vc_display"] = "NA"
+    else:
+        percent = relative_vc * 100 if relative_vc is not None else None
+        percentage = f"{percent:.0f}%" if percent is not None and np.isfinite(percent) else "NA"
+        formatted["vc_display"] = f"{vc:.2f} ({percentage})"
+    formatted["vc_ref_display"] = f"{vc_ref:.2f}" if vc_ref is not None and vc_ref > 0 else "NA"
+    return formatted
+
+
 def clinical(dict_stats: Dict[str, Any], path: str):
     """Make clinical report with colormap images.
 
@@ -112,7 +139,7 @@ def clinical(dict_stats: Dict[str, Any], path: str):
         dict_stats (Dict[str, Any]): dictionary of statistics
         path (str): path to save report
     """
-    dict_stats = format_dict(dict_stats)
+    dict_stats = format_dict(format_vc_values(dict_stats))
     current_path = os.path.dirname(__file__)
     path_clinical = os.path.abspath(
         os.path.join(current_path, os.pardir, "assets", "html", "clinical.html")
@@ -146,7 +173,7 @@ def grayscale(dict_stats: Dict[str, Any], path: str):
         dict_stats (Dict[str, Any]): dictionary of statistics
         path (str): path to save report
     """
-    dict_stats = format_dict(dict_stats)
+    dict_stats = format_dict(format_vc_values(dict_stats))
     current_path = os.path.dirname(__file__)
     path_clinical = os.path.abspath(
         os.path.join(current_path, os.pardir, "assets", "html", "grayscale.html")
@@ -180,7 +207,7 @@ def grayscale_cor(dict_stats: Dict[str, Any], path: str):
         dict_stats (Dict[str, Any]): dictionary of statistics
         path (str): path to save report
     """
-    dict_stats = format_dict(dict_stats)
+    dict_stats = format_dict(format_vc_values(dict_stats))
     current_path = os.path.dirname(__file__)
     path_clinical = os.path.abspath(
         os.path.join(current_path, os.pardir, "assets", "html", "grayscale_cor.html")
@@ -248,7 +275,7 @@ def qa(dict_stats: Dict[str, Any], path: str):
         dict_info (Dict[str, Any]): dictionary of statistics
         path (str): path to save report
     """
-    dict_stats = format_dict(dict_stats)
+    dict_stats = format_dict(format_vc_values(dict_stats))
     current_path = os.path.dirname(__file__)
     path_clinical = os.path.abspath(
         os.path.join(current_path, os.pardir, "assets", "html", "qa.html")
