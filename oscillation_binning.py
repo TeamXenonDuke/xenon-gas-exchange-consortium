@@ -17,7 +17,7 @@ def bin_rbc_oscillations(
     data_dissolved: np.ndarray,
     TR: float,
     rbc_m_ratio: float,
-    method: str = constants.BinningMethods.BANDPASS,
+    method: str = constants.BinningMethods.BANDPASS.value,
 ) -> Tuple[np.ndarray, np.ndarray, np.ndarray, float, float]:
     """Bin dissolved phase data into high and low signal bins.
 
@@ -56,7 +56,7 @@ def bin_rbc_oscillations(
     plt.title("Smoothed RBC k0")
     plt.savefig("tmp/Smoothedk0.png")
 
-    if method == constants.BinningMethods.BANDPASS:
+    if method == constants.BinningMethods.BANDPASS.value:
         # normalize and detrend by gas k0
         # data_rbc_k0_proc = data_rbc_k0_proc / np.abs(data_gas_k0)
         data_rbc_k0_proc = signal_utils.detrend(data_rbc_k0_proc)
@@ -96,7 +96,7 @@ def bin_rbc_oscillations(
         plt.title("Sine Fit to Bandpass Filtered Data")
         plt.savefig("tmp/sinefitk0.png")
 
-    elif method == constants.BinningMethods.FIT_SINE:
+    elif method == constants.BinningMethods.FIT_SINE.value:
         bias = np.mean(data_rbc_k0_proc)
         # fit data to biexponential decay and remove trend
         data_rbc_k0_proc = signal_utils.detrend(data_rbc_k0_proc)
@@ -129,7 +129,7 @@ def bin_rbc_oscillations_slidingwindows(
     data_dissolved: np.ndarray,
     TR: float,
     rbc_m_ratio: float,
-    method: str = constants.BinningMethods.BANDPASS,
+    method: str = constants.BinningMethods.BANDPASS.value,
 ) -> Tuple[np.ndarray, list[np.ndarray]]:
     """Bin dissolved phase data into multiple bins in sliding window fashion.
 
@@ -156,14 +156,14 @@ def bin_rbc_oscillations_slidingwindows(
     data_rbc_k0_proc = signal_utils.smooth(
         data=data_rbc_k0_proc, window_size=window_size
     )
-    if method == constants.BinningMethods.BANDPASS:
+    if method == constants.BinningMethods.BANDPASS.value:
         # normalize and detrend by gas k0
         data_rbc_k0_proc = data_rbc_k0_proc / np.abs(data_gas_k0)
         # apply bandpass filter
         data_rbc_k0_proc = signal_utils.bandpass(
             data=data_rbc_k0_proc, lowcut=0.5, highcut=2.5, fs=1 / TR
         )
-    elif method == constants.BinningMethods.FIT_SINE:
+    elif method == constants.BinningMethods.FIT_SINE.value:
         # fit data to biexponential decay and remove trend
         data_rbc_k0_proc = signal_utils.detrend(data_rbc_k0_proc)
         # fit sine wave to data

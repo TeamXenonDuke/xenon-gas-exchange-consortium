@@ -407,7 +407,7 @@ def get_orientation(twix_obj: mapvbvd._attrdict.AttrDict) -> str:
         orientation = str(twix_obj.hdr.Dicom.tOrientation)
     except:
         logging.info("Unable to find orientation from twix object, returning coronal.")
-    return orientation.lower() if orientation else constants.Orientation.CORONAL
+    return orientation.lower() if orientation else constants.Orientation.CORONAL.value
 
 
 def get_protocol_name(twix_obj: mapvbvd._attrdict.AttrDict) -> str:
@@ -484,7 +484,7 @@ def get_bandwidth(
         bandwidth in Hz/pixel
     """
     sample_time = get_sample_time(twix_obj=twix_obj)
-    npts = data_dict[constants.IOFields.FIDS_DIS].shape[1]
+    npts = data_dict[constants.IOFields.FIDS_DIS.value].shape[1]
     return (
         1.0 / (2 * sample_time * npts)
         if "BW" not in filename
@@ -536,12 +536,12 @@ def get_gx_data(twix_obj: mapvbvd._attrdict.AttrDict) -> Dict[str, Any]:
     except:
         raise ValueError("Cannot get data from twix object.")
     return {
-        constants.IOFields.FIDS: raw_fids,
-        constants.IOFields.FIDS_GAS: data_gas,
-        constants.IOFields.FIDS_DIS: data_dis,
-        constants.IOFields.N_FRAMES: n_frames,
-        constants.IOFields.N_SKIP_START: n_skip_start,
-        constants.IOFields.N_SKIP_END: n_skip_end,
+        constants.IOFields.FIDS.value: raw_fids,
+        constants.IOFields.FIDS_GAS.value: data_gas,
+        constants.IOFields.FIDS_DIS.value: data_dis,
+        constants.IOFields.N_FRAMES.value: n_frames,
+        constants.IOFields.N_SKIP_START.value: n_skip_start,
+        constants.IOFields.N_SKIP_END.value: n_skip_end,
     }
 
 
@@ -587,8 +587,8 @@ def get_ute_data(twix_obj: mapvbvd._attrdict.AttrDict) -> Dict[str, Any]:
     data = np.transpose(raw_fids)
 
     return {
-        constants.IOFields.FIDS: data,
-        constants.IOFields.N_FRAMES: nframes,
-        constants.IOFields.N_SKIP_START: n_skip_start,
-        constants.IOFields.N_SKIP_END: n_skip_end,
+        constants.IOFields.FIDS.value: data,
+        constants.IOFields.N_FRAMES.value: nframes,
+        constants.IOFields.N_SKIP_START.value: n_skip_start,
+        constants.IOFields.N_SKIP_END.value: n_skip_end,
     }

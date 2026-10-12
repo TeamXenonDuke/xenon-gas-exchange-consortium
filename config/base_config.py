@@ -29,7 +29,7 @@ class Config(config_dict.ConfigDict):
         reference_data_key: str, reference data key
         remove_contamination: bool, whether to remove gas contamination
         remove_noisy_projections: bool, whether to remove noisy projections
-        segmentation_key: str, the segmentation key (CNN_VENT, MANUAL)
+        segmentation_key: str, the segmentation key
         subject_id: str, the subject id
         vol_correction_key: str,lung volume correction key (NONE, RBC_AND_MEMBRANE)
         corrected_lung_volume: float, target lung volume in L
@@ -44,10 +44,12 @@ class Config(config_dict.ConfigDict):
         self.rbc_m_ratio = 0.0
         self.patient_frc = "None"
         self.bag_volume = "None"
+        # Choose SegmentationKey from CNN_VENT, CNN_PROTON, MANUAL_VENT, MANUAL_PROTON,...
+        # ...THRESHOLD_VENT, THRESHOLDS_FRACTIONAL_VENTILATION, SKIP
         self.segmentation_key = constants.SegmentationKey.CNN_VENT.value
         self.manual_seg_filepath = ""
         # Choose NormalizationMethod from GLB_99 (default), GLB_FV, GLB_MA, THRESHOLD_MA
-        self.vent_normalization_method = constants.NormalizationMethods.GLB_99
+        self.vent_normalization_method = constants.NormalizationMethods.GLB_99.value
         # auto-generate if filepath missing or file not found
         self.auto_make_trachea_plus_lung_mask = True
         # where to write it if auto-generated
@@ -61,7 +63,6 @@ class Config(config_dict.ConfigDict):
         self.vol_correction_key = constants.VolCorrectionKey.NONE.value
         self.corrected_lung_volume = "NA"
         self.dicom_proton_dir = ""
-        self.multi_echo = False
         self.registration_key = constants.RegistrationKey.SKIP.value
         self.manual_reg_filepath = ""
         self.output_folder = "gx"
@@ -69,10 +70,6 @@ class Config(config_dict.ConfigDict):
         # Additional options for contamination correction
         self.phase_gas_acq_diss = "None"  # degree
         self.area_gas_acq_diss = "None"
-
-        # Git/version check options (optional)
-        self.git_compare_branch = "origin/main"  # Compare HEAD to this ref (None -> auto origin/HEAD -> origin/main).
-        self.git_always_show = False  # If True log every run; if False log only when compare-branch warnings exist.
 
         # Loading the paramater to base_config
         self.processes = Process()
@@ -132,7 +129,7 @@ class Recon(object):
         self.remove_contamination = False
         self.remove_noisy_projections = False
         self.gas_contamination_correction = False
-        self.traj_type = constants.TrajType.HALTONSPIRAL
+        self.traj_type = constants.TrajType.HALTONSPIRAL.value
 
         # Scaling is calculated automatically if not reading in trajectories directly
         # Will default to 1 when reading in trajectories, but may be specified instead

@@ -80,7 +80,7 @@ def rotate_sagittal_to_coronal(image: np.ndarray) -> np.ndarray:
 
 def flip_and_rotate_image(
     image: np.ndarray,
-    orientation: str = constants.Orientation.CORONAL,
+    orientation: str = constants.Orientation.CORONAL.value,
     system_vendor: str = constants.SystemVendor.SIEMENS.value,
 ) -> np.ndarray:
     """Flip and rotate image based on orientation.
@@ -94,21 +94,21 @@ def flip_and_rotate_image(
 
     # Siemens vendor code block
     if system_vendor.lower() == constants.SystemVendor.SIEMENS.value.lower():
-        if orientation == constants.Orientation.CORONAL:
+        if orientation == constants.Orientation.CORONAL.value:
             image = np.rot90(np.rot90(image, 3, axes=(1, 2)), 1, axes=(0, 2))
             image = np.rot90(image, 1, axes=(0, 1))
             image = np.flip(np.flip(image, axis=1), axis=2)
             return image
-        elif orientation == constants.Orientation.SAGITTAL:
+        elif orientation == constants.Orientation.SAGITTAL.value:
             return rotate_sagittal_to_coronal(flip_image_complex(image))
-        elif orientation == constants.Orientation.TRANSVERSE:
+        elif orientation == constants.Orientation.TRANSVERSE.value:
             return rotate_axial_to_coronal(flip_image_complex(image))
-        elif orientation == constants.Orientation.AXIAL:
+        elif orientation == constants.Orientation.AXIAL.value:
             image = np.rot90(np.rot90(image, 1, axes=(1, 2)), 3, axes=(0, 2))
             image = np.rot90(image, 1, axes=(0, 1))
             image = np.flip(image, axis=2)
             return image
-        elif orientation == constants.Orientation.NONE:
+        elif orientation == constants.Orientation.NONE.value:
             return image
         else:
             raise ValueError(
@@ -117,11 +117,11 @@ def flip_and_rotate_image(
 
     # Philips vendor code block
     elif system_vendor.lower() == constants.SystemVendor.PHILIPS.value.lower():
-        if orientation == constants.Orientation.CORONAL:
+        if orientation == constants.Orientation.CORONAL.value:
             image = np.rot90(np.rot90(image, 3, axes=(1, 2)), 1, axes=(0, 2))
             image = np.flip(image, axis=2)
             return image
-        elif orientation == constants.Orientation.NONE:
+        elif orientation == constants.Orientation.NONE.value:
             return image
         else:
             raise ValueError(
@@ -130,7 +130,7 @@ def flip_and_rotate_image(
 
     # GE vendor code block
     elif system_vendor.lower() == constants.SystemVendor.GE.value.lower():
-        if orientation == constants.Orientation.CORONAL:
+        if orientation == constants.Orientation.CORONAL.value:
 
             def complex_rot_axial_iowa(x):
                 from scipy.ndimage import rotate
@@ -145,7 +145,7 @@ def flip_and_rotate_image(
             image = complex_rot_axial_iowa(complex_align(image))
             image = np.flip(image, axis=0)
             return image
-        elif orientation == constants.Orientation.NONE:
+        elif orientation == constants.Orientation.NONE.value:
             return image
         else:
             raise ValueError(
@@ -237,7 +237,7 @@ def interp(img: np.ndarray, factor: int = 1):
 def normalize(
     image: np.ndarray,
     mask: np.ndarray = np.array([0.0]),
-    method: str = constants.NormalizationMethods.GLB_99,  # default method = GLB_99
+    method: str = constants.NormalizationMethods.GLB_99.value,  # default method = GLB_99
     percentile: float = 99.0,
     bag_volume: float = None,  # Add bag_volume as a parameter with a default value
 ) -> np.ndarray:
@@ -255,30 +255,30 @@ def normalize(
     """
     # Only require bag_volume when doing GLB_FV normalization
 
-    if method == constants.NormalizationMethods.MAX:
+    if method == constants.NormalizationMethods.MAX.value:
         return image * 1.0 / np.max(image)
-    elif method == constants.NormalizationMethods.PERCENTILE:
+    elif method == constants.NormalizationMethods.PERCENTILE.value:
         return image * 1.0 / np.percentile(image, percentile)
-    elif method == constants.NormalizationMethods.GLB_99:
+    elif method == constants.NormalizationMethods.GLB_99.value:
         image_thre = np.percentile(image[mask], percentile)
         image_n = np.divide(np.multiply(image, mask), image_thre)
         image_n[image_n > 1] = 1
         return image_n
-    elif method == constants.NormalizationMethods.MEAN:
+    elif method == constants.NormalizationMethods.MEAN.value:
         image[np.isnan(image)] = 0
         image[np.isinf(image)] = 0
         return image / np.mean(image[mask])
-    elif method == constants.NormalizationMethods.GLB_MA:
+    elif method == constants.NormalizationMethods.GLB_MA.value:
         image_mean = np.mean(image[mask])
         image_n = np.divide(np.multiply(image, mask), image_mean)
         image_clip = np.percentile(image_n[mask], 99)
         image_n[image_n > image_clip] = image_clip
         return image_n
-    elif method == constants.NormalizationMethods.THRESHOLD_MA:
+    elif method == constants.NormalizationMethods.THRESHOLD_MA.value:
         image_mean = np.mean(image[mask])
         image_n = np.divide(np.multiply(image, mask), image_mean)
         return image_n
-    elif method == constants.NormalizationMethods.GLB_FV:
+    elif method == constants.NormalizationMethods.GLB_FV.value:
 
         if (
             bag_volume is None
@@ -391,7 +391,7 @@ def calculate_rbc_oscillation(
     image_low: np.ndarray,
     image_total: np.ndarray,
     mask: np.ndarray,
-    method: str = constants.Methods.SMOOTH,
+    method: str = constants.Methods.SMOOTH.value,
 ) -> np.ndarray:
     """Calculate RBC oscillation.
 
@@ -406,15 +406,15 @@ def calculate_rbc_oscillation(
     """
     image_total = image_total.copy()
     image_total[mask == 0] = np.max(image_total[mask > 0])
-    if method == constants.Methods.ELEMENTWISE:
+    if method == constants.Methods.ELEMENTWISE.value:
         return 100 * np.subtract(image_high, image_low) / image_total
-    elif method == constants.Methods.MEAN:
+    elif method == constants.Methods.MEAN.value:
         return (
             100
             * np.subtract(image_high, image_low)
             / np.abs(np.mean(image_total[mask > 0]))
         )
-    elif method == constants.Methods.SMOOTH:
+    elif method == constants.Methods.SMOOTH.value:
         return 100 * np.subtract(image_high, image_low) / smooth_image(image_total)
     else:
         raise ValueError("Invalid method: {}.".format(method))
@@ -432,7 +432,7 @@ def calculate_corrected_rbc_oscillation(
     height: float,
     alveolar_volume: float,
     hemoglobin: float = 0.0,
-    method: str = constants.Methods.SMOOTH,
+    method: str = constants.Methods.SMOOTH.value,
 ) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
     """Calculate RBC oscillations corrected for relative capillary blood volume.
 
