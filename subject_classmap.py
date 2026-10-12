@@ -2135,6 +2135,6 @@ class Subject(object):
             repo_dir=".",
             do_fetch=True,
             show_n=8,
-            compare_branch=self.config.git_compare_branch,
-            git_always_show=self.config.git_always_show,
+            compare_branch="origin/main", # Compare HEAD to this ref (None -> auto origin/HEAD -> origin/main)
+            git_always_show=False, # If True log every run; if False log only when compare-branch warnings exist
         )
