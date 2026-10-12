@@ -155,7 +155,7 @@ class Subject(object):
             )
         except ValueError:
             logging.info("No dynamic spectroscopy twix file found")
-        if self.config.recon.recon_proton:
+        if self.config.recon_proton:
             try:
                 self.dict_ute = io_utils.read_ute_twix(
                     io_utils.get_ute_twix_files(str(self.config.data_dir)),
@@ -179,7 +179,7 @@ class Subject(object):
             )
         except ValueError:
             logging.info("No dynamic spectroscopy MRD file found")
-        if self.config.recon.recon_proton:
+        if self.config.recon_proton:
             try:
                 self.dict_ute = io_utils.read_ute_mrd(
                     io_utils.get_ute_mrd_files(str(self.config.data_dir))
@@ -258,7 +258,7 @@ class Subject(object):
         Also, calculates the scaling factor for the trajectory.
         """
         # remove contamination
-        if self.config.recon.gas_contamination_correction:
+        if self.config.corrections.gas_contamination_correction:
             if not (
                 io_utils.check_real_number(self.config.phase_gas_acq_diss)
                 and io_utils.check_real_number(self.config.area_gas_acq_diss)
@@ -346,7 +346,7 @@ class Subject(object):
         )
         self.n_gas_spikes_detected = np.sum(~gas_indices)
         self.n_dis_spikes_detected = np.sum(~dissolved_indices)
-        if self.config.recon.remove_noisy_projections:
+        if self.config.corrections.remove_noisy_projections:
             indices = gas_indices & dissolved_indices
             self.data_gas, self.traj_gas = recon_utils.apply_indices_mask(
                 data=self.data_gas,
@@ -365,7 +365,7 @@ class Subject(object):
         self.traj_gas *= self.traj_scaling_factor
 
         # prepare proton data and trajectories
-        if self.config.recon.recon_proton:
+        if self.config.recon_proton:
             if getattr(self, "dict_ute", None):
                 # get or generate trajectories
                 if constants.IOFields.TRAJ.value not in self.dict_ute.keys():
@@ -377,7 +377,7 @@ class Subject(object):
                 self.data_ute = self.dict_ute[constants.IOFields.FIDS.value]
 
                 # remove noisy FIDs
-                if self.config.recon.remove_noisy_projections:
+                if self.config.corrections.remove_noisy_projections:
                     self.data_ute, self.traj_ute = pp.remove_noisy_projections(
                         self.data_ute, self.traj_ute
                     )
@@ -440,7 +440,7 @@ class Subject(object):
 
     def reconstruction_gas(self):
         """Reconstruct the gas phase image."""
-        if self.config.recon.recon_key == constants.ReconKey.ROBERTSON.value:
+        if self.config.recon_key == constants.ReconKey.ROBERTSON.value:
             self.image_gas_highsnr = reconstruction.reconstruct(
                 data=(recon_utils.flatten_data(self.data_gas)),
                 traj=recon_utils.flatten_traj(self.traj_gas),
@@ -481,7 +481,7 @@ class Subject(object):
             io_utils.export_nii(
                 np.abs(self.image_gas_highreso), "tmp/image_gas_highreso.nii"
             )
-        elif self.config.recon.recon_key == constants.ReconKey.PLUMMER.value:
+        elif self.config.recon_key == constants.ReconKey.PLUMMER.value:
             norm_data = np.linalg.norm(self.data_gas)
             self.data_gas /= norm_data
             decay_factor = signal_utils.calculate_decay_factor(
@@ -511,12 +511,12 @@ class Subject(object):
             io_utils.export_nii(np.abs(self.image_gas), "tmp/image_gas.nii")
         else:
             raise ValueError(
-                f"Unknown reconstruction key: {self.config.recon.recon_key}"
+                f"Unknown reconstruction key: {self.config.recon_key}"
             )
 
     def reconstruction_dissolved(self):
         """Reconstruct the dissolved phase image."""
-        if self.config.recon.recon_key == constants.ReconKey.ROBERTSON.value:
+        if self.config.recon_key == constants.ReconKey.ROBERTSON.value:
             orientation = self.dict_dis[constants.IOFields.ORIENTATION.value]
             system_vendor = self.dict_dis[constants.IOFields.SYSTEM_VENDOR.value]
             self.image_dissolved = reconstruction.reconstruct(
@@ -556,7 +556,7 @@ class Subject(object):
             )
             io_utils.export_nii(np.abs(self.image_dissolved), "tmp/image_dissolved.nii")
 
-        elif self.config.recon.recon_key == constants.ReconKey.PLUMMER.value:
+        elif self.config.recon_key == constants.ReconKey.PLUMMER.value:
             norm_data = np.linalg.norm(self.data_dissolved)
             self.data_dissolved /= norm_data
             decay_factor = signal_utils.calculate_decay_factor(
@@ -604,7 +604,7 @@ class Subject(object):
         self.key_radius = int(
             np.ceil(
                 self.data_dissolved.shape[1]
-                * self.config.osc_recon.key_radius_pct
+                * self.config.key_radius_pct
                 / 100
             )
         )
@@ -614,7 +614,7 @@ class Subject(object):
         )
 
         # reconstruction
-        if self.config.recon.recon_key == constants.ReconKey.ROBERTSON.value:
+        if self.config.recon_key == constants.ReconKey.ROBERTSON.value:
             # prepare data and traj for reconstruction
             data_dis_high, traj_dis_high = pp.prepare_data_and_traj_keyhole(
                 data=data_dissolved_norm,
@@ -664,7 +664,7 @@ class Subject(object):
                 orientation=self.dict_dis[constants.IOFields.ORIENTATION.value],
                 system_vendor=self.dict_dis[constants.IOFields.SYSTEM_VENDOR.value],
             )
-        elif self.config.recon.recon_key == constants.ReconKey.PLUMMER.value:
+        elif self.config.recon_key == constants.ReconKey.PLUMMER.value:
             # prepare data and traj for reconstruction
             norm_data = np.linalg.norm(self.data_dissolved)
             self.data_dissolved /= norm_data
@@ -739,7 +739,7 @@ class Subject(object):
             self.mask_include_trachea = get_or_make_mask_include_trachea()
 
         elif self.config.segmentation_key == constants.SegmentationKey.CNN_PROTON.value:
-            if self.config.recon.recon_proton:
+            if self.config.recon_proton:
                 logging.info("Performing proton neural network segmentation.")
                 self.mask = segmentation.predict(
                     self.image_proton, constants.ImageType.UTE.value
@@ -798,7 +798,7 @@ class Subject(object):
         Uses ANTs registration to register the proton image to the xenon image.
         """
 
-        if self.config.registration_key == constants.RegistrationKey.MASK2GAS.value:
+        if self.config.proton.registration_key == constants.RegistrationKey.MASK2GAS.value:
             logging.info(
                 "Run registration algorithm, vent is fixed, proton mask is moving"
             )
@@ -809,7 +809,7 @@ class Subject(object):
             ]:
                 self.mask_proton = self.mask
             else:
-                if self.config.recon.recon_proton:
+                if self.config.recon_proton:
                     self.mask_proton = segmentation.predict(
                         self.image_proton, constants.ImageType.UTE.value
                     ).astype(bool)
@@ -823,21 +823,21 @@ class Subject(object):
                     abs(self.image_gas_highreso),
                     self.mask_proton,
                     self.image_proton,
-                    self.config.registration_key,
+                    self.config.proton.registration_key,
                 )
             )
-        elif self.config.registration_key == constants.RegistrationKey.PROTON2GAS.value:
+        elif self.config.proton.registration_key == constants.RegistrationKey.PROTON2GAS.value:
             logging.info("Run registration algorithm, vent is fixed, proton is moving")
             self.image_proton_reg, mask = np.abs(
                 registration.register_ants(
                     abs(self.image_gas_highreso),
                     self.image_proton,
                     self.mask,
-                    self.config.registration_key,
+                    self.config.proton.registration_key,
                 )
             )
 
-        elif self.config.registration_key == constants.RegistrationKey.MANUAL.value:
+        elif self.config.proton.registration_key == constants.RegistrationKey.MANUAL.value:
             # Load a file specified by the user
             try:
                 proton_reg = glob.glob(self.config.manual_reg_filepath)[0]
@@ -846,7 +846,7 @@ class Subject(object):
                 )
             except ValueError:
                 logging.error("Invalid proton nifti file.")
-        elif self.config.registration_key == constants.RegistrationKey.SKIP.value:
+        elif self.config.proton.registration_key == constants.RegistrationKey.SKIP.value:
             logging.info("No registration, setting registered proton to proton")
             self.image_proton_reg = self.image_proton
         else:
@@ -861,7 +861,7 @@ class Subject(object):
                 constants.SegmentationKey.CNN_PROTON.value,
                 constants.SegmentationKey.MANUAL_PROTON.value,
             ]
-            and self.config.registration_key != constants.RegistrationKey.SKIP.value
+            and self.config.proton.registration_key != constants.RegistrationKey.SKIP.value
         ):
             mask = np.around(mask)
             self.mask = mask
@@ -887,11 +887,11 @@ class Subject(object):
 
     def biasfield_correction(self):
         """Correct ventilation image for bias field."""
-        if self.config.bias_key == constants.BiasfieldKey.SKIP.value:
+        if self.config.corrections.bias_key == constants.BiasfieldKey.SKIP.value:
             logging.info("Skipping bias field correction.")
             self.image_gas_cor = abs(self.image_gas_highreso)
             self.image_biasfield = np.ones(self.image_gas_highreso.shape)
-        elif self.config.bias_key == constants.BiasfieldKey.N4ITK.value:
+        elif self.config.corrections.bias_key == constants.BiasfieldKey.N4ITK.value:
             logging.info("Performing N4ITK bias field correction.")
             (
                 self.image_gas_cor,
@@ -933,7 +933,7 @@ class Subject(object):
                 thresholds=self.reference_data[
                     (
                         "threshold_vent_nb"
-                        if self.config.bias_key == constants.BiasfieldKey.SKIP.value
+                        if self.config.corrections.bias_key == constants.BiasfieldKey.SKIP.value
                         else "threshold_vent"
                     )
                 ],
@@ -962,7 +962,7 @@ class Subject(object):
                 thresholds=self.reference_data[
                     (
                         "threshold_vent_mean_anchor_nb"
-                        if self.config.bias_key == constants.BiasfieldKey.SKIP.value
+                        if self.config.corrections.bias_key == constants.BiasfieldKey.SKIP.value
                         else "threshold_vent_mean_anchor"
                     )
                 ],
@@ -987,7 +987,7 @@ class Subject(object):
         """Perform Dixon decomposition on the dissolved-phase images."""
         rbc_m_ratio = (
             -self.rbc_m_ratio
-            if self.config.recon.recon_key == constants.ReconKey.PLUMMER.value
+            if self.config.recon_key == constants.ReconKey.PLUMMER.value
             else self.rbc_m_ratio
         )
         self.image_rbc, self.image_membrane = img_utils.dixon_decomposition(
@@ -999,13 +999,13 @@ class Subject(object):
 
     def hb_correction(self):
         """Apply hemoglobin correction."""
-        if self.config.hb_correction_key != constants.HbCorrectionKey.NONE.value:
-            if self.config.hb > 0:
+        if self.config.corrections.hb_correction_key != constants.HbCorrectionKey.NONE.value:
+            if self.config.corrections.hb > 0:
                 # get hb correction scaling factors
                 (
                     self.rbc_hb_correction_factor,
                     self.membrane_hb_correction_factor,
-                ) = signal_utils.get_hb_correction(self.config.hb)
+                ) = signal_utils.get_hb_correction(self.config.corrections.hb)
                 logging.info(
                     "Applying hemoglobin correction to RBC and membrane signal"
                 )
@@ -1027,7 +1027,7 @@ class Subject(object):
                 self.mask, self.dict_dis[constants.IOFields.FOV.value]
             )
         }
-        if self.config.vol_correction_key != constants.VolCorrectionKey.NONE.value:
+        if self.config.corrections.vol_correction_key != constants.VolCorrectionKey.NONE.value:
             if self.dict_stats["inflation"] > 0:
                 self.corrected_lung_volume = self.config.corrected_lung_volume
                 # get volume correction scaling factors
@@ -1041,7 +1041,7 @@ class Subject(object):
                 )
 
                 if (
-                    self.config.vol_correction_key
+                    self.config.corrections.vol_correction_key
                     == constants.VolCorrectionKey.RBC_AND_MEMBRANE.value
                 ):
                     logging.info(
@@ -1122,12 +1122,12 @@ class Subject(object):
         # Extract high and low RBC images
         rbc_m_ratio_high = (
             -self.rbc_m_ratio_high
-            if self.config.recon.recon_key == constants.ReconKey.PLUMMER.value
+            if self.config.recon_key == constants.ReconKey.PLUMMER.value
             else self.rbc_m_ratio_high
         )
         rbc_m_ratio_low = (
             -self.rbc_m_ratio_low
-            if self.config.recon.recon_key == constants.ReconKey.PLUMMER.value
+            if self.config.recon_key == constants.ReconKey.PLUMMER.value
             else self.rbc_m_ratio_low
         )
         self.image_rbc_high, _ = img_utils.dixon_decomposition(
@@ -1145,10 +1145,10 @@ class Subject(object):
 
         rbc_m_ratio = (
             -self.rbc_m_ratio
-            if self.config.recon.recon_key == constants.ReconKey.PLUMMER.value
+            if self.config.recon_key == constants.ReconKey.PLUMMER.value
             else self.rbc_m_ratio
         )
-        if self.config.recon.recon_key == constants.ReconKey.PLUMMER.value:
+        if self.config.recon_key == constants.ReconKey.PLUMMER.value:
             self.image_rbc_norm = self.image_rbc
         else:
             self.image_rbc_norm = img_utils.dixon_decomposition(
@@ -1167,7 +1167,7 @@ class Subject(object):
         )
 
         # analyze oscillations corrected for relative capillary blood volume
-        if self.config.osc_recon.vc_correction:
+        if self.config.vc_correction:
             corr_calc = img_utils.calculate_corrected_rbc_oscillation(
                 image_high=self.image_rbc_high,
                 image_low=self.image_rbc_low,
@@ -1183,7 +1183,7 @@ class Subject(object):
                     self.mask,
                     self.dict_dis[constants.IOFields.FOV.value],
                 ),
-                hemoglobin=self.config.hb,
+                hemoglobin=self.config.corrections.hb,
             )
             self.relative_vc_map = corr_calc[0]
             self.correction_map = corr_calc[1]
@@ -1206,7 +1206,7 @@ class Subject(object):
         self.image_rbc_osc_binned[np.logical_and(self.mask, ~self.mask_rbc)] = -1
 
         # bin corrected oscillation image
-        if self.config.osc_recon.vc_correction:
+        if self.config.vc_correction:
             self.image_rbc_osc_binned_corr = binning.linear_bin(
                 image=self.image_rbc_osc_corr,
                 mask=self.mask,
@@ -1440,7 +1440,7 @@ class Subject(object):
                 self.dict_stats[constants.StatsIOFields.INFLATION.value], 1
             )
 
-        if self.config.osc_recon.oscillation_analysis:
+        if self.config.oscillation_analysis:
             self.dict_stats.update(
                 {
                     constants.StatsIOFields.OSC_DEFECT_PCT.value: metrics.bin_percentage(
@@ -1473,7 +1473,7 @@ class Subject(object):
                     ),
                 }
             )
-            if self.config.osc_recon.vc_correction:
+            if self.config.vc_correction:
                 self.dict_stats.update(
                     {
                         constants.StatsIOFields.OSC_DEFECT_PCT_CORR.value: metrics.bin_percentage(
@@ -1546,11 +1546,11 @@ class Subject(object):
                 constants.IOFields.GRAD_DELAY_Z.value
             ],
             constants.IOFields.RAMP_TIME.value: self.dict_dis[constants.IOFields.RAMP_TIME.value],
-            constants.IOFields.HB_CORRECTION_KEY.value: self.config.hb_correction_key,
-            constants.IOFields.HB.value: self.config.hb,
+            constants.IOFields.HB_CORRECTION_KEY.value: self.config.corrections.hb_correction_key,
+            constants.IOFields.HB.value: self.config.corrections.hb,
             constants.IOFields.RBC_HB_CORRECTION_FACTOR.value: self.rbc_hb_correction_factor,
             constants.IOFields.MEMBRANE_HB_CORRECTION_FACTOR.value: self.membrane_hb_correction_factor,
-            constants.IOFields.VOL_CORRECTION_KEY.value: self.config.vol_correction_key,
+            constants.IOFields.VOL_CORRECTION_KEY.value: self.config.corrections.vol_correction_key,
             constants.IOFields.CORRECTED_LUNG_VOLUME.value: self.corrected_lung_volume,
             constants.IOFields.VOL_CORRECTION_FACTOR_MEMBRANE.value: self.vol_correction_factor_membrane,
             constants.IOFields.VOL_CORRECTION_FACTOR_RBC.value: self.vol_correction_factor_rbc,
@@ -1558,7 +1558,7 @@ class Subject(object):
             constants.IOFields.N_SKIP_START.value: self.config.recon.n_skip_start,
             constants.IOFields.N_DIS_REMOVED.value: self.n_dis_spikes_detected,
             constants.IOFields.N_GAS_REMOVED.value: self.n_gas_spikes_detected,
-            constants.IOFields.REMOVE_NOISE.value: self.config.recon.remove_noisy_projections,
+            constants.IOFields.REMOVE_NOISE.value: self.config.corrections.remove_noisy_projections,
             constants.IOFields.SHAPE_FIDS.value: self.dict_dis[constants.IOFields.FIDS.value].shape,
             constants.IOFields.SHAPE_IMAGE.value: self.image_gas_highreso.shape,
             constants.IOFields.T2_CORRECTION_FACTOR_MEMBRANE.value: signal_utils.calculate_t2star_correction(
@@ -1669,7 +1669,7 @@ class Subject(object):
             index_skip=index_skip,
         )
 
-        if self.config.bias_key == constants.BiasfieldKey.SKIP.value:
+        if self.config.corrections.bias_key == constants.BiasfieldKey.SKIP.value:
             bias = False
         else:
             bias = True
@@ -1754,7 +1754,7 @@ class Subject(object):
             outline="data",
         )
 
-        if self.config.osc_recon.oscillation_analysis:
+        if self.config.oscillation_analysis:
             plot.plot_montage_color(
                 image=plot.map_grey_to_rgb(
                     self.image_rbc_osc_binned,
@@ -1801,7 +1801,7 @@ class Subject(object):
                 low=self.low_indices,
                 title="H/L Binning of RBC k0",
             )
-            if self.config.osc_recon.vc_correction:
+            if self.config.vc_correction:
                 plot.plot_montage_grey(
                     image=np.abs(self.relative_vc_map),
                     path="tmp/montage_relative_vc.png",
@@ -1881,7 +1881,7 @@ class Subject(object):
         report.combine_pdfs(pdf_list, path)
 
         # oscillation imaging report
-        if self.config.osc_recon.oscillation_analysis:
+        if self.config.oscillation_analysis:
             pdf_list = []
 
             base_path = os.path.join("tmp/report_osc_imaging.pdf")
@@ -1896,7 +1896,7 @@ class Subject(object):
             pdf_list.append(base_path)
 
             # report on correction for capillary blood volume
-            if self.config.osc_recon.vc_correction:
+            if self.config.vc_correction:
                 corr_path = os.path.join("tmp/osc_imaging_correction.pdf")
                 report.clinical_osc_imaging_correction(
                     {
@@ -1980,7 +1980,7 @@ class Subject(object):
             "tmp/dissolved.nii",
             self.dict_dis[constants.IOFields.FOV.value],
         )
-        if self.config.recon.recon_proton:
+        if self.config.recon_proton:
             io_utils.export_nii(
                 np.abs(self.image_proton),
                 "tmp/proton.nii",
@@ -2027,7 +2027,7 @@ class Subject(object):
                 ),
                 "tmp/GLB_FV.nii",
             )
-        if self.config.osc_recon.oscillation_analysis:
+        if self.config.oscillation_analysis:
             io_utils.export_nii_4d(
                 plot.map_grey_to_rgb(
                     self.image_rbc_osc_binned, constants.CMAP.RBC_OSC_BIN2COLOR
@@ -2035,7 +2035,7 @@ class Subject(object):
                 "tmp/osc_binned_color.nii",
             )
             io_utils.export_nii(self.image_rbc_osc * self.mask_rbc, "tmp/osc.nii")
-            if self.config.osc_recon.vc_correction:
+            if self.config.vc_correction:
                 io_utils.export_nii_4d(
                     plot.map_grey_to_rgb(
                         self.image_rbc_osc_binned_corr, constants.CMAP.RBC_OSC_BIN2COLOR
@@ -2085,12 +2085,12 @@ class Subject(object):
         os.makedirs(subfolder, exist_ok=True)
         io_utils.move_files(output_files, subfolder)
 
-        if self.config.osc_recon.oscillation_analysis:
+        if self.config.oscillation_analysis:
             osc_files = (
                 "tmp/{}_report_osc_imaging.pdf".format(self.config.subject_id),
                 "tmp/osc_binned_color.nii",
             )
-            if self.config.osc_recon.vc_correction:
+            if self.config.vc_correction:
                 osc_files = osc_files + ("tmp/osc_binned_color_corr.nii",)
 
             # move files
