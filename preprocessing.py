@@ -26,7 +26,7 @@ def gas_contamination_correction(
         * (-1.0),
         phase_gas_acq_diss=config.phase_gas_acq_diss,
         area_gas_acq_diss=config.area_gas_acq_diss,
-        optimized_conta_phase=config.recon.optimized_conta_phase,
+        optimized_conta_phase=config.corrections.optimized_conta_phase,
         fa_gas=dict_dis[constants.IOFields.FA_GAS.value],
     )
     return dict_dis
