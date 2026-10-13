@@ -717,6 +717,6 @@ class ReferenceDistribution(object):
             "osc_high_avg": "12.02",
             "osc_mean_avg": "5.75",
             "osc_negative_avg": "1.87",
-            "key_radius_ref": "7.43",
+            "key_radius_ref": "6.8",
         },
     }
