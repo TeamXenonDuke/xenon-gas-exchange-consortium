@@ -149,8 +149,8 @@ class OscillationRecon(object):
         Attributes:
             oscillation_analysis: bool, whether to perform oscillation imaging analysis.
             key_radius: int, points per radial spoke used to define the center of the keyhole image.
-                If not specified, this will be calculated automatically, such that the
-                key radius is 7.43% of the k-max.
+                If set to 0, this will be calculated automatically, such that the
+                key radius is 6.8% of the k-max.
             vc_correction: bool, whether to correction oscillation images for relative capillary blood volume.
         """
         self.oscillation_analysis = False
