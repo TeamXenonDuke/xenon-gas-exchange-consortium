@@ -3,6 +3,7 @@
 from typing import Literal, Tuple
 
 import matplotlib
+import logging
 
 matplotlib.use("Agg")
 from matplotlib import pyplot as plt
@@ -17,6 +18,8 @@ def bin_rbc_oscillations(
     data_dissolved: np.ndarray,
     TR: float,
     rbc_m_ratio: float,
+    config,
+    te_acq,
     method: str = constants.BinningMethods.BANDPASS,
 ) -> Tuple[np.ndarray, np.ndarray, np.ndarray, float, float]:
     """Bin dissolved phase data into high and low signal bins.
@@ -34,6 +37,19 @@ def bin_rbc_oscillations(
     data_rbc, data_membrane = signal_utils.dixon_decomposition(
         data_dissolved, rbc_m_ratio
     )
+    if config.recon.te90_correction:
+        logging.info("Performing TE90 correction on RBC signal")
+        data_rbc, data_membrane = signal_utils.te90_correction(
+            data_rbc = data_rbc,
+            data_membrane = data_membrane,
+            te90 = config.te90,
+            te_acq = te_acq,
+            rbc_freq = config.rbc_freq,
+            membrane_freq = config.membrane_freq,
+            rbc_m_ratio = rbc_m_ratio
+        )
+    else:
+        logging.info("Skipping TE90 correction")
     data_rbc_k0, data_membrane_k0 = data_rbc[:, 0], data_membrane[:, 0]
     data_gas_k0 = data_gas[:, 0]
     # negate data if mean is negative

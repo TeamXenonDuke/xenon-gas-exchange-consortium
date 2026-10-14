@@ -1011,7 +1011,9 @@ class Subject(object):
                 te_acq = self.dict_dis[constants.IOFields.TE90],
                 rbc_freq = self.config.rbc_freq,
                 membrane_freq = self.config.membrane_freq,
-                rbc_m_ratio = self.rbc_m_ratio
+                rbc_m_ratio = self.rbc_m_ratio,
+                config = self.config,
+                te_acq = self.dict_dis[constants.IOFields.TE90],
             )
         else:
             logging.info("Skipping TE90 correction")

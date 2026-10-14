@@ -278,6 +278,40 @@ def dixon_decomposition(
     return np.imag(rotated_data), np.real(rotated_data)
 
 
+def te90_correction(
+        data_rbc: np.ndarray,
+        data_membrane: np.ndarray,
+        te90: float,
+        te_acq: float,
+        rbc_freq: float,
+        membrane_freq: float,
+        rbc_m_ratio: float
+) -> Tuple[np.ndarray, np.ndarray]:
+    """Apply TE90 correction on data not acquired at TE90.
+    Calculates angle deviation from 90-degrees between RBC and membrane (theta) 
+    and angle from Sx axis to membrane signal (alpha). Corrects RBC and membrane 
+    signals. 
+    Args:
+        data_rbc: uncorrected rbc data
+        data_membrane: uncorrected membrane data
+        te90: TE90 for acquisition
+        te_acq: actual TE used during acquisition
+        rbc_freq: frequency of the RBC peak in Hz
+        m_freq: frequency of the membrane peak in Hz
+        rbc_m_ratio: RBC:m ratio
+    Returns:
+        Tuple of corrected RBC and membrane images respectively.
+    """
+    dfreq = rbc_freq - membrane_freq    # [Hz]
+    dte = te_acq - (te90 * 1e-3)        # [s]
+    theta = dfreq * dte * 2 * np.pi
+    alpha = np.arctan((1 - np.cos(theta) - rbc_m_ratio*np.sin(theta)) / (1/rbc_m_ratio + rbc_m_ratio * np.cos(theta) - np.sin(theta)))
+    data_rbc_corr = (-data_membrane*np.sin(alpha)+data_rbc*np.cos(alpha))/np.cos(theta)
+    data_membrane_corr = (data_membrane*np.cos(theta+alpha)+data_rbc*np.sin(theta+alpha))/np.cos(theta)
+
+    return data_rbc_corr, data_membrane_corr
+
+
 def smooth(data: np.ndarray, window_size: int = 5) -> np.ndarray:
     """Smooth response data.
 
