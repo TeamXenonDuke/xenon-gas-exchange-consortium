@@ -1197,6 +1197,7 @@ class Subject(object):
         )
         if self.config.recon.recon_key == constants.ReconKey.PLUMMER.value:
             self.image_rbc_norm = self.image_rbc
+            self.image_membrane_norm = self.image_membrane
         else:
             self.image_rbc_norm, self.image_membrane_norm = img_utils.dixon_decomposition(
                 image_gas=self.image_gas_highsnr,
