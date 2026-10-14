@@ -271,7 +271,7 @@ class Subject(object):
         #self.recon_matrix_size = self.dict_dis["matrix_size"]
         self.recon_matrix_size = 64
         #path = "/media/peppermint/T9/Fixed_Traj/CCHMC_Recons/ILD-HC-023-data-share-Duke/traj_before_rescaling.npy"
-        path = "/Users/hong/Pipeline/patients/projects/HealthyAging/Cincinnati/Cinci_Manual_FIx/traj_before_rescaling.npy"
+        path = "/Users/hong/Pipeline/patients/projects/Cincinnati/Cinci_Manual_FIx/traj_before_rescaling.npy"
         new_traj_bf = np.load(path)
         self.traj_gas= new_traj_bf.copy();
         self.traj_dissolved= new_traj_bf.copy();
