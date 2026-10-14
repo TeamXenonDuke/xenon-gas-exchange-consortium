@@ -92,6 +92,8 @@ class Subject(object):
         self.image_gas_highreso = np.array([0.0])
         self.image_gas_highsnr = np.array([0.0])
         self.image_membrane = np.array([0.0])
+        self.image_membrane_high = np.array([0.0])
+        self.image_membrane_low = np.array([0.0])
         self.image_membrane2gas = np.array([0.0])
         self.image_membrane2gas_binned = np.array([0.0])
         self.membrane_hb_correction_factor = "NA"
@@ -1147,18 +1149,44 @@ class Subject(object):
             if self.config.recon.recon_key == constants.ReconKey.PLUMMER.value
             else self.rbc_m_ratio_low
         )
-        self.image_rbc_high, _ = img_utils.dixon_decomposition(
+        self.image_rbc_high, self.image_membrane_high = img_utils.dixon_decomposition(
             image_gas=self.image_gas_highsnr,
             image_dissolved=self.image_dissolved_high,
             mask=self.mask_vent,
             rbc_m_ratio=rbc_m_ratio_high,
         )
-        self.image_rbc_low, _ = img_utils.dixon_decomposition(
+        if self.config.recon.te90_correction:
+            logging.info("Performing TE90 correction for RBC high")
+            self.image_rbc_high, self.image_membrane_high = img_utils.te90_correction(
+                image_rbc = self.image_rbc_high,
+                image_membrane = self.image_membrane_high,
+                te90 = self.config.te90,
+                te_acq = self.dict_dis[constants.IOFields.TE90],
+                rbc_freq = self.config.rbc_freq,
+                membrane_freq = self.config.membrane_freq,
+                rbc_m_ratio = self.rbc_m_ratio_high,
+            )
+        else:
+            logging.info("Skipping TE90 correction for RBC high")
+        self.image_rbc_low, self.image_membrane_low = img_utils.dixon_decomposition(
             image_gas=self.image_gas_highsnr,
             image_dissolved=self.image_dissolved_low,
             mask=self.mask_vent,
             rbc_m_ratio=rbc_m_ratio_low,
         )
+        if self.config.recon.te90_correction:
+            logging.info("Performing TE90 correction for RBC low")
+            self.image_rbc_low, self.image_membrane_low = img_utils.te90_correction(
+                image_rbc = self.image_rbc_low,
+                image_membrane = self.image_membrane_low,
+                te90 = self.config.te90,
+                te_acq = self.dict_dis[constants.IOFields.TE90],
+                rbc_freq = self.config.rbc_freq,
+                membrane_freq = self.config.membrane_freq,
+                rbc_m_ratio = self.rbc_m_ratio_low,
+            )
+        else:
+            logging.info("Skipping TE90 correction for RBC low")
 
         rbc_m_ratio = (
             -self.rbc_m_ratio
@@ -1168,12 +1196,25 @@ class Subject(object):
         if self.config.recon.recon_key == constants.ReconKey.PLUMMER.value:
             self.image_rbc_norm = self.image_rbc
         else:
-            self.image_rbc_norm = img_utils.dixon_decomposition(
+            self.image_rbc_norm, self.image_membrane_norm = img_utils.dixon_decomposition(
                 image_gas=self.image_gas_highsnr,
                 image_dissolved=self.image_dissolved_norm,
                 mask=self.mask_vent,
                 rbc_m_ratio=rbc_m_ratio,
             )[0]
+        if self.config.recon.te90_correction:
+            logging.info("Performing TE90 correction for RBC norm")
+            self.image_rbc_norm, self.image_membrane_norm = img_utils.te90_correction(
+                image_rbc = self.image_rbc_norm,
+                image_membrane = self.image_membrane_norm,
+                te90 = self.config.te90,
+                te_acq = self.dict_dis[constants.IOFields.TE90],
+                rbc_freq = self.config.rbc_freq,
+                membrane_freq = self.config.membrane_freq,
+                rbc_m_ratio = self.rbc_m_ratio,
+            )
+        else:
+            logging.info("Skipping TE90 correction for RBC norm")
 
         # Calculate oscillations
         self.image_rbc_osc = img_utils.calculate_rbc_oscillation(
