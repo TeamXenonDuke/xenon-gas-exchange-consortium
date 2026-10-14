@@ -7,6 +7,7 @@ sys.path.append("..")
 import csv
 import glob
 import shutil
+import tempfile
 from typing import Any, Dict, List, Optional, Tuple
 
 import ismrmrd
@@ -661,16 +662,51 @@ def export_subject_csv(dict_stats: Dict[str, Any], path: str, overwrite=False):
         path (str): file path of csv file
         overwrite (bool): if True, overwrite existing csv file
     """
-    header = dict_stats.keys()
+    header = list(dict_stats)
     if overwrite or (not os.path.exists(path)):
         with open(path, "w", newline="") as csvfile:
             writer = csv.DictWriter(csvfile, fieldnames=header)
             writer.writeheader()
             writer.writerow(dict_stats)
     else:
-        with open(path, "a", newline="") as csvfile:
-            writer = csv.DictWriter(csvfile, fieldnames=header)
-            writer.writerow(dict_stats)
+        # Preserve existing column order. New columns require a new header and
+        # empty cells in historical rows; never append a wider row to an old header.
+        with open(path, "r", newline="") as csvfile:
+            old_header = next(csv.reader(csvfile), None)
+        if not old_header:
+            if os.path.getsize(path) == 0:
+                return export_subject_csv(dict_stats, path, overwrite=True)
+            raise ValueError("Existing statistics CSV has no valid header")
+        if len(old_header) != len(set(old_header)):
+            raise ValueError("Existing statistics CSV has duplicate columns")
+        additions = [key for key in header if key not in old_header]
+        header = old_header + additions
+        if additions:
+            temp_path = None
+            try:
+                with tempfile.NamedTemporaryFile(
+                    mode="w", newline="", dir=os.path.dirname(os.path.abspath(path)),
+                    prefix=".stats_", suffix=".csv", delete=False,
+                ) as output:
+                    temp_path = output.name
+                    writer = csv.DictWriter(output, fieldnames=header)
+                    writer.writeheader()
+                    with open(path, "r", newline="") as source:
+                        reader = csv.DictReader(source)
+                        for row in reader:
+                            if None in row or any(value is None for value in row.values()):
+                                raise ValueError("Existing statistics CSV has misaligned rows")
+                            writer.writerow(row)
+                    writer.writerow(dict_stats)
+                os.chmod(temp_path, os.stat(path).st_mode & 0o777)
+                os.replace(temp_path, path)
+            finally:
+                if temp_path is not None and os.path.exists(temp_path):
+                    os.remove(temp_path)
+        else:
+            with open(path, "a", newline="") as csvfile:
+                writer = csv.DictWriter(csvfile, fieldnames=header)
+                writer.writerow(dict_stats)
 
 
 def export_config_to_json(config: config_dict, path: str) -> None:
