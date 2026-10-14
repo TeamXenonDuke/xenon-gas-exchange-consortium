@@ -102,7 +102,7 @@ class Recon(object):
         n_skip_end: int, the number of frames to skip at the end
         recon_size: int, size to which the images are reconstructed
         matrix_size: int, the final matrix size
-        oversampled: bool, whether or not the k-space data is oversampled
+        kmax_factor: float, the fractional extent of kmax that is sampled (default=1)
         traj_type: str, the trajectory type
         traj_scaling_factor: str, scaling factor to apply to trajectories
     """
@@ -120,7 +120,7 @@ class Recon(object):
         # Reconstruction and matrix sizes
         self.recon_size = 64
         self.matrix_size = 128
-        self.oversampled = False
+        self.kmax_factor = 1.0
 
         # Additional options
         self.recon_proton = True

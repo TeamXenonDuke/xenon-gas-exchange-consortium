@@ -95,28 +95,25 @@ def calculate_key_radius(
     dwell_time: float,
     points_per_view: float,
     ramp_time: float,
-    oversampled: bool,
+    kmax_factor: float,
 ) -> int:
     """Calculate the optimal key_radius for keyhole reconstruction, assuming trapezoidal
         gradients with no ramp down. Key radius will be expressed as a number of points per view and
-        will reach 6.8% of k_max. If k-space data is oversampled, only half of the
-        points per view are considered when defining k_max.
+        will reach 6.8% of k_max. If k-space data is oversampled, only the points up to
+        1*kmax are considered.
 
     Args:
         dwell_time (float): time between samples in a readout
         points_per_view (float): number of points in a readout
         ramp_time (float): time it takes for gradients to reach their max value
-        oversampled (bool): whether or not the k-spcace data is oversampled
+        kmax_factor (float): the fractional extent of kmax that is sampled
 
     Returns:
         int: key radius as the number of points per view that reaches 6.8% of k_max
     """
 
     total_time = dwell_time * points_per_view
-    if oversampled == True:
-        key_radius_ref = 6.8 / (2 * 100)
-    else:
-        key_radius_ref = 6.8 / 100
+    key_radius_ref = 6.8 / (kmax_factor * 100)
 
     # area of each region divided by the total trapezoidal area
     frac_k_ramp_up = ramp_time / (2 * (total_time - (ramp_time / 2)))

@@ -612,11 +612,16 @@ class Subject(object):
             logging.info(
                 "Key radius not specified in config. Calculating automatically."
             )
+            if self.config is not None and hasattr(self.config.recon, "kmax_factor"):
+                kmax_factor = self.config.recon.kmax_factor
+            else:
+                logging.info("Kmax sampling factor not specified. Default to 1.")
+                kmax_factor = 1
             self.key_radius = recon_utils.calculate_key_radius(
                 self.dict_dis[constants.IOFields.SAMPLE_TIME],
                 self.dict_dis[constants.IOFields.FIDS_DIS].shape[1],
                 self.dict_dis[constants.IOFields.RAMP_TIME] * (10**-6),
-                self.config.recon.oversampled,
+                kmax_factor,
             )
 
         normalization = np.abs(self.data_gas[:, 0])
