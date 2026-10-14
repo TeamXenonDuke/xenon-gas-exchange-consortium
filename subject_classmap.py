@@ -602,6 +602,8 @@ class Subject(object):
             data_dissolved=self.data_dissolved,
             rbc_m_ratio=self.rbc_m_ratio,
             TR=self.dict_dis[constants.IOFields.TR],
+            config = self.config,
+            te_acq = self.dict_dis[constants.IOFields.TE90],
         )
         # calculate the key radius and normalize
         self.key_radius = int(
@@ -1012,8 +1014,6 @@ class Subject(object):
                 rbc_freq = self.config.rbc_freq,
                 membrane_freq = self.config.membrane_freq,
                 rbc_m_ratio = self.rbc_m_ratio,
-                config = self.config,
-                te_acq = self.dict_dis[constants.IOFields.TE90],
             )
         else:
             logging.info("Skipping TE90 correction")
