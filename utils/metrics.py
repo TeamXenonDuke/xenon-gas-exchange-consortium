@@ -290,7 +290,7 @@ def dlco(
     mask_vent: np.ndarray,
     fov: float,
     frequency: float,
-    membrane_mean: float = 0.89,
+    membrane_mean: float = constants.MEM_REF * 100,
     rbc_mean: float = constants.RBC_REF * 100,
 ) -> float:
     """Get the DLCO of the image.
@@ -417,7 +417,7 @@ def kco(
     image_rbc: np.ndarray,
     mask: np.ndarray,
     frequency: float,
-    membrane_mean: float = 0.89,
+    membrane_mean: float = constants.MEM_REF * 100,
     rbc_mean: float = constants.RBC_REF * 100,
 ) -> float:
     """Get the KCO of the image.

@@ -15,11 +15,12 @@ THRESHOLD_MA = 60 / 100.0 # Here we use 60% which is used by other consortiums, 
 
 K_M = 22.6  # membrane coefficient
 K_R = 7.28  # RBC coefficient
-K_V = 1.61
+K_V = 1.61  # ventilation coefficient
+MEM_REF = 0.0089  # membrane/gas ratio at 218 ppm; equivalent to 0.89 percent
+RBC_REF = 0.00455  # RBC/gas ratio at 218 ppm; equivalent to 0.455 percent
 
 # Absolute capillary blood volume equation; RBC reference is a ratio, not percent.
 VC_COEFFICIENT = 13.0  # mL/L
-RBC_REF = 0.00455  # RBC/gas ratio at 218 ppm; equivalent to 0.455 percent
 VC_RBC_208_TO_218 = 1.031
 
 
