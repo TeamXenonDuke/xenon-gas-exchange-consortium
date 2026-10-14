@@ -387,10 +387,10 @@ def relative_capillary_blood_volume(vc: float, vc_ref: float) -> float:
     vc, vc_ref = float(vc), float(vc_ref)
     if not all(math.isfinite(value) for value in (vc, vc_ref)) or vc < 0 or vc_ref <= 0:
         raise ValueError("Relative Vc requires nonnegative Vc and positive finite reference")
-    relative_vc = vc / vc_ref
-    if not math.isfinite(relative_vc):
+    vc_rel = vc / vc_ref
+    if not math.isfinite(vc_rel):
         raise ValueError("Relative Vc result is not finite")
-    return relative_vc
+    return vc_rel
 
 
 def alveolar_volume(image: np.ndarray, mask: np.ndarray, fov: float) -> float:
@@ -404,7 +404,7 @@ def alveolar_volume(image: np.ndarray, mask: np.ndarray, fov: float) -> float:
     Returns:
         Alveolar volume in L.
     """
-    kv = constants.VA_ALPHA
+    kv = constants.K_V
     vv = inflation_volume(mask, fov) * (
         1.0 - bin_percentage(image, np.asarray([1]), mask) / 100
     )
@@ -429,8 +429,8 @@ def kco(
         mask: np.ndarray. mask of non-VDP region.
         membrane_mean: float. The mean membrane in healthy subjects.
         rbc_mean: float. The mean RBC in healthy subjects.
-        KCO_ALPHA: membrane coefficient
-        KCO_BETA: rbc coefficient
+        K_M: membrane coefficient
+        K_R: rbc coefficient
     """
     if 206 <= frequency <= 210:
         mem = mean(image_membrane, mask) * 0.918
@@ -443,7 +443,7 @@ def kco(
     rbc_rel = rbc / rbc_mean  # relative mean RBC
     membrane_rel = 1.0 / membrane_rel if membrane_rel > 1 else membrane_rel
     kco_v = 1 / (
-        1 / (constants.KCO_ALPHA * membrane_rel) + 1 / (constants.KCO_BETA * rbc_rel)
+        1 / (constants.K_M * membrane_rel) + 1 / (constants.K_R * rbc_rel)
     )
     return kco_v
 

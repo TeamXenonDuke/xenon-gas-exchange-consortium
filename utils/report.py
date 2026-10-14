@@ -107,7 +107,7 @@ def format_dict(dict_stats: Dict[str, Any]) -> Dict[str, Any]:
 def format_vc_values(dict_stats: Dict[str, Any]) -> Dict[str, Any]:
     """Add report-only VC display strings without changing the CSV values.
 
-    Format the percentage from the full precision relative_vc ratio before
+    Format the percentage from the full precision vc_rel ratio before
     format_dict rounds numeric statistics. Both volume values are in mL.
     """
     def finite_nonnegative(value):
@@ -119,12 +119,12 @@ def format_vc_values(dict_stats: Dict[str, Any]) -> Dict[str, Any]:
 
     formatted = dict_stats.copy()
     vc = finite_nonnegative(dict_stats.get("vc"))
-    relative_vc = finite_nonnegative(dict_stats.get("relative_vc"))
+    vc_rel = finite_nonnegative(dict_stats.get("vc_rel"))
     vc_ref = finite_nonnegative(dict_stats.get("vc_ref"))
     if vc is None:
         formatted["vc_display"] = "NA"
     else:
-        percent = relative_vc * 100 if relative_vc is not None else None
+        percent = vc_rel * 100 if vc_rel is not None else None
         percentage = f"{percent:.0f}%" if percent is not None and np.isfinite(percent) else "NA"
         formatted["vc_display"] = f"{vc:.1f} ({percentage})"
     formatted["vc_ref_display"] = f"{vc_ref:.1f}" if vc_ref is not None and vc_ref > 0 else "NA"

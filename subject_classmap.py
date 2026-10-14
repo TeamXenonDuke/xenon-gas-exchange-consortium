@@ -1253,14 +1253,14 @@ class Subject(object):
                 height=self.dict_dis.get(constants.IOFields.HEIGHT),
             )
         except (TypeError, ValueError, OverflowError) as exc:
-            logging.warning("Vc reference unavailable: %s; relative_vc will be NA", exc)
+            logging.warning("Vc reference unavailable: %s; vc_rel will be NA", exc)
             return "NA"
         try:
             return metrics.relative_capillary_blood_volume(
                 self.dict_stats[constants.StatsIOFields.VC], self.vc_ref
             )
         except (TypeError, ValueError, KeyError, OverflowError) as exc:
-            logging.warning("Relative Vc unavailable: %s; relative_vc will be NA", exc)
+            logging.warning("Relative Vc unavailable: %s; vc_rel will be NA", exc)
             return "NA"
 
     def get_statistics(self) -> Dict[str, Any]:
@@ -1396,7 +1396,7 @@ class Subject(object):
             ),
         }
         self.dict_stats[constants.StatsIOFields.VC] = self.get_capillary_blood_volume()
-        self.dict_stats[constants.StatsIOFields.RELATIVE_VC] = (
+        self.dict_stats[constants.StatsIOFields.VC_REL] = (
             self.get_relative_capillary_blood_volume()
         )
         age = self.dict_dis[constants.IOFields.AGE]

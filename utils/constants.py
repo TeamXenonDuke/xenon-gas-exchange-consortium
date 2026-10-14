@@ -13,9 +13,9 @@ T2STAR_DISSOLVED_3T = 1.0 * 1e-3  # seconds
 THRESHOLD_MA = 60 / 100.0 # Here we use 60% which is used by other consortiums, 55.3% is the value from Sup's mehod.
 
 
-KCO_ALPHA = 22.6  # membrane coefficient
-KCO_BETA = 7.28  # RBC coefficient
-VA_ALPHA = 1.61
+K_M = 22.6  # membrane coefficient
+K_R = 7.28  # RBC coefficient
+K_V = 1.61
 
 # Absolute capillary blood volume equation; RBC reference is a ratio, not percent.
 VC_COEFFICIENT = 13.0  # mL/L
@@ -321,7 +321,7 @@ class StatsIOFields(object):
     RDP_BA = "rdp_ba"
     ALVEOLAR_VOLUME = "alveolar_volume"
     VC = "vc"
-    RELATIVE_VC = "relative_vc"
+    VC_REL = "vc_rel"
 
     RBC_HIGH_SNR = "rbc_high_snr"
     RBC_LOW_SNR = "rbc_low_snr"
