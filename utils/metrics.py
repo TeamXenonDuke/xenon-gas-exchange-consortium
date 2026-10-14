@@ -291,7 +291,7 @@ def dlco(
     fov: float,
     frequency: float,
     membrane_mean: float = 0.89,
-    rbc_mean: float = 0.455,
+    rbc_mean: float = constants.RBC_REF * 100,
 ) -> float:
     """Get the DLCO of the image.
 
@@ -353,7 +353,7 @@ def capillary_blood_volume(
         constants.VC_COEFFICIENT
         * va
         * (constants.HbCorrection.HB_REF / hb)
-        * (rbc / constants.VC_RBC_REF)
+        * (rbc / constants.RBC_REF)
     )
     if not math.isfinite(vc):
         raise ValueError("Vc result is not finite")
@@ -418,7 +418,7 @@ def kco(
     mask: np.ndarray,
     frequency: float,
     membrane_mean: float = 0.89,
-    rbc_mean: float = 0.455,
+    rbc_mean: float = constants.RBC_REF * 100,
 ) -> float:
     """Get the KCO of the image.
 
