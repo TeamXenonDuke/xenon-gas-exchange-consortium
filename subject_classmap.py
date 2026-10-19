@@ -624,14 +624,25 @@ class Subject(object):
             rbc_m_ratio=self.rbc_m_ratio,
             TR=self.dict_dis[constants.IOFields.TR],
         )
-        # calculate the key radius and normalize
-        self.key_radius = int(
-            np.ceil(
-                self.data_dissolved.shape[1]
-                * self.config.osc_recon.key_radius_pct
-                / 100
+        # Use a configured radius, preserve explicit legacy percentages, or
+        # calculate a radius from the readout timing.
+        if self.config.osc_recon.key_radius > 0:
+            self.key_radius = self.config.osc_recon.key_radius
+        elif getattr(self.config.osc_recon, "key_radius_pct", 0) > 0:
+            self.key_radius = int(
+                np.ceil(
+                    self.data_dissolved.shape[1]
+                    * self.config.osc_recon.key_radius_pct
+                    / 100
+                )
             )
-        )
+        else:
+            self.key_radius = recon_utils.calculate_key_radius(
+                self.dict_dis[constants.IOFields.SAMPLE_TIME],
+                self.dict_dis[constants.IOFields.FIDS_DIS].shape[1],
+                self.dict_dis[constants.IOFields.RAMP_TIME] * 1e-6,
+                self.config.recon.kmax_factor,
+            )
         normalization = np.abs(self.data_gas[:, 0])
         data_dissolved_norm = np.divide(
             self.data_dissolved, np.expand_dims(normalization, -1)

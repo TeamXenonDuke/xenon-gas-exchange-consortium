@@ -36,10 +36,19 @@ ventilation normalization, and trajectory settings. This makes the generated
 manifest directly reviewable and editable. Fields that require subject-specific
 confirmation (`hb` and lung-volume correction) remain blank.
 
-`recon_size`, `del_x`, `del_y`, `del_z`, `key_radius_pct`, and `n_skip_start`
+`recon_size`, `del_x`, `del_y`, `del_z`, `key_radius`, `kmax_factor`, and `n_skip_start`
 are deliberately blank in discovered manifests so they inherit the enforced
 defaults from `base_config.Config`. They may still be set as per-subject CSV
 overrides when needed.
+
+`key_radius` is a number of readout points; leave it blank or set it to `0` to
+calculate a radius at 6.8% of k-max from the dwell and ramp times. The default
+`kmax_factor` is `1.0`; set a positive sampling factor for acquisitions with a
+different sampled k-space extent.
+
+Older manifests with a nonblank `key_radius_pct` keep their percentage-based
+radius. A positive `key_radius` takes priority; clear `key_radius_pct` to use
+the new automatic calculation.
 
 For Twix inputs, age, sex, height, and weight are also copied into the generated
 CSV when available in the Dixon header. If the header does not provide a complete

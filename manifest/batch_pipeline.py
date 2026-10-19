@@ -42,6 +42,8 @@ DISCOVERED_MANIFEST_FIELDS = [
     "ramp_time",
     "oscillation_analysis",
     "key_radius_pct",
+    "key_radius",
+    "kmax_factor",
     "output_folder",
     "combine_reports",
     "vc_correction",
@@ -575,6 +577,7 @@ def build_config(
         "traj_scaling_factor",
         "optimized_conta_phase",
         "ramp_time",
+        "kmax_factor",
     ):
         value = optional_float(row.get(field, ""))
         if value is not None:
@@ -598,10 +601,12 @@ def build_config(
     config.osc_recon.oscillation_analysis = is_true(
         row.get("oscillation_analysis", "false")
     )
-    for field in ("key_radius_pct",):
-        value = optional_int(row.get(field, ""))
-        if value is not None:
-            setattr(config.osc_recon, field, value)
+    key_radius = optional_int(row.get("key_radius", ""))
+    if key_radius is not None:
+        config.osc_recon.key_radius = key_radius
+    legacy_key_radius_pct = optional_int(row.get("key_radius_pct", ""))
+    if legacy_key_radius_pct is not None:
+        config.osc_recon.key_radius_pct = legacy_key_radius_pct
     value = row.get("vc_correction", "").strip()
     if value:
         config.osc_recon.vc_correction = is_true(value)
@@ -668,6 +673,7 @@ def config_snapshot(
             "n_skip_start": json_value(config.recon.n_skip_start),
             "n_skip_end": config.recon.n_skip_end,
             "ramp_time": config.recon.ramp_time,
+            "kmax_factor": config.recon.kmax_factor,
             "traj_type": config.recon.traj_type,
             "traj_scaling_factor": config.recon.traj_scaling_factor,
             "gas_contamination_correction": config.recon.gas_contamination_correction,
@@ -677,7 +683,8 @@ def config_snapshot(
         },
         "osc_recon": {
             "oscillation_analysis": config.osc_recon.oscillation_analysis,
-            "key_radius_pct": config.osc_recon.key_radius_pct,
+            "key_radius": config.osc_recon.key_radius,
+            "key_radius_pct": getattr(config.osc_recon, "key_radius_pct", None),
             "vc_correction": config.osc_recon.vc_correction,
         },
     }

@@ -89,3 +89,28 @@ def skip_from_flipangle(fa_dis: float) -> int:
     # Round *up* to ensure sufficient skip for stabilization
     n_skip = np.log(0.1) / np.log(cos_fa)
     return int(np.ceil(n_skip))
+
+
+def calculate_key_radius(
+    dwell_time: float,
+    points_per_view: float,
+    ramp_time: float,
+    kmax_factor: float,
+) -> int:
+    """Return the number of readout points reaching 6.8% of k-max.
+
+    The readout gradient ramps up and then remains flat; it does not ramp down
+    during acquisition. Times must be in seconds. ``kmax_factor`` is the
+    sampled k-space extent relative to the reference k-max.
+    """
+    total_time = dwell_time * points_per_view
+    key_radius_ref = 6.8 / (kmax_factor * 100)
+    area = total_time - ramp_time / 2
+    frac_k_ramp_up = ramp_time / (2 * area)
+
+    if frac_k_ramp_up >= key_radius_ref:
+        t_opt = np.sqrt(2 * key_radius_ref * ramp_time * area)
+    else:
+        t_opt = key_radius_ref * area + ramp_time / 2
+
+    return int(np.round(t_opt / dwell_time))
