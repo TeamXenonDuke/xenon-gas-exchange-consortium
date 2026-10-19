@@ -290,8 +290,8 @@ def dlco(
     mask_vent: np.ndarray,
     fov: float,
     frequency: float,
-    membrane_mean: float = 0.89,
-    rbc_mean: float = 0.455,
+    membrane_mean: float = constants.MEM_REF * 100,
+    rbc_mean: float = constants.RBC_REF * 100,
 ) -> float:
     """Get the DLCO of the image.
 
@@ -315,6 +315,84 @@ def dlco(
     return dlco_v
 
 
+def capillary_blood_volume(
+    alveolar_volume: float,
+    rbc_mean: float,
+    hemoglobin: float,
+    excitation_ppm: float,
+) -> float:
+    """Estimate absolute Vc in mL using the supplied manuscript equation.
+
+    alveolar_volume is in L; hemoglobin is in g/dL. rbc_mean is the
+    mean RBC/gas ratio over the ventilated mask.
+    The 208 ppm mean is converted locally to the 218 ppm scale. Frequency
+    windows match the pipeline's reference-data selection.
+    Missing Hb (including the config's zero placeholder) uses the reference
+    Hb of 14, so its multiplicative factor is one. 
+    """
+    va, rbc, ppm = map(float, (alveolar_volume, rbc_mean, excitation_ppm))
+    if hemoglobin is None or (
+        isinstance(hemoglobin, str)
+        and hemoglobin.strip().lower() in {"", "na", "n/a", "none", "nan"}
+    ):
+        hb = constants.HbCorrection.HB_REF
+    else:
+        hb = float(hemoglobin)
+        if hb == 0 or math.isnan(hb):
+            hb = constants.HbCorrection.HB_REF
+    if not all(math.isfinite(value) for value in (va, rbc, hb, ppm)):
+        raise ValueError("Vc inputs must be finite numbers")
+    if va < 0 or rbc < 0 or hb <= 0:
+        raise ValueError("Vc requires nonnegative VA/RBC and positive Hb when supplied")
+    if 206 <= ppm <= 210:
+        rbc *= constants.VC_RBC_208_TO_218
+    elif not 216 <= ppm <= 220:
+        raise ValueError("Vc requires a 208 or 218 ppm excitation")
+
+    vc = (
+        constants.VC_COEFFICIENT
+        * va
+        * (constants.HbCorrection.HB_REF / hb)
+        * (rbc / constants.RBC_REF)
+    )
+    if not math.isfinite(vc):
+        raise ValueError("Vc result is not finite")
+    return vc
+
+
+def capillary_blood_volume_reference(age: float, sex: str, height: float) -> float:
+    """Return demographic Vc reference in mL; age is years and height is cm.
+     Invalid or nonpositive references cannot serve as a denominator and raise ValueError.
+    """
+    age, height = float(age), float(height)
+    if not all(math.isfinite(value) and value > 0 for value in (age, height)):
+        raise ValueError("Vc reference requires positive finite age and height")
+    if not isinstance(sex, str):
+        raise ValueError("Vc reference requires sex M or F")
+    sex = sex.strip().upper()
+    if sex in {"M", "MALE"}:
+        intercept, height_coefficient, age_squared_coefficient = constants.VcReference.MALE
+    elif sex in {"F", "FEMALE"}:
+        intercept, height_coefficient, age_squared_coefficient = constants.VcReference.FEMALE
+    else:
+        raise ValueError("Vc reference requires sex M or F")
+    vc_ref = intercept + height_coefficient * height - age_squared_coefficient * age**2
+    if not math.isfinite(vc_ref) or vc_ref <= 0:
+        raise ValueError("Demographic Vc reference is nonpositive or not finite")
+    return vc_ref
+
+
+def relative_capillary_blood_volume(vc: float, vc_ref: float) -> float:
+    """Return dimensionless vc/vc_ref; 1.0 corresponds to 100% predicted."""
+    vc, vc_ref = float(vc), float(vc_ref)
+    if not all(math.isfinite(value) for value in (vc, vc_ref)) or vc < 0 or vc_ref <= 0:
+        raise ValueError("Relative Vc requires nonnegative Vc and positive finite reference")
+    vc_rel = vc / vc_ref
+    if not math.isfinite(vc_rel):
+        raise ValueError("Relative Vc result is not finite")
+    return vc_rel
+
+
 def alveolar_volume(image: np.ndarray, mask: np.ndarray, fov: float) -> float:
     """Get the alveolar volume of the image.
 
@@ -326,7 +404,7 @@ def alveolar_volume(image: np.ndarray, mask: np.ndarray, fov: float) -> float:
     Returns:
         Alveolar volume in L.
     """
-    kv = constants.VA_ALPHA
+    kv = constants.K_V
     vv = inflation_volume(mask, fov) * (
         1.0 - bin_percentage(image, np.asarray([1]), mask) / 100
     )
@@ -339,8 +417,8 @@ def kco(
     image_rbc: np.ndarray,
     mask: np.ndarray,
     frequency: float,
-    membrane_mean: float = 0.89,
-    rbc_mean: float = 0.455,
+    membrane_mean: float = constants.MEM_REF * 100,
+    rbc_mean: float = constants.RBC_REF * 100,
 ) -> float:
     """Get the KCO of the image.
 
@@ -351,8 +429,8 @@ def kco(
         mask: np.ndarray. mask of non-VDP region.
         membrane_mean: float. The mean membrane in healthy subjects.
         rbc_mean: float. The mean RBC in healthy subjects.
-        KCO_ALPHA: membrane coefficient
-        KCO_BETA: rbc coefficient
+        K_M: membrane coefficient
+        K_R: rbc coefficient
     """
     if 206 <= frequency <= 210:
         mem = mean(image_membrane, mask) * 0.918
@@ -365,7 +443,7 @@ def kco(
     rbc_rel = rbc / rbc_mean  # relative mean RBC
     membrane_rel = 1.0 / membrane_rel if membrane_rel > 1 else membrane_rel
     kco_v = 1 / (
-        1 / (constants.KCO_ALPHA * membrane_rel) + 1 / (constants.KCO_BETA * rbc_rel)
+        1 / (constants.K_M * membrane_rel) + 1 / (constants.K_R * rbc_rel)
     )
     return kco_v
 
