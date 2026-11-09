@@ -3,7 +3,6 @@
 import glob
 import logging
 import os
-from pathlib import Path
 from typing import Any, Dict
 
 import nibabel as nib
@@ -228,17 +227,7 @@ class Subject(object):
         if self.config.rbc_m_ratio > 0:
             self.rbc_m_ratio = float(self.config.rbc_m_ratio)
         else:
-            try:
-                self.rbc_m_ratio = float(mdict["rbc_m_ratio"])
-                if not np.isfinite(self.rbc_m_ratio) or self.rbc_m_ratio <= 0:
-                    raise ValueError("Read-in RBC:M ratio is not positive and finite")
-            except (KeyError, TypeError, ValueError):
-                self.rbc_m_ratio = 0.455
-                logging.warning(
-                    "Could not read RBC:M ratio from the .mat file; using fallback "
-                    "value %.3f.",
-                    self.rbc_m_ratio,
-                )
+            self.rbc_m_ratio = float(mdict["rbc_m_ratio"])
 
     def calculate_rbc_m_ratio(self):
         """Calculate RBC:M ratio using static spectroscopy.
@@ -250,29 +239,17 @@ class Subject(object):
             logging.info("Using manual RBC:M ratio of {}".format(self.rbc_m_ratio))
         else:
             logging.info("Calculating RBC:M ratio from static spectroscopy.")
-            try:
-                assert self.dict_dyn[constants.IOFields.FIDS_DIS] is not None
-                rbc_m_ratio, _ = spect_utils.calculate_static_spectroscopy(
-                    fid=self.dict_dyn[constants.IOFields.FIDS_DIS],
-                    sample_time=self.dict_dyn[constants.IOFields.SAMPLE_TIME],
-                    tr=self.dict_dyn[constants.IOFields.TR],
-                    center_freq=self.dict_dyn[constants.IOFields.XE_CENTER_FREQUENCY],
-                    rf_excitation=self.dict_dyn[
-                        constants.IOFields.XE_DISSOLVED_OFFSET_FREQUENCY
-                    ],
-                    plot=False,
-                )
-                if not np.isfinite(rbc_m_ratio) or rbc_m_ratio <= 0:
-                    raise ValueError("Calculated RBC:M ratio is not positive and finite")
-                self.rbc_m_ratio = rbc_m_ratio
-            except Exception as error:
-                self.rbc_m_ratio = 0.455
-                logging.warning(
-                    "Could not calculate RBC:M ratio from static spectroscopy; "
-                    "using fallback value %.3f. Reason: %s",
-                    self.rbc_m_ratio,
-                    error,
-                )
+            assert self.dict_dyn[constants.IOFields.FIDS_DIS] is not None
+            self.rbc_m_ratio, _ = spect_utils.calculate_static_spectroscopy(
+                fid=self.dict_dyn[constants.IOFields.FIDS_DIS],
+                sample_time=self.dict_dyn[constants.IOFields.SAMPLE_TIME],
+                tr=self.dict_dyn[constants.IOFields.TR],
+                center_freq=self.dict_dyn[constants.IOFields.XE_CENTER_FREQUENCY],
+                rf_excitation=self.dict_dyn[
+                    constants.IOFields.XE_DISSOLVED_OFFSET_FREQUENCY
+                ],
+                plot=False,
+            )
 
     def preprocess(self):
         """Prepare data and trajectory for reconstruction.
@@ -624,25 +601,29 @@ class Subject(object):
             rbc_m_ratio=self.rbc_m_ratio,
             TR=self.dict_dis[constants.IOFields.TR],
         )
-        # Use a configured radius, preserve explicit legacy percentages, or
-        # calculate a radius from the readout timing.
-        if self.config.osc_recon.key_radius > 0:
+
+        if (
+            self.config is not None
+            and hasattr(self.config.osc_recon, "key_radius")
+            and self.config.osc_recon.key_radius > 0
+        ):
             self.key_radius = self.config.osc_recon.key_radius
-        elif getattr(self.config.osc_recon, "key_radius_pct", 0) > 0:
-            self.key_radius = int(
-                np.ceil(
-                    self.data_dissolved.shape[1]
-                    * self.config.osc_recon.key_radius_pct
-                    / 100
-                )
-            )
         else:
+            logging.info(
+                "Key radius not specified in config. Calculating automatically."
+            )
+            if self.config is not None and hasattr(self.config.recon, "kmax_factor"):
+                kmax_factor = self.config.recon.kmax_factor
+            else:
+                logging.info("Kmax sampling factor not specified. Default to 1.")
+                kmax_factor = 1
             self.key_radius = recon_utils.calculate_key_radius(
                 self.dict_dis[constants.IOFields.SAMPLE_TIME],
                 self.dict_dis[constants.IOFields.FIDS_DIS].shape[1],
-                self.dict_dis[constants.IOFields.RAMP_TIME] * 1e-6,
-                self.config.recon.kmax_factor,
+                self.dict_dis[constants.IOFields.RAMP_TIME] * (10**-6),
+                kmax_factor,
             )
+
         normalization = np.abs(self.data_gas[:, 0])
         data_dissolved_norm = np.divide(
             self.data_dissolved, np.expand_dims(normalization, -1)
@@ -1493,9 +1474,6 @@ class Subject(object):
                     constants.StatsIOFields.OSC_MEAN: float(
                         metrics.mean(self.image_rbc_osc, self.mask_rbc)
                     ),
-                    constants.StatsIOFields.OSC_STDDEV: float(
-                        metrics.std(self.image_rbc_osc, self.mask_rbc)
-                    ),
                     constants.StatsIOFields.OSC_NEGATIVE_PCT: metrics.negative_percentage(
                         self.image_rbc_osc, self.mask_rbc
                     ),
@@ -1532,9 +1510,6 @@ class Subject(object):
                         ),
                         constants.StatsIOFields.OSC_MEAN_CORR: float(
                             metrics.mean(self.image_rbc_osc_corr, self.mask_rbc)
-                        ),
-                        constants.StatsIOFields.OSC_STDDEV_CORR: float(
-                            metrics.std(self.image_rbc_osc_corr, self.mask_rbc)
                         ),
                         constants.StatsIOFields.OSC_NEGATIVE_PCT_CORR: metrics.negative_percentage(
                             self.image_rbc_osc_corr, self.mask_rbc
@@ -1619,6 +1594,8 @@ class Subject(object):
             constants.IOFields.SEX: self.dict_dis[constants.IOFields.SEX],
             constants.IOFields.HEIGHT: self.dict_dis[constants.IOFields.HEIGHT],
             constants.IOFields.WEIGHT: self.dict_dis[constants.IOFields.WEIGHT],
+            constants.IOFields.BMI: self.dict_dis[constants.IOFields.WEIGHT]
+            / ((self.dict_dis[constants.IOFields.HEIGHT] / 100) ** 2),
             constants.IOFields.VENT_NORMALIZATION_METHOD: self.config.vent_normalization_method,
         }
         return self.dict_info
@@ -2134,35 +2111,13 @@ class Subject(object):
                 osc_files = osc_files + ("tmp/osc_binned_color_corr.nii",)
 
             # move files
-            subfolder_osc = os.path.join(self.config.data_dir, "osc_imaging")
+            try:
+                osc_folder_name = "{}_osc_imaging".format(self.config.output_folder)
+            except:
+                osc_folder_name = "osc_imaging"
+            subfolder_osc = os.path.join(self.config.data_dir, osc_folder_name)
             os.makedirs(subfolder_osc, exist_ok=True)
             io_utils.move_files(osc_files, subfolder_osc)
-
-        if getattr(self.config, "combine_reports", False):
-            self.combine_subject_reports()
-
-    def combine_subject_reports(self):
-        """Create a subject-level report from gx_batch and oscillation PDFs only."""
-        subject_dir = Path(self.config.data_dir)
-        gas_exchange_pdf = subject_dir / "gx_batch" / (
-            f"{self.config.subject_id}_report.pdf"
-        )
-        oscillation_pdf = subject_dir / "osc_imaging" / (
-            f"{self.config.subject_id}_report_osc_imaging.pdf"
-        )
-        combined_pdf = subject_dir / f"{self.config.subject_id}_combined_report.pdf"
-
-        reports = [gas_exchange_pdf, oscillation_pdf]
-        existing_reports = [str(path) for path in reports if path.is_file()]
-        if not existing_reports:
-            logging.warning(
-                "No PDFs found in gx_batch or osc_imaging for subject %s.",
-                self.config.subject_id,
-            )
-            return
-
-        report.combine_pdfs(existing_reports, str(combined_pdf))
-        logging.info("Combined report saved to %s", combined_pdf)
 
     def check_git_version(self) -> None:
         """

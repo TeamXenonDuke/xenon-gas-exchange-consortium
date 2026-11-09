@@ -100,7 +100,7 @@ if !([[ "$1" == "build-only" ]] || [[ "$1" == "install-only" ]]); then
     echo "Current env: $CONDA_DEFAULT_ENV"
 
     # pip install and upgrade
-    pip install --upgrade pip
+    conda install pip
 
     # Install gcc to native computer
     if [[ "$OSTYPE" == "linux-gnu"* ]]; then

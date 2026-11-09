@@ -97,20 +97,34 @@ def calculate_key_radius(
     ramp_time: float,
     kmax_factor: float,
 ) -> int:
-    """Return the number of readout points reaching 6.8% of k-max.
+    """Calculate the optimal key_radius for keyhole reconstruction, assuming trapezoidal
+        gradients with no ramp down. Key radius will be expressed as a number of points per view and
+        will reach 6.8% of k_max. If k-space data is oversampled, only the points up to
+        1*kmax are considered.
 
-    The readout gradient ramps up and then remains flat; it does not ramp down
-    during acquisition. Times must be in seconds. ``kmax_factor`` is the
-    sampled k-space extent relative to the reference k-max.
+    Args:
+        dwell_time (float): time between samples in a readout
+        points_per_view (float): number of points in a readout
+        ramp_time (float): time it takes for gradients to reach their max value
+        kmax_factor (float): the fractional extent of kmax that is sampled
+
+    Returns:
+        int: key radius as the number of points per view that reaches 6.8% of k_max
     """
+
     total_time = dwell_time * points_per_view
     key_radius_ref = 6.8 / (kmax_factor * 100)
-    area = total_time - ramp_time / 2
-    frac_k_ramp_up = ramp_time / (2 * area)
+
+    # area of each region divided by the total trapezoidal area
+    frac_k_ramp_up = ramp_time / (2 * (total_time - (ramp_time / 2)))
 
     if frac_k_ramp_up >= key_radius_ref:
-        t_opt = np.sqrt(2 * key_radius_ref * ramp_time * area)
-    else:
-        t_opt = key_radius_ref * area + ramp_time / 2
+        # optimal time lies on the ramp up
+        t_opt = np.sqrt(2 * key_radius_ref * ramp_time * (total_time - (ramp_time / 2)))
 
-    return int(np.round(t_opt / dwell_time))
+    else:
+        # optimal time lies on the flat top of the trapezoid
+        t_opt = key_radius_ref * (total_time - (ramp_time / 2)) + (ramp_time / 2)
+
+    n_points_opt = np.round(t_opt / dwell_time)
+    return int(n_points_opt)

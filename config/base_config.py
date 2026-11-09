@@ -2,6 +2,7 @@
 
 import sys
 
+import numpy as np
 from ml_collections import config_dict
 
 # parent directory
@@ -22,14 +23,13 @@ class Config(config_dict.ConfigDict):
         manual_reg_filepath: str, path to manual registration nifti file
         manual_seg_filepath: str, path to the manual segmentation nifti file
         output_folder: str, name of folder to output gx files
-        combine_reports: bool, whether to create a combined subject-level PDF
         dicom_proton_dir: str, path to the DICOM proton images
         processes: Process, the evaluation processes
         rbc_m_ratio: float, the RBC to M ratio from spectroscopy
         reference_data_key: str, reference data key
         remove_contamination: bool, whether to remove gas contamination
         remove_noisy_projections: bool, whether to remove noisy projections
-        segmentation_key: str, the segmentation key (MANUAL_VENT by default)
+        segmentation_key: str, the segmentation key (CNN_VENT, MANUAL)
         subject_id: str, the subject id
         vol_correction_key: str,lung volume correction key (NONE, RBC_AND_MEMBRANE)
         corrected_lung_volume: float, target lung volume in L
@@ -44,12 +44,12 @@ class Config(config_dict.ConfigDict):
         self.rbc_m_ratio = 0.0
         self.patient_frc = "None"
         self.bag_volume = "None"
-        self.segmentation_key = constants.SegmentationKey.MANUAL_VENT.value
+        self.segmentation_key = constants.SegmentationKey.CNN_VENT.value
         self.manual_seg_filepath = ""
         # Choose NormalizationMethod from GLB_99 (default), GLB_FV, GLB_MA, THRESHOLD_MA
         self.vent_normalization_method = constants.NormalizationMethods.GLB_99
         # auto-generate if filepath missing or file not found
-        self.auto_make_trachea_plus_lung_mask = False  # True
+        self.auto_make_trachea_plus_lung_mask = True
         # where to write it if auto-generated
         self.trachea_plus_lung_mask_output_dir = self.data_dir
 
@@ -65,9 +65,6 @@ class Config(config_dict.ConfigDict):
         self.registration_key = constants.RegistrationKey.SKIP.value
         self.manual_reg_filepath = ""
         self.output_folder = "gx"
-        # When enabled, assemble gx_batch and osc_imaging reports into one
-        # subject-level PDF after pipeline outputs are moved.
-        self.combine_reports = True
 
         # Additional options for contamination correction
         self.phase_gas_acq_diss = "None"  # degree
@@ -105,20 +102,20 @@ class Recon(object):
         n_skip_end: int, the number of frames to skip at the end
         recon_size: int, size to which the images are reconstructed
         matrix_size: int, the final matrix size
-        kmax_factor: float, the fractional extent of k-max sampled
+        kmax_factor: float, the fractional extent of kmax that is sampled (default=1)
         traj_type: str, the trajectory type
         traj_scaling_factor: str, scaling factor to apply to trajectories
     """
 
     def __init__(self):
         """Initialize the reconstruction parameters."""
-        # Gradient delays in microseconds
-        self.del_x = -5
-        self.del_y = -5
-        self.del_z = -5
+        # Gradient delays - MUST be specified
+        self.del_x = "None"
+        self.del_y = "None"
+        self.del_z = "None"
 
         # Ramp time will read in by default, but may be specified in us
-        self.ramp_time = 90  # "None"
+        self.ramp_time = "None"
 
         # Reconstruction and matrix sizes
         self.recon_size = 64
@@ -130,7 +127,8 @@ class Recon(object):
         self.recon_key = constants.ReconKey.ROBERTSON.value
         self.kernel_sharpness_lr = 0.14
         self.kernel_sharpness_hr = 0.32
-        self.n_skip_start = 100
+        # Set initial n_skip_start value as NaN, or user input an expected value
+        self.n_skip_start = np.nan
         self.n_skip_end = 0
         self.optimized_conta_phase = 49.9  # degree
         self.remove_contamination = False
@@ -149,10 +147,11 @@ class OscillationRecon(object):
         """Initialize the oscillation reconstruction parameters.
 
         Attributes:
-            oscillation_analysis: bool, whether to perform oscillation imaging analysis
-            key_radius: int, points per radial spoke in the keyhole center.
-                Set to 0 to calculate the radius automatically at 6.8% of k-max.
-            vc_correction: bool, whether to correction oscillation images for relative capillary blood volume
+            oscillation_analysis: bool, whether to perform oscillation imaging analysis.
+            key_radius: int, points per radial spoke used to define the center of the keyhole image.
+                If set to 0, this will be calculated automatically, such that the
+                key radius is 6.8% of the k-max.
+            vc_correction: bool, whether to correction oscillation images for relative capillary blood volume.
         """
         self.oscillation_analysis = False
 
