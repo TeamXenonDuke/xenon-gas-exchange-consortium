@@ -8,7 +8,7 @@ import csv
 import glob
 import shutil
 from typing import Any, Dict, List, Optional, Tuple
-
+import ants
 import ismrmrd
 import mapvbvd
 import nibabel as nib
@@ -543,37 +543,43 @@ def read_ute_mrd(path: str) -> Dict[str, Any]:
     }
 
 
-def read_dicom(path: str, shape_gas: Tuple[int, int, int]) -> np.ndarray:
-    """Read in DICOM image as numpy array.
+def read_dicom(path: str, shape_gas: Tuple[int, int, int], fov_gas: float) -> np.ndarray:
+    """Read in DICOM proton image and resample it onto the gas image grid.
 
     Args:
         path (str): path to DICOM proton image
         shape_gas (tuple[int, int, int]): size of Dixon gas image
+        fov_gas (float): field of view of the gas image in cm
 
     Returns:
-        np.ndarray: numpy array from DICOM image.
+        np.ndarray: numpy array from DICOM image resampled.
     """
-    files = os.listdir(path)
-    file1 = os.path.join(path, files[0])
-    RefDs = pydicom.dcmread(file1)
-    ConstPixelDims = (int(RefDs.Columns), int(RefDs.Rows), len(files))
-    dicom = np.zeros(ConstPixelDims)
+    slices = [pydicom.dcmread(os.path.join(path, f)) for f in os.listdir(path) if not f.startswith(".")]
 
-    for i in range(0, len(files)):
-        if files[i] == ".DS_Store":
-            continue
-        file_with_path = os.path.join(path, files[i])
-        RefDs = pydicom.dcmread(file_with_path)
-        slice_num = int(RefDs.InstanceNumber)
-        ds = pydicom.dcmread(file_with_path)
-        dicom[:, :, slice_num - 1] = ds.pixel_array
-
-    image = dicom.astype("float64")
-
-    if image.shape[0] != shape_gas[0]:
-        image = img_utils.interp(image, shape_gas[0] / image.shape[0])
-
-    return image
+    # get orientation
+    row_dir = np.array(slices[0].ImageOrientationPatient[:3], dtype=float)
+    col_dir = np.array(slices[0].ImageOrientationPatient[3:], dtype=float)
+    normal = np.cross(row_dir, col_dir)
+    
+    # order slices by position along the slice direction (InstanceNumber order varies by scanner)
+    slices.sort(key=lambda ds: np.dot(normal, np.array(ds.ImagePositionPatient, dtype=float)))
+    image = np.stack([ds.pixel_array for ds in slices], axis=-1).astype("float64")
+    
+    first = np.array(slices[0].ImagePositionPatient, dtype=float)
+    spacing_proton = np.array([float(slices[0].PixelSpacing[0]), float(slices[0].PixelSpacing[1]),
+                               np.dot(normal, np.array(slices[1].ImagePositionPatient, dtype=float) - first)])
+    direction_proton = np.column_stack([col_dir, row_dir, normal])
+    proton = ants.from_numpy(image, origin=tuple(first), spacing=tuple(spacing_proton), direction=direction_proton)
+    
+    # gas grid in the pipeline's orientation, centred on the proton image
+    direction_gas = np.column_stack([[0, 0, -1], [1, 0, 0], [0, 1, 0]]).astype(float)
+    spacing_gas = 10 * fov_gas / shape_gas[0]  # fov_gas is in cm
+    center = first + direction_proton @ ((np.array(image.shape) - 1) * spacing_proton / 2)
+    origin_gas = center - direction_gas @ ((np.array(shape_gas) - 1) * spacing_gas / 2)
+    gas_grid = ants.from_numpy(np.zeros(shape_gas), origin=tuple(origin_gas),
+                               spacing=(spacing_gas,) * 3, direction=direction_gas)
+    
+    return ants.resample_image_to_target(proton, gas_grid, interp_type="linear").numpy().astype("float64")
 
 
 def export_nii(image: np.ndarray, path: str, fov: Optional[float] = None):

@@ -132,18 +132,16 @@ class RegistrationKey(enum.Enum):
     """Registration flags.
 
     Defines how and if registration is performed. Options:
-    PROTON2GAS: Register ANTs to register proton image (moving) to gas image (fixed).
-        Also uses the transformation and applies on the mask if segmented on proton
-        image.
-    MASK2GAS: Register ANTs to register mask (moving) to gas image (fixed).
-        Also uses the transformation and applies on the proton image.
+    RIGID: Register proton image (moving) to gas image (fixed) with a rigid transform.
+        Also applies the transform to the mask if segmented on the proton image.
+    AFFINE: Same as RIGID, with an affine transform.
     MANUAL: Read in Nifti file of manually registered proton image.
     SKIP: Skip registration entirely.
     """
 
     MANUAL = "manual"
-    MASK2GAS = "mask2gas"
-    PROTON2GAS = "proton2gas"
+    AFFINE = "affine"
+    RIGID = "rigid"
     SKIP = "skip"
 
 

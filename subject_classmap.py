@@ -191,7 +191,7 @@ class Subject(object):
     def read_dicom_files(self):
         """Read in DICOM files for proton image."""
         self.image_proton = io_utils.read_dicom(
-            self.config.dicom_proton_dir, self.image_gas_highreso.shape
+            self.config.dicom_proton_dir, self.image_gas_highreso.shape, self.dict_dis[constants.IOFields.FOV]
         )
 
     def read_mat_file(self):
@@ -813,42 +813,32 @@ class Subject(object):
 
         Uses ANTs registration to register the proton image to the xenon image.
         """
-
-        if self.config.registration_key == constants.RegistrationKey.MASK2GAS.value:
-            logging.info(
-                "Run registration algorithm, vent is fixed, proton mask is moving"
-            )
-
-            if self.config.segmentation_key in [
-                constants.SegmentationKey.CNN_PROTON.value,
-                constants.SegmentationKey.MANUAL_PROTON.value,
-            ]:
-                self.mask_proton = self.mask
+        if not np.any(self.image_proton):
+            logging.warning("No proton image, skipping registration.")
+            self.config.registration_key = constants.RegistrationKey.SKIP.value
+            
+        if self.config.registration_key in [constants.RegistrationKey.RIGID.value,
+                                            constants.RegistrationKey.AFFINE.value]:
+            logging.info(f"Run {self.config.registration_key} registration, gas mask is fixed, proton mask is moving")
+            
+            # proton-space lung mask: reuse the segmentation if it was done on the proton image
+            if self.config.segmentation_key in [constants.SegmentationKey.CNN_PROTON.value,
+                                                constants.SegmentationKey.MANUAL_PROTON.value]:
+                mask_proton = self.mask
             else:
-                if self.config.recon.recon_proton:
-                    self.mask_proton = segmentation.predict(
-                        self.image_proton, constants.ImageType.UTE.value
-                    ).astype(bool)
-                else:
-                    logging.error(
-                        "Proton reconstruction is disabled. Cannot perform proton mask-to-gas registration."
-                    )
-
+                mask_proton = segmentation.predict(self.image_proton, constants.ImageType.UTE.value)
+            
+            # gas-space lung mask: reuse the segmentation if it was done on the gas image
+            if self.config.segmentation_key in [constants.SegmentationKey.CNN_VENT.value,
+                                                constants.SegmentationKey.MANUAL_VENT.value]:
+                mask_gas = self.mask
+            else:
+                mask_gas = segmentation.predict(self.image_gas_highreso, constants.ImageType.VENT.value)
             mask, self.image_proton_reg = np.abs(
                 registration.register_ants(
-                    abs(self.image_gas_highreso),
-                    self.mask_proton,
+                    mask_gas,
+                    mask_proton,
                     self.image_proton,
-                    self.config.registration_key,
-                )
-            )
-        elif self.config.registration_key == constants.RegistrationKey.PROTON2GAS.value:
-            logging.info("Run registration algorithm, vent is fixed, proton is moving")
-            self.image_proton_reg, mask = np.abs(
-                registration.register_ants(
-                    abs(self.image_gas_highreso),
-                    self.image_proton,
-                    self.mask,
                     self.config.registration_key,
                 )
             )

@@ -59,17 +59,17 @@ def register_ants(
     ants_moving2 = numpy_to_ants(np.abs(image_moving2))
 
     # Registration of moving1 --> static
-    transform = ("TRSAA" if registration_key == "mask2gas" else "Rigid")
+    transform = ("TRSAA" if registration_key == "affine" else "Rigid")
     logging.info(f"*** Using ANTsPy ({transform}) to register images ...")
     registration = ants.registration(fixed = ants_static, moving = ants_moving1,
-                                     aff_metric = 'mattes', syn_metric = 'mattes',
+                                     aff_metric = 'meansquares', syn_metric = 'meansquares',
                                      type_of_transform = transform, interpolator = "nearestNeighbor")
 
     moving1_reg = registration["warpedmovout"].numpy()
 
     # Apply the same transform to moving2
     moving2_ants_reg = ants.apply_transforms(fixed = ants_static, moving = ants_moving2,
-        transformlist = registration["fwdtransforms"], interpolator = "nearestNeighbor",)
+                                             transformlist = registration["fwdtransforms"], interpolator = "linear")
     moving2_reg = moving2_ants_reg.numpy()
     end_time = time.time()
     tot_time = end_time - start_time
