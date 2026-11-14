@@ -1,0 +1,5 @@
+batch_status.csv
+generated_configs/
+manifest.csv
+__pycache__/
+*.log

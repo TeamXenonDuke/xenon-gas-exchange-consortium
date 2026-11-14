@@ -1,4 +1,4 @@
-"""Scripts to run gas exchange mapping pipeline in batches."""
+"""Legacy config-file batch runner; prefer manifest/batch_pipeline.py."""
 import glob
 import importlib
 import logging
@@ -22,6 +22,9 @@ def main(argv):
     Import the config file and run the gas exchange imaging pipeline on all
     subjects specified in by the cohort flag.
     """
+    logging.warning(
+        "script_process_batch.py is legacy; use manifest/batch_pipeline.py for new batches."
+    )
     if FLAGS.cohort == "healthy":
         subjects = glob.glob(os.path.join(CONFIG_PATH, "healthy", "*py"))
     elif FLAGS.cohort == "cteph":
@@ -63,11 +66,11 @@ def main(argv):
         if FLAGS.force_recon:
             gx_mapping_reconstruction(config)
         elif FLAGS.force_readin:
-            gx_mapping_readin(config)
+            gx_mapping_readin(config, force_segmentation=FLAGS.force_segmentation)
         elif config.processes.gx_mapping_recon:
             gx_mapping_reconstruction(config)
         elif config.processes.gx_mapping_readin:
-            gx_mapping_readin(config)
+            gx_mapping_readin(config, force_segmentation=FLAGS.force_segmentation)
         else:
             pass
 

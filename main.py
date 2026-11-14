@@ -6,6 +6,7 @@ from ml_collections import config_flags
 
 from config import base_config
 from subject_classmap import Subject
+from utils import constants
 
 import logging
 
@@ -24,6 +25,39 @@ flags.DEFINE_bool("force_segmentation", False, "run segmentation again.")
 flags.DEFINE_string("folder", None, "relative path to subject data folder.")
 
 
+def apply_manifest_demographics(subject: Subject, config: base_config.Config) -> None:
+    """Apply demographics supplied by the batch manifest after input loading."""
+    overrides = getattr(config, "manifest_demographics", {})
+    fields = {
+        "age": constants.IOFields.AGE,
+        "sex": constants.IOFields.SEX,
+        "height_cm": constants.IOFields.HEIGHT,
+        "weight_kg": constants.IOFields.WEIGHT,
+    }
+    for name, io_field in fields.items():
+        if name in overrides:
+            subject.dict_dis[io_field] = overrides[name]
+
+
+def read_raw_data(subject: Subject, config: base_config.Config) -> None:
+    """Read the manifest-selected input type or auto-detect for legacy configs."""
+    input_type = getattr(config, "input_type", "").lower()
+    if input_type == "twix":
+        subject.read_twix_files()
+        return
+    if input_type == "mrd":
+        subject.read_mrd_files()
+        return
+    if input_type:
+        raise ValueError(f"Unsupported reconstruction input_type: {input_type}")
+
+    try:
+        subject.read_twix_files()
+    except ValueError:
+        logging.info("No Twix input found; trying MRD input.")
+        subject.read_mrd_files()
+
+
 def gx_mapping_reconstruction(config: base_config.Config):
     """Run the gas exchange mapping pipeline with reconstruction.
 
@@ -37,14 +71,8 @@ def gx_mapping_reconstruction(config: base_config.Config):
             f"You choose a wrong normalization method: {config.vent_normalization_method}! It has to be: GLB_99, GLB_FV, GLB_MA, or THRESHOLD_MA"
         )
         raise ValueError(msg)
-    try:
-        subject.read_twix_files()
-    except:
-        logging.warning("Cannot read in twix files.")
-        try:
-            subject.read_mrd_files()
-        except:
-            raise ValueError("Cannot read in raw data files.")
+    read_raw_data(subject, config)
+    apply_manifest_demographics(subject, config)
     subject.calculate_rbc_m_ratio()
     logging.info("Reconstructing images")
     subject.preprocess()
@@ -87,7 +115,10 @@ def gx_mapping_reconstruction(config: base_config.Config):
     logging.info("Complete")
 
 
-def gx_mapping_readin(config: base_config.Config):
+def gx_mapping_readin(
+    config: base_config.Config,
+    force_segmentation: bool = False,
+):
     """Run the gas exchange imaging pipeline by reading in .mat file.
 
     Args:
@@ -101,7 +132,8 @@ def gx_mapping_readin(config: base_config.Config):
         )
         raise ValueError(msg)
     subject.read_mat_file()
-    if FLAGS.force_segmentation:
+    apply_manifest_demographics(subject, config)
+    if force_segmentation:
         subject.segmentation()
     subject.gas_binning()
     subject.dixon_decomposition()
@@ -138,13 +170,13 @@ def main(argv):
         gx_mapping_reconstruction(config)
     elif FLAGS.force_readin:
         logging.info("Gas exchange imaging mapping with reconstruction.")
-        gx_mapping_readin(config)
+        gx_mapping_readin(config, force_segmentation=FLAGS.force_segmentation)
     elif config.processes.gx_mapping_recon:
         logging.info("Gas exchange imaging mapping with reconstruction.")
         gx_mapping_reconstruction(config)
     elif config.processes.gx_mapping_readin:
         logging.info("Gas exchange imaging mapping with reconstruction.")
-        gx_mapping_readin(config)
+        gx_mapping_readin(config, force_segmentation=FLAGS.force_segmentation)
     else:
         pass
 

@@ -146,9 +146,10 @@ class Subject(object):
         data.
         """
 
-        self.dict_dis = io_utils.read_dis_twix(
-            io_utils.get_dis_twix_files(str(self.config.data_dir)), config=self.config
-        )
+        dissolved_path = getattr(self.config, "source_file", "")
+        if not dissolved_path:
+            dissolved_path = io_utils.get_dis_twix_files(str(self.config.data_dir))
+        self.dict_dis = io_utils.read_dis_twix(dissolved_path, config=self.config)
         try:
             self.dict_dyn = io_utils.read_dyn_twix(
                 io_utils.get_dyn_twix_files(str(self.config.data_dir))
@@ -170,10 +171,10 @@ class Subject(object):
         Read in the dynamic spectroscopy (if it exists) and the dissolved-phase image
         data.
         """
-        self.dict_dis = io_utils.read_dis_mrd(
-            io_utils.get_dis_mrd_files(str(self.config.data_dir)),
-            self.config.multi_echo,
-        )
+        dissolved_path = getattr(self.config, "source_file", "")
+        if not dissolved_path:
+            dissolved_path = io_utils.get_dis_mrd_files(str(self.config.data_dir))
+        self.dict_dis = io_utils.read_dis_mrd(dissolved_path, self.config.multi_echo)
         try:
             self.dict_dyn = io_utils.read_dyn_mrd(
                 io_utils.get_dyn_mrd_files(str(self.config.data_dir))
@@ -200,7 +201,10 @@ class Subject(object):
         Note: The mat file variable names are matched to the instance variable names.
         Thus, if the variable names are changed in the mat file, they must be changed.
         """
-        mdict = io_utils.import_mat(io_utils.get_mat_file(str(self.config.data_dir)))
+        mat_path = getattr(self.config, "source_file", "")
+        if not mat_path:
+            mat_path = io_utils.get_mat_file(str(self.config.data_dir))
+        mdict = io_utils.import_mat(mat_path)
         self.dict_dis = io_utils.import_matstruct_to_dict(mdict["dict_dis"])
         if "dict_dyn" in mdict.keys() and mdict["dict_dyn"].flatten()[0] is not None:
             self.dict_dyn = io_utils.import_matstruct_to_dict(mdict["dict_dyn"])
