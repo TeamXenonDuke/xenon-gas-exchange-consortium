@@ -431,7 +431,8 @@ def calculate_corrected_rbc_oscillation(
     sex: str,
     height: float,
     alveolar_volume: float,
-    hemoglobin: float = 0.0,
+    hemoglobin: float,
+    excitation_ppm: float,
     method: str = constants.Methods.SMOOTH,
 ) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
     """Calculate RBC oscillations corrected for relative capillary blood volume.
@@ -464,24 +465,34 @@ def calculate_corrected_rbc_oscillation(
         rbc_ref,
         alveolar_volume,
         hemoglobin,
+        excitation_ppm,
     )
-    correction_map = np.divide(10.49, ((np.divide(3.73, relative_vc_map)) + 6.76))
+    correction_map = np.divide(5.263, ((np.divide(2.061, relative_vc_map)) + 3.202))
     raw_oscillations = calculate_rbc_oscillation(
         image_high, image_low, image_total, mask, method
     )
-    if np.min(raw_oscillations[mask]) > -4.02:  # -3 SD healthy reference osc threshold
-        corrected_oscillations = (
-            np.multiply(
-                correction_map,
-                (raw_oscillations - np.min(raw_oscillations[mask]) + 0.01),
-            )
-            + np.min(raw_oscillations[mask])
-            - 0.01
-        )
-    else:
-        corrected_oscillations = (
-            np.multiply(correction_map, (raw_oscillations + 4.02 + 0.01)) - 4.02 - 0.01
-        )
+    weight = np.divide(1, (1 + np.exp(np.multiply(-1.118, raw_oscillations))))
+    offset = np.multiply(0.673, np.exp(np.divide(-np.square(raw_oscillations), 8)))
+
+    corrected_oscillations = (
+        np.multiply(weight, np.multiply(correction_map, raw_oscillations))
+        + np.multiply(1 - weight, np.multiply(2 - correction_map, raw_oscillations))
+        + np.multiply(correction_map - 1, offset)
+    )
+
+    # if np.min(raw_oscillations[mask]) > -4.02:  # -3 SD healthy reference osc threshold
+    #    corrected_oscillations = (
+    #        np.multiply(
+    #            correction_map,
+    #            (raw_oscillations - np.min(raw_oscillations[mask]) + 0.01),
+    #        )
+    #        + np.min(raw_oscillations[mask])
+    #        - 0.01
+    #    )
+    # else:
+    #    corrected_oscillations = (
+    #        np.multiply(correction_map, (raw_oscillations + 4.02 + 0.01)) - 4.02 - 0.01
+    #    )
     return (relative_vc_map, correction_map, corrected_oscillations)
 
 

@@ -66,10 +66,13 @@ def gx_mapping_reconstruction(config: base_config.Config):
     """
     subject = Subject(config=config)
     subject.clear_temp_file()
-    if config.vent_normalization_method not in ["glb_99", "glb_fv", "glb_ma","threshold_ma"]:
-        msg = (
-            f"You choose a wrong normalization method: {config.vent_normalization_method}! It has to be: GLB_99, GLB_FV, GLB_MA, or THRESHOLD_MA"
-        )
+    if config.vent_normalization_method not in [
+        "glb_99",
+        "glb_fv",
+        "glb_ma",
+        "threshold_ma",
+    ]:
+        msg = f"You choose a wrong normalization method: {config.vent_normalization_method}! It has to be: GLB_99, GLB_FV, GLB_MA, or THRESHOLD_MA"
         raise ValueError(msg)
     read_raw_data(subject, config)
     apply_manifest_demographics(subject, config)
@@ -105,7 +108,7 @@ def gx_mapping_reconstruction(config: base_config.Config):
     subject.get_statistics()
     subject.get_info()
     subject.save_subject_to_mat()
-    subject.write_stats_to_csv()
+    # subject.write_stats_to_csv()
     subject.generate_figures()
     subject.generate_pdf()
     subject.save_files()
@@ -126,10 +129,13 @@ def gx_mapping_readin(
     """
     subject = Subject(config=config)
     subject.clear_temp_file()
-    if config.vent_normalization_method not in ["glb_99", "glb_fv", "glb_ma","threshold_ma"]:
-        msg = (
-            f"You choose a wrong normalization method: {config.vent_normalization_method}! It has to be: GLB_99, GLB_FV, GLB_MA, or THRESHOLD_MA"
-        )
+    if config.vent_normalization_method not in [
+        "glb_99",
+        "glb_fv",
+        "glb_ma",
+        "threshold_ma",
+    ]:
+        msg = f"You choose a wrong normalization method: {config.vent_normalization_method}! It has to be: GLB_99, GLB_FV, GLB_MA, or THRESHOLD_MA"
         raise ValueError(msg)
     subject.read_mat_file()
     apply_manifest_demographics(subject, config)

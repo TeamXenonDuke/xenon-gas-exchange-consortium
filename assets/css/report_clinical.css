@@ -103,6 +103,14 @@ body {
   border-collapse: collapse;
 }
 
+/* Keep the seven-column summary within the existing 1105px container. */
+.table-container1 table.vc-summary {
+  table-layout: fixed;
+}
+.table-container1 .vc-value {
+  white-space: nowrap;
+}
+
 .table-container1 th,
 .table-container1 td {
   border: 1px solid white;
