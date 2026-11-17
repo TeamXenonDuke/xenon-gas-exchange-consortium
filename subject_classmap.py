@@ -603,10 +603,10 @@ class Subject(object):
 
         if (
             self.config is not None
-            and hasattr(self.config.osc_recon, "key_radius")
-            and self.config.osc_recon.key_radius > 0
+            and hasattr(self.config, "key_radius")
+            and self.config.key_radius > 0
         ):
-            self.key_radius = self.config.osc_recon.key_radius
+            self.key_radius = self.config.key_radius
         else:
             logging.info(
                 "Key radius not specified in config. Calculating automatically."

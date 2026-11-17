@@ -38,9 +38,10 @@ class Config(config_dict.ConfigDict):
         trachea_plus_lung_mask_filepath: str, optional user override of big mask
         bag_volume: str, the bag volume in L
 
-        key_radius_pct: int, percentage of points used to recon the keyhole image
+        key_radius: int, points per radial spoke used to define the center of the keyhole image.
+        	If set to 0, this will be calculated automatically, such that the key radius is 6.8% of the k-max
         osc_recon_key: str, the type of reconstruction to perform for oscillation imaging (ROBERTSON, PLUMMER)
-        vc_correction: bool, whether to correction oscillation images for relative capillary blood volume
+        vc_correction: bool, whether to correct oscillation images for relative capillary blood volume
     """
 
     def __init__(self):
@@ -91,7 +92,7 @@ class Config(config_dict.ConfigDict):
         ### Oscillation Imaging Options
 
         # Keyhole Radius
-        self.key_radius_pct = 14
+        self.key_radius = 0
         self.osc_recon_key = constants.ReconKey.ROBERTSON.value
         self.vc_correction = False
 
@@ -149,6 +150,7 @@ class Recon(object):
     Attributes:
         recon_size: int, size to which the images are reconstructed
         matrix_size: int, the final matrix size
+        kmax_factor: float, the fractional extent of kmax that is sampled (default=1)
         ramp_time: str, gradient ramp time in microseconds
         traj_type: str, the trajectory type (SPIRAL, HALTON, HALTONSPIRAL, SPIRALRANDOM, ARCHIMEDIAN, GOLDENMEAN)
         kernel_sharpness_lr: float, the kernel sharpness for low resolution, higher SNR images
@@ -164,6 +166,7 @@ class Recon(object):
         # Reconstruction and Matrix Sizes
         self.recon_size = 64
         self.matrix_size = 128
+        self.kmax_factor = 1.0
 
         # Ramp time will read in by default, but may be specified in us
         self.ramp_time = "None"
