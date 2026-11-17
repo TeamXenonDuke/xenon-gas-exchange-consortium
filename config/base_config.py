@@ -73,7 +73,7 @@ class Config(config_dict.ConfigDict):
         ### Histogram Analysis
 
         # Ventilation Normalization Method
-        self.vent_normalization_method = constants.NormalizationMethods.GLB_99.value
+        self.vent_normalization_method = constants.NormalizationMethods.THRESHOLD_MA.value
 
         # Reference Thresholds
         self.reference_data_key = constants.ReferenceDataKey.DUKE_REFERENCE.value
@@ -95,8 +95,7 @@ class Config(config_dict.ConfigDict):
         self.osc_recon_key = constants.ReconKey.ROBERTSON.value
         self.vc_correction = False
 
-        ### Do Not Edit Anyuthing Past This Point
-
+        ### Do not edit these 5 variables
         self.multi_echo = False
         self.corrections = Corrections()
         self.recon = Recon()
@@ -124,7 +123,7 @@ class Corrections(object):
         ### Initialize correction parameters
 
         # Bias Field Correction
-        self.bias_key = constants.BiasfieldKey.N4ITK.value
+        self.bias_key = constants.BiasfieldKey.SKIP.value
 
         # Hemoglobin Correction
         self.hb_correction_key = constants.HbCorrectionKey.NONE.value
@@ -179,9 +178,9 @@ class Recon(object):
         self.n_skip_end = 0
 
         # Scaling is calcuated automatically if not reading in trajectories directly
-        # Will default to 1 when reading in trajectories, but may be specified if desired
+        # Will default to 1.0 when reading in trajectories, but may be specified if desired
         # Use 0.903 for Halton Spiral Cincy data
-        self.traj_scaling_factor = "None"
+        self.traj_scaling_factor = 1.0
 
 class Proton(object):
     """Define the proton image reconstruction configurations.
