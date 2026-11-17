@@ -287,9 +287,9 @@ def read_dis_twix(
 
     if (
         config is None
-        or config.recon.del_x is constants.NONE
-        or config.recon.del_y is constants.NONE
-        or config.recon.del_z is constants.NONE
+        or config.del_x is constants.NONE
+        or config.del_y is constants.NONE
+        or config.del_z is constants.NONE
     ):  # type: ignore
         logging.error("Gradient delay is not properly set in the config file")
 
@@ -319,9 +319,9 @@ def read_dis_twix(
         constants.IOFields.XE_DISSOLVED_OFFSET_FREQUENCY.value: twix_utils.get_excitation_freq(
             twix_obj
         ),
-        constants.IOFields.GRAD_DELAY_X.value: config.recon.del_x,
-        constants.IOFields.GRAD_DELAY_Y.value: config.recon.del_y,
-        constants.IOFields.GRAD_DELAY_Z.value: config.recon.del_z,
+        constants.IOFields.GRAD_DELAY_X.value: config.del_x,
+        constants.IOFields.GRAD_DELAY_Y.value: config.del_y,
+        constants.IOFields.GRAD_DELAY_Z.value: config.del_z,
         constants.IOFields.INSTITUTION.value: twix_utils.get_institution_name(twix_obj),
         constants.IOFields.SYSTEM_VENDOR.value: twix_utils.get_system_vendor(twix_obj),
         constants.IOFields.N_FRAMES.value: data_dict[constants.IOFields.N_FRAMES.value],
@@ -381,9 +381,9 @@ def read_ute_twix(
 
     if (
         config is None
-        or config.recon.del_x is constants.NONE
-        or config.recon.del_y is constants.NONE
-        or config.recon.del_z is constants.NONE
+        or config.del_x is constants.NONE
+        or config.del_y is constants.NONE
+        or config.del_z is constants.NONE
     ):  # type: ignore
         logging.error("Gradient delay is not properly set in the config file")
 
@@ -393,9 +393,9 @@ def read_ute_twix(
         constants.IOFields.INSTITUTION.value: twix_utils.get_institution_name(twix_obj),
         constants.IOFields.SYSTEM_VENDOR.value: twix_utils.get_system_vendor(twix_obj),
         constants.IOFields.RAMP_TIME.value: twix_utils.get_ramp_time(twix_obj),
-        constants.IOFields.GRAD_DELAY_X.value: config.recon.del_x,
-        constants.IOFields.GRAD_DELAY_Y.value: config.recon.del_y,
-        constants.IOFields.GRAD_DELAY_Z.value: config.recon.del_z,
+        constants.IOFields.GRAD_DELAY_X.value: config.del_x,
+        constants.IOFields.GRAD_DELAY_Y.value: config.del_y,
+        constants.IOFields.GRAD_DELAY_Z.value: config.del_z,
         constants.IOFields.N_SKIP_END.value: data_dict[constants.IOFields.N_SKIP_END.value],
         constants.IOFields.N_SKIP_START.value: data_dict[constants.IOFields.N_SKIP_START.value],
         constants.IOFields.N_FRAMES.value: data_dict[constants.IOFields.N_FRAMES.value],
