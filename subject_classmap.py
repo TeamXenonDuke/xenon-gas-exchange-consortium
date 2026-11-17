@@ -600,14 +600,29 @@ class Subject(object):
             rbc_m_ratio=self.rbc_m_ratio,
             TR=self.dict_dis[constants.IOFields.TR.value],
         )
-        # calculate the key radius and normalize
-        self.key_radius = int(
-            np.ceil(
-                self.data_dissolved.shape[1]
-                * self.config.key_radius_pct
-                / 100
+
+        if (
+            self.config is not None
+            and hasattr(self.config.osc_recon, "key_radius")
+            and self.config.osc_recon.key_radius > 0
+        ):
+            self.key_radius = self.config.osc_recon.key_radius
+        else:
+            logging.info(
+                "Key radius not specified in config. Calculating automatically."
             )
-        )
+            if self.config is not None and hasattr(self.config.recon, "kmax_factor"):
+                kmax_factor = self.config.recon.kmax_factor
+            else:
+                logging.info("Kmax sampling factor not specified. Default to 1.")
+                kmax_factor = 1
+            self.key_radius = recon_utils.calculate_key_radius(
+                self.dict_dis[constants.IOFields.SAMPLE_TIME],
+                self.dict_dis[constants.IOFields.FIDS_DIS].shape[1],
+                self.dict_dis[constants.IOFields.RAMP_TIME] * (10**-6),
+                kmax_factor,
+            )
+
         normalization = np.abs(self.data_gas[:, 0])
         data_dissolved_norm = np.divide(
             self.data_dissolved, np.expand_dims(normalization, -1)
@@ -1571,15 +1586,16 @@ class Subject(object):
                 constants.T2STAR_RBC_3T,
                 self.dict_dis[constants.IOFields.FIELD_STRENGTH.value],
             ),
-            constants.IOFields.TE90.value: 1e6 * self.dict_dis[constants.IOFields.TE90.value],
-            constants.IOFields.TR_DIS.value: 1e3 * self.dict_dis[constants.IOFields.TR.value],
-            constants.IOFields.USER_LUNG_VOLUME_VALUE.value: self.user_lung_volume_value,
-            constants.IOFields.AGE.value: self.dict_dis[constants.IOFields.AGE.value],
-            constants.IOFields.SEX.value: self.dict_dis[constants.IOFields.SEX.value],
-            constants.IOFields.HEIGHT.value: self.dict_dis[constants.IOFields.HEIGHT.value],
-            constants.IOFields.WEIGHT.value: self.dict_dis[constants.IOFields.WEIGHT.value],
-            constants.IOFields.BMI.value: self.dict_dis[constants.IOFields.WEIGHT.value]/((self.dict_dis[constants.IOFields.HEIGHT.value]/100)**2),
-            constants.IOFields.VENT_NORMALIZATION_METHOD.value: self.config.vent_normalization_method,
+            constants.IOFields.TE90: 1e6 * self.dict_dis[constants.IOFields.TE90],
+            constants.IOFields.TR_DIS: 1e3 * self.dict_dis[constants.IOFields.TR],
+            constants.IOFields.USER_LUNG_VOLUME_VALUE: self.user_lung_volume_value,
+            constants.IOFields.AGE: self.dict_dis[constants.IOFields.AGE],
+            constants.IOFields.SEX: self.dict_dis[constants.IOFields.SEX],
+            constants.IOFields.HEIGHT: self.dict_dis[constants.IOFields.HEIGHT],
+            constants.IOFields.WEIGHT: self.dict_dis[constants.IOFields.WEIGHT],
+            constants.IOFields.BMI: self.dict_dis[constants.IOFields.WEIGHT]
+            / ((self.dict_dis[constants.IOFields.HEIGHT] / 100) ** 2),
+            constants.IOFields.VENT_NORMALIZATION_METHOD: self.config.vent_normalization_method,
         }
         return self.dict_info
 
