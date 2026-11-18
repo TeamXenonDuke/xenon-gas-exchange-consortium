@@ -661,7 +661,7 @@ def export_subject_csv(dict_stats: Dict[str, Any], path: str, overwrite=False):
         path (str): file path of csv file
         overwrite (bool): if True, overwrite existing csv file
     """
-    header = dict_stats.keys()
+    header = list(dict_stats)
     if overwrite or (not os.path.exists(path)):
         with open(path, "w", newline="") as csvfile:
             writer = csv.DictWriter(csvfile, fieldnames=header)

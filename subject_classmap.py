@@ -108,6 +108,7 @@ class Subject(object):
         self.image_rbc_osc_corr = np.array([0.0])
         self.image_rbc_osc_binned_corr = np.array([0.0])
         self.relative_vc_map = np.array([0.0])
+        self.vc_ref = "NA"
         self.correction_map = np.array([0.0])
         self.key_radius = 0
         self.low_indices = np.array([0.0])
@@ -1319,8 +1320,8 @@ class Subject(object):
                 self.image_rbc2gas,
                 self.mask_vent,
                 self.dict_dis[constants.IOFields.XE_DISSOLVED_OFFSET_FREQUENCY],
-                0.008871,
-                0.00455,  # sex- and hemoglobin averaged, the value in Sup's paper is non-Hb-corrected, non-sex-specific average
+                constants.MEM_REF,
+                constants.RBC_REF,  # sex- and hemoglobin averaged, the value in Sup's paper is non-Hb-corrected, non-sex-specific average
             ),
             constants.StatsIOFields.DLCO_EST: metrics.dlco(
                 self.image_gas_binned,
@@ -1330,8 +1331,8 @@ class Subject(object):
                 self.mask_vent,
                 self.dict_dis[constants.IOFields.FOV],
                 self.dict_dis[constants.IOFields.XE_DISSOLVED_OFFSET_FREQUENCY],
-                0.008871,
-                0.00455,  # sex- and hemoglobin averaged, the value in Sup's paper is non-Hb-corrected, non-sex-specific average
+                constants.MEM_REF,
+                constants.RBC_REF,  # sex- and hemoglobin averaged, the value in Sup's paper is non-Hb-corrected, non-sex-specific average
             ),
             constants.StatsIOFields.RDP_BA: round(
                 metrics.rdp_ba(
@@ -1365,6 +1366,20 @@ class Subject(object):
                 volume_type="dlco",
             ),
         }
+        self.dict_stats[constants.StatsIOFields.VC] = metrics.get_capillary_blood_volume(
+            alveolar_volume=self.dict_stats.get(constants.StatsIOFields.ALVEOLAR_VOLUME),
+            rbc_mean=self.dict_stats.get(constants.StatsIOFields.RBC_MEAN),
+            hemoglobin=getattr(self.config, "hb", None),
+            excitation_ppm=self.dict_dis.get(constants.IOFields.XE_DISSOLVED_OFFSET_FREQUENCY),
+        )
+        self.dict_stats[constants.StatsIOFields.VC_REL], self.vc_ref = (
+            metrics.get_relative_capillary_blood_volume(
+                vc=self.dict_stats[constants.StatsIOFields.VC],
+                age=self.dict_dis.get(constants.IOFields.AGE),
+                sex=self.dict_dis.get(constants.IOFields.SEX),
+                height=self.dict_dis.get(constants.IOFields.HEIGHT),
+            )
+        )
         age = self.dict_dis[constants.IOFields.AGE]
         sex = self.dict_dis[constants.IOFields.SEX]
         if pd.notna(age) and age != "" and pd.notna(sex) and sex != "":
@@ -1877,19 +1892,23 @@ class Subject(object):
         ]
         report.intro(self.dict_info, path=pdf_list[0])
         report.clinical(
-            {**self.dict_stats, **self.reference_data["reference_stats"]},
+            {**self.dict_stats, **self.reference_data["reference_stats"],
+             "vc_ref": getattr(self, "vc_ref", "NA")},
             path=pdf_list[1],
         )
         report.grayscale(
-            {**self.dict_stats, **self.reference_data["reference_stats"]},
+            {**self.dict_stats, **self.reference_data["reference_stats"],
+             "vc_ref": getattr(self, "vc_ref", "NA")},
             path=pdf_list[2],
         )
         report.grayscale_cor(
-            {**self.dict_stats, **self.reference_data["reference_stats"]},
+            {**self.dict_stats, **self.reference_data["reference_stats"],
+             "vc_ref": getattr(self, "vc_ref", "NA")},
             path=pdf_list[3],
         )
         report.qa(
-            {**self.dict_stats, **self.reference_data["reference_stats"]},
+            {**self.dict_stats, **self.reference_data["reference_stats"],
+             "vc_ref": getattr(self, "vc_ref", "NA")},
             path=pdf_list[4],
         )
 

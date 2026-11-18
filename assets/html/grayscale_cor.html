@@ -139,11 +139,21 @@
       </div>
     </div>
     <div class="table-container1">
-      <table>
+      <table class="vc-summary">
+        <colgroup>
+          <col style="width: 10%" />
+          <col style="width: 9%" />
+          <col style="width: 9%" />
+          <col style="width: 16%" />
+          <col style="width: 22%" />
+          <col style="width: 22%" />
+          <col style="width: 12%" />
+        </colgroup>
         <tr class="title">
           <th> </th>
           <th>FRC (L)</th>
           <th>VA (L)</th>
+          <th>VC (mL)</th>
           <th>KCO (mL/min/mmHg/L)</th>
           <th>DLCO (mL/min/mmHg)</th>
           <th>RDP_BA (%)</th>
@@ -152,14 +162,16 @@
           <td>Xe est.</td>
           <td style="text-align:center;">-</td>
           <td>{alveolar_volume}</td>
+          <td class="vc-value">{vc_display}</td>
           <td>{kco_est}</td>
           <td>{dlco_est}</td>
           <td>{rdp_ba}</td>
         </tr>
         <tr class="basic">
-          <td>GLI est.</td>
+          <td>Reference</td>
           <td>{gli_frc}</td>
           <td>{gli_va}</td>
+          <td class="vc-value">{vc_ref_display}</td>
           <td>{gli_kco}</td>
           <td>{gli_dlco}</td>
           <td style="text-align:center;">-</td>
