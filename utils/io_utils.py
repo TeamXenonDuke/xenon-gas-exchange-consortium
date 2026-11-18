@@ -694,8 +694,6 @@ def export_subject_csv(dict_stats: Dict[str, Any], path: str, overwrite=False):
                     with open(path, "r", newline="") as source:
                         reader = csv.DictReader(source)
                         for row in reader:
-                            if None in row or any(value is None for value in row.values()):
-                                raise ValueError("Existing statistics CSV has misaligned rows")
                             writer.writerow(row)
                     writer.writerow(dict_stats)
                 os.chmod(temp_path, os.stat(path).st_mode & 0o777)
