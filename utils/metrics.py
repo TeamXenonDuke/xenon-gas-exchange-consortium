@@ -315,6 +315,53 @@ def dlco(
     return dlco_v
 
 
+def get_capillary_blood_volume(
+    alveolar_volume,
+    rbc_mean,
+    hemoglobin,
+    excitation_ppm,
+    hb_correction_key,
+    vol_correction_key,
+):
+    """Return Vc in mL, or NA for unavailable inputs or corrected RBC signals."""
+    if (
+        hb_correction_key != constants.HbCorrectionKey.NONE.value
+        or vol_correction_key != constants.VolCorrectionKey.NONE.value
+    ):
+        logging.warning(
+            "Vc unavailable: requires RBC before optional Hb/volume signal "
+            "corrections; vc will be NA"
+        )
+        return "NA"
+    try:
+        return capillary_blood_volume(
+            alveolar_volume=alveolar_volume,
+            rbc_mean=rbc_mean,
+            hemoglobin=hemoglobin,
+            excitation_ppm=excitation_ppm,
+        )
+    except (TypeError, ValueError, KeyError, OverflowError) as exc:
+        logging.warning("Vc unavailable: %s; vc will be NA", exc)
+        return "NA"
+
+
+def get_relative_capillary_blood_volume(vc, age, sex, height):
+    """Return (vc_rel, vc_ref), using NA for unavailable results.
+
+    Retain a valid demographic reference even when measured Vc is unavailable.
+    """
+    try:
+        vc_ref = capillary_blood_volume_reference(age=age, sex=sex, height=height)
+    except (TypeError, ValueError, OverflowError) as exc:
+        logging.warning("Vc reference unavailable: %s; vc_rel will be NA", exc)
+        return "NA", "NA"
+    try:
+        return relative_capillary_blood_volume(vc, vc_ref), vc_ref
+    except (TypeError, ValueError, KeyError, OverflowError) as exc:
+        logging.warning("Relative Vc unavailable: %s; vc_rel will be NA", exc)
+        return "NA", vc_ref
+
+
 def capillary_blood_volume(
     alveolar_volume: float,
     rbc_mean: float,
