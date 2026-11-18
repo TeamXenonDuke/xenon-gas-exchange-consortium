@@ -1356,8 +1356,6 @@ class Subject(object):
             rbc_mean=self.dict_stats.get(constants.StatsIOFields.RBC_MEAN),
             hemoglobin=getattr(self.config, "hb", None),
             excitation_ppm=self.dict_dis.get(constants.IOFields.XE_DISSOLVED_OFFSET_FREQUENCY),
-            hb_correction_key=self.config.hb_correction_key,
-            vol_correction_key=self.config.vol_correction_key,
         )
         self.dict_stats[constants.StatsIOFields.VC_REL], self.vc_ref = (
             metrics.get_relative_capillary_blood_volume(

@@ -320,19 +320,8 @@ def get_capillary_blood_volume(
     rbc_mean,
     hemoglobin,
     excitation_ppm,
-    hb_correction_key,
-    vol_correction_key,
 ):
-    """Return Vc in mL, or NA for unavailable inputs or corrected RBC signals."""
-    if (
-        hb_correction_key != constants.HbCorrectionKey.NONE.value
-        or vol_correction_key != constants.VolCorrectionKey.NONE.value
-    ):
-        logging.warning(
-            "Vc unavailable: requires RBC before optional Hb/volume signal "
-            "corrections; vc will be NA"
-        )
-        return "NA"
+    """Return Vc in mL, or NA when calculation inputs are unavailable/invalid."""
     try:
         return capillary_blood_volume(
             alveolar_volume=alveolar_volume,
