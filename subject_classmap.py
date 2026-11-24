@@ -55,6 +55,7 @@ class Subject(object):
         image_membrane (np.array): membrane image
         image_membrane2gas (np.array): membrane image normalized by gas-phase image
         image_membrane2gas_binned (np.array): binned image_membrane2gas
+        image_gem (np.array): gas exchange map label mask
         image_proton (np.array): UTE proton image
         image_proton_reg (np.array): registered UTE proton image
         image_rbc (np.array): RBC image
@@ -94,6 +95,7 @@ class Subject(object):
         self.image_membrane = np.array([0.0])
         self.image_membrane2gas = np.array([0.0])
         self.image_membrane2gas_binned = np.array([0.0])
+        self.image_gem = np.array([0.0])
         self.membrane_hb_correction_factor = "NA"
         self.image_proton = np.array([0.0])
         self.image_proton_reg = np.array([0.0])
@@ -1127,6 +1129,23 @@ class Subject(object):
             mask=self.mask_vent,
             thresholds=self.reference_data["threshold_membrane"],
         )
+        
+        # Create the gas-exchange map
+        mem = self.image_membrane2gas_binned
+        rbc = self.image_rbc2gas_binned
+        mem_low = np.isin(mem, [1, 2])
+        mem_norm = np.isin(mem, [3, 4, 5])
+        mem_high = mem >= 6
+        rbc_low = np.isin(rbc, [1, 2])
+        rbc_norm = rbc >= 3
+        self.image_gem = np.zeros(mem.shape, dtype=np.uint8)
+        self.image_gem[self.image_gas_binned == 1] = 1
+        self.image_gem[mem_low & rbc_low] = 2
+        self.image_gem[mem_low & rbc_norm] = 3
+        self.image_gem[mem_norm & rbc_low] = 4
+        self.image_gem[mem_norm & rbc_norm] = 5
+        self.image_gem[mem_high & rbc_low] = 6
+        self.image_gem[mem_high & rbc_norm] = 7
 
     def oscillation_analysis(self):
         """Calculate the oscillation image from the rbc high, low, and normal images."""
@@ -1952,7 +1971,7 @@ class Subject(object):
     def save_files(self):
         """Save select images to nifti files and instance variable to mat."""
         proton_reg = img_utils.normalize(
-            np.abs(self.image_proton),
+            np.abs(self.image_proton_reg),
             self.mask,
             bag_volume=self.config.bag_volume,
             method=constants.NormalizationMethods.PERCENTILE,
@@ -2030,6 +2049,21 @@ class Subject(object):
             ),
             "tmp/gas_rgb.nii",
         )
+        io_utils.export_nii(
+            self.image_gem,
+            "tmp/gem.nii",
+            self.dict_dis[constants.IOFields.FOV],
+        )
+        io_utils.export_nii_4d(
+            plot.map_and_overlay_to_rgb_with_outline(
+                self.image_gem,
+                proton_reg,
+                constants.CMAP.GEM_BIN2COLOR,
+                self.mask,
+            ),
+            "tmp/gem_rgb.nii",
+        )
+
 
         if (
             self.config.vent_normalization_method
@@ -2088,6 +2122,7 @@ class Subject(object):
             "tmp/{}_stats.csv".format(self.config.subject_id),
             "tmp/gas_highreso.nii",
             "tmp/gas_rgb.nii",
+            "tmp/gem_rgb.nii",
             "tmp/mask_reg.nii",
             "tmp/membrane2gas_rgb.nii",
             "tmp/proton_reg.nii",

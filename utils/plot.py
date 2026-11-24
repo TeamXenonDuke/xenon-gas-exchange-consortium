@@ -218,6 +218,29 @@ def map_and_overlay_to_rgb(
         )
     return image_out
 
+def map_and_overlay_to_rgb_with_outline(image: np.ndarray, image_background: np.ndarray,
+    cmap: Dict[int, np.ndarray], mask: np.ndarray, outline_color: Tuple[float, float, float] = (0.0, 0.0, 0.0),
+) -> np.ndarray:
+    """Map and overlay a binned image on a background, then outline a mask.
+
+    Args:
+        image (np.ndarray): binned image of shape (x, y, z)
+        image_background (np.ndarray): greyscale image of shape (x, y, z)
+        cmap (Dict[int, np.ndarray]): colormap mapping integers to RGB values.
+        mask (np.ndarray): binary mask to outline, shape (x, y, z)
+        outline_color (Tuple[float, float, float]): RGB outline color in [0, 1]
+    Returns:
+        RGB image of shape (x, y, z, 3)
+    """
+    image_out = map_and_overlay_to_rgb(image, image_background, cmap)
+    mask = mask.astype(np.uint8)
+    kernel = np.ones((3, 3), np.uint8)
+    for i in range(mask.shape[2]):
+        dilated = cv2.dilate(mask[:, :, i], kernel, iterations=1)
+        border = (dilated > 0) & (mask[:, :, i] == 0)
+        image_out[:, :, i, :][border] = outline_color
+    return image_out
+
 
 def overlay_mask_on_image(image: np.ndarray, mask: np.ndarray) -> np.ndarray:
     """Overlay the border of a binary mask on a greyscale image in red.
