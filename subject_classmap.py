@@ -190,7 +190,7 @@ class Subject(object):
     def read_dicom_files(self):
         """Read in DICOM files for proton image."""
         self.image_proton = io_utils.read_dicom(
-            self.config.dicom_proton_dir, self.image_gas_highreso.shape
+            self.config.proton.dicom_proton_dir, self.image_gas_highreso.shape
         )
 
     def read_mat_file(self):
@@ -260,13 +260,13 @@ class Subject(object):
         # remove contamination
         if self.config.corrections.gas_contamination_correction:
             if not (
-                io_utils.check_real_number(self.config.phase_gas_acq_diss)
-                and io_utils.check_real_number(self.config.area_gas_acq_diss)
-                and io_utils.check_real_number(self.config.recon.optimized_conta_phase)
+                io_utils.check_real_number(self.config.corrections.phase_gas_acq_diss)
+                and io_utils.check_real_number(self.config.corrections.area_gas_acq_diss)
+                and io_utils.check_real_number(self.config.corrections.optimized_conta_phase)
             ):
                 logging.error(
-                    "Error: config.phase_gas_acq_diss, config.area_gas_acq_diss, and "
-                    "config.recon.optimized_conta_phase must all be real, finite scalars."
+                    "Error: config.corrections.phase_gas_acq_diss, config.corrections.area_gas_acq_diss, and "
+                    "config.corrections.optimized_conta_phase must all be real, finite scalars."
                 )
             else:
                 self.dict_dis = pp.gas_contamination_correction(
@@ -855,7 +855,7 @@ class Subject(object):
         elif self.config.proton.registration_key == constants.RegistrationKey.MANUAL.value:
             # Load a file specified by the user
             try:
-                proton_reg = glob.glob(self.config.manual_reg_filepath)[0]
+                proton_reg = glob.glob(self.config.proton.manual_reg_filepath)[0]
                 self.image_proton_reg = np.squeeze(
                     np.array(nib.load(proton_reg).get_fdata())
                 )
@@ -1044,7 +1044,7 @@ class Subject(object):
         }
         if self.config.corrections.vol_correction_key != constants.VolCorrectionKey.NONE.value:
             if self.dict_stats["inflation"] > 0:
-                self.corrected_lung_volume = self.config.corrected_lung_volume
+                self.corrected_lung_volume = self.config.corrections.corrected_lung_volume
                 # get volume correction scaling factors
 
                 (

@@ -53,11 +53,11 @@ def gx_mapping_reconstruction(config: base_config.Config):
     if config.recon_proton:
         if getattr(subject, "dict_ute", None):
             subject.reconstruction_ute()
-        elif config.dicom_proton_dir:
+        elif config.proton.dicom_proton_dir:
             subject.read_dicom_files()
         else:
             subject.image_proton = np.zeros_like(subject.image_gas_highreso)
-    elif config.dicom_proton_dir:
+    elif config.proton.dicom_proton_dir:
         subject.read_dicom_files()
     else:
         subject.image_proton = np.zeros_like(subject.image_gas_highreso)

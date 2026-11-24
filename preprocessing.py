@@ -24,8 +24,8 @@ def gas_contamination_correction(
         freq_gas_acq_diss=dict_dis[constants.IOFields.XE_CENTER_FREQUENCY.value]
         * dict_dis[constants.IOFields.XE_DISSOLVED_OFFSET_FREQUENCY.value]
         * (-1.0),
-        phase_gas_acq_diss=config.phase_gas_acq_diss,
-        area_gas_acq_diss=config.area_gas_acq_diss,
+        phase_gas_acq_diss=config.corrections.phase_gas_acq_diss,
+        area_gas_acq_diss=config.corrections.area_gas_acq_diss,
         optimized_conta_phase=config.corrections.optimized_conta_phase,
         fa_gas=dict_dis[constants.IOFields.FA_GAS.value],
     )
