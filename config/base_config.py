@@ -93,7 +93,6 @@ class Config(config_dict.ConfigDict):
 
         # Keyhole Radius
         self.key_radius = 0
-        self.osc_recon_key = constants.ReconKey.ROBERTSON.value
         self.vc_correction = False
 
         ### Do not edit these 5 variables
@@ -157,7 +156,7 @@ class Recon(object):
         kernel_sharpness_hr: float, the kernel sharpness for high resolution, lower SNR images
         n_skip_start: int, the number of frames to skip at the beginning
         n_skip_end: int, the number of frames to skip at the end
-        traj_scaling_factor: str, scaling factor to apply to trajectories     
+        traj_scaling_factor: float, scaling factor to apply to trajectories     
     """
 
     def __init__(self):
@@ -183,7 +182,7 @@ class Recon(object):
         # Scaling is calcuated automatically if not reading in trajectories directly
         # Will default to 1.0 when reading in trajectories, but may be specified if desired
         # Use 0.903 for Halton Spiral Cincy data
-        self.traj_scaling_factor = 1.0
+        self.traj_scaling_factor = np.nan
 
 class Proton(object):
     """Define the proton image reconstruction configurations.

@@ -288,7 +288,7 @@ class Subject(object):
             self.traj_dissolved = pp.prepare_traj(self.dict_dis, config=self.config)
             if (
                 hasattr(self.config.recon, "traj_scaling_factor")
-                and self.config.recon.traj_scaling_factor is not constants.NONE
+                and self.config.recon.traj_scaling_factor is not np.nan
             ):
                 self.traj_scaling_factor = self.config.recon.traj_scaling_factor
             else:
@@ -302,7 +302,7 @@ class Subject(object):
             self.traj_dissolved = self.dict_dis[constants.IOFields.TRAJ.value][1]
             if (
                 hasattr(self.config.recon, "traj_scaling_factor")
-                and self.config.recon.traj_scaling_factor is not constants.NONE
+                and self.config.recon.traj_scaling_factor is not np.nan
             ):
                 self.traj_scaling_factor = self.config.recon.traj_scaling_factor
 
