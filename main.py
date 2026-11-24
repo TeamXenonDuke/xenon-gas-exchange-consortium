@@ -50,14 +50,14 @@ def gx_mapping_reconstruction(config: base_config.Config):
     subject.preprocess()
     subject.reconstruction_gas()
     subject.reconstruction_dissolved()
-    if config.recon.recon_proton:
+    if config.recon_proton:
         if getattr(subject, "dict_ute", None):
             subject.reconstruction_ute()
-        elif config.dicom_proton_dir:
+        elif config.proton.dicom_proton_dir:
             subject.read_dicom_files()
         else:
             subject.image_proton = np.zeros_like(subject.image_gas_highreso)
-    elif config.dicom_proton_dir:
+    elif config.proton.dicom_proton_dir:
         subject.read_dicom_files()
     else:
         subject.image_proton = np.zeros_like(subject.image_gas_highreso)
@@ -70,7 +70,7 @@ def gx_mapping_reconstruction(config: base_config.Config):
     subject.vol_correction()
     subject.dissolved_analysis()
     subject.dissolved_binning()
-    if config.osc_recon.oscillation_analysis:
+    if config.oscillation_analysis:
         subject.reconstruction_rbc_oscillation()
         subject.oscillation_analysis()
         subject.oscillation_binning()
@@ -109,7 +109,7 @@ def gx_mapping_readin(config: base_config.Config):
     subject.vol_correction()
     subject.dissolved_analysis()
     subject.dissolved_binning()
-    if config.osc_recon.oscillation_analysis:
+    if config.oscillation_analysis:
         subject.oscillation_analysis()
         subject.oscillation_binning()
     subject.get_statistics()

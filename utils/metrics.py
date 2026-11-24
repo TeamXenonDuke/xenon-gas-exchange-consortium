@@ -541,7 +541,7 @@ def relative_vc_map(
     )
     VA = np.divide(alveolar_volume, alveolar_volume_ref)
     if hemoglobin > 0.0:
-        HB = np.divide(hemoglobin, constants.HbCorrection.HB_REF)
+        HB = np.divide(hemoglobin, constants.HbCorrection.HB_REF.value)
     else:
         HB = 1.0
     RBC = np.divide(rbc_img, rbc_ref)

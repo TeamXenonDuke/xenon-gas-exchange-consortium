@@ -37,7 +37,7 @@ class DCF(ABC):
         self.extent = kernel_extent
         self.unique_string = "Kernel_e" + str(self.extent)
         self.dcf = np.array([])
-        self.space = constants.DCFSpace.DATASPACE
+        self.space = constants.DCFSpace.DATASPACE.value
 
     def times(self, b: np.ndarray):
         """Multiple density compensation filter by array."""
@@ -79,7 +79,7 @@ class IterativeDCF(DCF):
         self.dcf_iterations = dcf_iterations
         self.verbosity = verbosity
         self.unique_string = "iter" + str(dcf_iterations)
-        self.space = constants.DCFSpace.DATASPACE
+        self.space = constants.DCFSpace.DATASPACE.value
         # system_obj is a MatrixSystemModel
         idea_PSFdata = np.ones((system_obj.A._shape[1], 1))
         # reasonable first guess by summing all up

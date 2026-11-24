@@ -683,11 +683,11 @@ def vent_hist_ticklabels(method: str, bias: bool):
     """
     f = constants.VENTHISTOGRAMFields
 
-    if method == constants.NormalizationMethods.GLB_FV:
+    if method == constants.NormalizationMethods.GLB_FV.value:
         return f.XTICKLABELS, f.YTICKLABELS_GLB_FV
     elif (
-        method == constants.NormalizationMethods.THRESHOLD_MA
-        or method == constants.NormalizationMethods.GLB_MA
+        method == constants.NormalizationMethods.THRESHOLD_MA.value
+        or method == constants.NormalizationMethods.GLB_MA.value
     ):
         if bias == True:
             return f.XTICKLABELS_GLB_MA, f.YTICKLABELS_GLB_MA
@@ -706,11 +706,11 @@ def vent_hist_lim(method: str, bias: bool):
     """
     f = constants.VENTHISTOGRAMFields
 
-    if method == constants.NormalizationMethods.GLB_FV:
+    if method == constants.NormalizationMethods.GLB_FV.value:
         return f.XLIM, f.YLIM_GLB_FV
     elif (
-        method == constants.NormalizationMethods.THRESHOLD_MA
-        or method == constants.NormalizationMethods.GLB_MA
+        method == constants.NormalizationMethods.THRESHOLD_MA.value
+        or method == constants.NormalizationMethods.GLB_MA.value
     ):
         if bias == True:
             return f.XLIM_GLB_MA, f.YLIM_GLB_MA
@@ -733,11 +733,11 @@ def vent_hist_ticks(method: str, bias: bool):
     """
     f = constants.VENTHISTOGRAMFields
 
-    if method == constants.NormalizationMethods.GLB_FV:
+    if method == constants.NormalizationMethods.GLB_FV.value:
         return f.XTICKS, f.YTICKS_GLB_FV
     elif (
-        method == constants.NormalizationMethods.THRESHOLD_MA
-        or method == constants.NormalizationMethods.GLB_MA
+        method == constants.NormalizationMethods.THRESHOLD_MA.value
+        or method == constants.NormalizationMethods.GLB_MA.value
     ):
         if bias == True:
             return f.XTICKS_GLB_MA, f.YTICKS_GLB_MA
@@ -751,22 +751,22 @@ def vent_hist_thresholds(method: str, reference_data: dict, bias: bool):
     """
     Return the bin thresholds for the current normalization method.
     """
-    if method == constants.NormalizationMethods.GLB_99:
+    if method == constants.NormalizationMethods.GLB_99.value:
         if bias == True:
             return reference_data["threshold_vent"]
         elif bias == False:
             return reference_data["threshold_vent_nb"]
 
-    elif method == constants.NormalizationMethods.GLB_FV:
+    elif method == constants.NormalizationMethods.GLB_FV.value:
         return reference_data["thresholds_fractional_ventilation"]
 
-    elif method == constants.NormalizationMethods.GLB_MA:
+    elif method == constants.NormalizationMethods.GLB_MA.value:
         if bias == True:
             return reference_data["threshold_vent_mean_anchor"]
         elif bias == False:
             return reference_data["threshold_vent_mean_anchor_nb"]
 
-    elif method == constants.NormalizationMethods.THRESHOLD_MA:
+    elif method == constants.NormalizationMethods.THRESHOLD_MA.value:
         return None
 
 
@@ -775,22 +775,22 @@ def vent_hist_reference_fit(method: str, reference_data: dict, bias: bool):
     Return the reference histogram fit/profile (the [0] element) for the current
     ventilation normalization method.
     """
-    if method == constants.NormalizationMethods.GLB_99:
+    if method == constants.NormalizationMethods.GLB_99.value:
         if bias == True:
             return reference_data["healthy_histogram_vent_dir"]
         elif bias == False:
             return reference_data["healthy_histogram_vent_nb_dir"]
 
-    elif method == constants.NormalizationMethods.GLB_FV:
+    elif method == constants.NormalizationMethods.GLB_FV.value:
         return reference_data["healthy_histogram_vent_frac_dir"]
 
-    elif method == constants.NormalizationMethods.GLB_MA:
+    elif method == constants.NormalizationMethods.GLB_MA.value:
         if bias == True:
             return reference_data["healthy_histogram_vent_mean_anchor_dir"]
         if bias == False:
             return reference_data["healthy_histogram_vent_mean_anchor_nb_dir"]
 
-    elif method == constants.NormalizationMethods.THRESHOLD_MA:
+    elif method == constants.NormalizationMethods.THRESHOLD_MA.value:
         return None
 
 

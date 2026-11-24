@@ -42,47 +42,47 @@ def format_dict(dict_stats: Dict[str, Any]) -> Dict[str, Any]:
     """
     # list of variables to round to 0 decimal places
     list_round_0 = [
-        constants.StatsIOFields.VENT_DEFECT_PCT,
-        constants.StatsIOFields.VENT_LOW_PCT,
-        constants.StatsIOFields.VENT_HIGH_PCT,
-        constants.StatsIOFields.RBC_DEFECT_PCT,
-        constants.StatsIOFields.RBC_LOW_PCT,
-        constants.StatsIOFields.RBC_HIGH_PCT,
-        constants.StatsIOFields.MEMBRANE_DEFECT_PCT,
-        constants.StatsIOFields.MEMBRANE_LOW_PCT,
-        constants.StatsIOFields.MEMBRANE_HIGH_PCT,
+        constants.StatsIOFields.VENT_DEFECT_PCT.value,
+        constants.StatsIOFields.VENT_LOW_PCT.value,
+        constants.StatsIOFields.VENT_HIGH_PCT.value,
+        constants.StatsIOFields.RBC_DEFECT_PCT.value,
+        constants.StatsIOFields.RBC_LOW_PCT.value,
+        constants.StatsIOFields.RBC_HIGH_PCT.value,
+        constants.StatsIOFields.MEMBRANE_DEFECT_PCT.value,
+        constants.StatsIOFields.MEMBRANE_LOW_PCT.value,
+        constants.StatsIOFields.MEMBRANE_HIGH_PCT.value,
     ]
     # list of variables to round to 1 decimal places
     list_round_1 = [
-        constants.StatsIOFields.MEMBRANE_SNR,
-        constants.StatsIOFields.RBC_SNR,
-        constants.StatsIOFields.VENT_SNR,
-        constants.StatsIOFields.OSC_DEFECT_PCT,
-        constants.StatsIOFields.OSC_LOW_PCT,
-        constants.StatsIOFields.OSC_DEFECTLOW_PCT,
-        constants.StatsIOFields.OSC_HIGH_PCT,
-        constants.StatsIOFields.OSC_MEAN,
-        constants.StatsIOFields.OSC_NEGATIVE_PCT,
-        constants.StatsIOFields.RBC_HIGH_SNR,
-        constants.StatsIOFields.RBC_LOW_SNR,
-        constants.StatsIOFields.DISSOLVED_SNR,
-        constants.StatsIOFields.OSC_DEFECT_PCT_CORR,
-        constants.StatsIOFields.OSC_LOW_PCT_CORR,
-        constants.StatsIOFields.OSC_DEFECTLOW_PCT_CORR,
-        constants.StatsIOFields.OSC_HIGH_PCT_CORR,
-        constants.StatsIOFields.OSC_MEAN_CORR,
-        constants.StatsIOFields.OSC_NEGATIVE_PCT_CORR,
+        constants.StatsIOFields.MEMBRANE_SNR.value,
+        constants.StatsIOFields.RBC_SNR.value,
+        constants.StatsIOFields.VENT_SNR.value,
+        constants.StatsIOFields.OSC_DEFECT_PCT.value,
+        constants.StatsIOFields.OSC_LOW_PCT.value,
+        constants.StatsIOFields.OSC_DEFECTLOW_PCT.value,
+        constants.StatsIOFields.OSC_HIGH_PCT.value,
+        constants.StatsIOFields.OSC_MEAN.value,
+        constants.StatsIOFields.OSC_NEGATIVE_PCT.value,
+        constants.StatsIOFields.RBC_HIGH_SNR.value,
+        constants.StatsIOFields.RBC_LOW_SNR.value,
+        constants.StatsIOFields.DISSOLVED_SNR.value,
+        constants.StatsIOFields.OSC_DEFECT_PCT_CORR.value,
+        constants.StatsIOFields.OSC_LOW_PCT_CORR.value,
+        constants.StatsIOFields.OSC_DEFECTLOW_PCT_CORR.value,
+        constants.StatsIOFields.OSC_HIGH_PCT_CORR.value,
+        constants.StatsIOFields.OSC_MEAN_CORR.value,
+        constants.StatsIOFields.OSC_NEGATIVE_PCT_CORR.value,
     ]
     # list of variables to round to 3 decimal places
-    list_round_3 = [constants.StatsIOFields.RBC_M_RATIO]
+    list_round_3 = [constants.StatsIOFields.RBC_M_RATIO.value]
     # list of variables to output to multiply by 100 for readabiltiy
     list_mult_100 = [
-        constants.StatsIOFields.RBC_MEAN,
-        constants.StatsIOFields.MEMBRANE_MEAN,
-        constants.StatsIOFields.RBC_MEDIAN,
-        constants.StatsIOFields.MEMBRANE_MEDIAN,
-        constants.StatsIOFields.RBC_STDDEV,
-        constants.StatsIOFields.MEMBRANE_STDDEV,
+        constants.StatsIOFields.RBC_MEAN.value,
+        constants.StatsIOFields.MEMBRANE_MEAN.value,
+        constants.StatsIOFields.RBC_MEDIAN.value,
+        constants.StatsIOFields.MEMBRANE_MEDIAN.value,
+        constants.StatsIOFields.RBC_STDDEV.value,
+        constants.StatsIOFields.MEMBRANE_STDDEV.value,
     ]
 
     for key in dict_stats.keys():

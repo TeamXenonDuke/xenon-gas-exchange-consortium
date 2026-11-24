@@ -246,17 +246,17 @@ def _traj_factory(traj_type: str) -> Callable:
     Args:
         traj_type: Trajectory type.
     """
-    if traj_type == constants.TrajType.SPIRAL:
+    if traj_type == constants.TrajType.SPIRAL.value:
         return _spiral_seq
-    elif traj_type == constants.TrajType.HALTON:
+    elif traj_type == constants.TrajType.HALTON.value:
         return _halton_seq
-    elif traj_type == constants.TrajType.HALTONSPIRAL:
+    elif traj_type == constants.TrajType.HALTONSPIRAL.value:
         return _halton_spiral_seq
-    elif traj_type == constants.TrajType.SPIRALRANDOM:
+    elif traj_type == constants.TrajType.SPIRALRANDOM.value:
         return _random_spiral_seq
-    elif traj_type == constants.TrajType.ARCHIMEDIAN:
+    elif traj_type == constants.TrajType.ARCHIMEDIAN.value:
         return _archimedian_seq
-    elif traj_type == constants.TrajType.GOLDENMEAN:
+    elif traj_type == constants.TrajType.GOLDENMEAN.value:
         return _golden_mean_seq
     else:
         raise ValueError("Invalid trajectory type {}.".format(traj_type))
@@ -357,7 +357,7 @@ def generate_trajectory(
     n_points: int = 64,
     plat_time: float = 2500,
     ramp_time: float = 100,
-    traj_type: str = constants.TrajType.HALTONSPIRAL,
+    traj_type: str = constants.TrajType.HALTONSPIRAL.value,
 ) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
     """Generate and vectorize trajectory and data.
 
